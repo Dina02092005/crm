@@ -202,7 +202,7 @@ export function EmployeesTable({ data, onUpdate, onDelete, onToggleStatus, pagin
                                     <th
                                         key={header.id}
                                         className={`
-                                            py-3 px-4 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground
+                                            py-2 px-4 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground
                                             ${index === 0 ? "pl-6" : ""}
                                             ${index === headerGroup.headers.length - 1 ? "pr-6" : ""}
                                         `}
@@ -224,7 +224,7 @@ export function EmployeesTable({ data, onUpdate, onDelete, onToggleStatus, pagin
                                     <td
                                         key={cell.id}
                                         className={`
-                                            py-4 px-4 align-middle 
+                                            py-3 px-4 align-middle 
                                             ${index === 0 ? "pl-6" : ""}
                                             ${index === row.getVisibleCells().length - 1 ? "pr-6" : ""}
                                         `}
@@ -245,32 +245,31 @@ export function EmployeesTable({ data, onUpdate, onDelete, onToggleStatus, pagin
             </div>
 
             {/* Pagination Controls */}
-            {
-                pagination && pagination.totalPages > 1 && (
-                    <div className="flex items-center justify-end space-x-2 py-4 pr-6 border-t border-gray-100">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => pagination.onPageChange(Math.max(1, pagination.page - 1))}
-                            disabled={pagination.page <= 1}
-                            className="rounded-xl h-8"
-                        >
-                            Previous
-                        </Button>
-                        <div className="text-sm font-medium text-gray-600">
-                            Page {pagination.page} of {pagination.totalPages}
-                        </div>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => pagination.onPageChange(Math.min(pagination.totalPages, pagination.page + 1))}
-                            disabled={pagination.page >= pagination.totalPages}
-                            className="rounded-xl h-8"
-                        >
-                            Next
-                        </Button>
+            {pagination && (
+                <div className="flex items-center justify-end space-x-2 py-4 pr-6 border-t border-border">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => pagination.onPageChange(Math.max(1, pagination.page - 1))}
+                        disabled={pagination.page <= 1}
+                        className="rounded-xl h-8"
+                    >
+                        Previous
+                    </Button>
+                    <div className="text-sm font-medium text-gray-600">
+                        Page {pagination.page} of {pagination.totalPages}
                     </div>
-                )
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => pagination.onPageChange(Math.min(pagination.totalPages, pagination.page + 1))}
+                        disabled={pagination.page >= pagination.totalPages}
+                        className="rounded-xl h-8"
+                    >
+                        Next
+                    </Button>
+                </div>
+            )
             }
 
 

@@ -13,9 +13,9 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <Sidebar />
 
             {/* Main Content - positioned adjacent to sidebar */}
-            <div className="flex-1 flex items-center py-2 md:py-4 overflow-hidden">
+            <div className="flex-1 flex items-center py-1 md:py-2 overflow-hidden">
                 {/* White rounded container - premium floating effect */}
-                <div className="bg-background dark:bg-sidebar rounded-3xl px-4 md:px-6 pb-6 pt-0 h-[95vh] w-full overflow-y-auto scrollbar-hide ml-0 mr-2 md:mr-4 border border-border">
+                <div className="bg-background dark:bg-sidebar rounded-3xl px-3 md:px-4 pb-4 pt-0 h-[98vh] w-full overflow-y-auto scrollbar-hide ml-0 mr-1 md:mr-2 border border-border">
                     <DashboardHeader />
                     {children}
                 </div>

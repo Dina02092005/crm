@@ -119,7 +119,7 @@ export function AssignLeadSheet({
                         <Button
                             onClick={handleAssign}
                             disabled={!selectedEmployee || isSaving}
-                            className="bg-cyan-600 hover:bg-cyan-700"
+                            className="bg-primary hover:bg-primary/90 text-white rounded-xl font-bold shadow-sm px-8"
                         >
                             {isSaving ? "Assigning..." : "Assign Lead"}
                         </Button>

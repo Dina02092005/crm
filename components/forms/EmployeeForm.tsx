@@ -15,16 +15,29 @@ const employeeSchema = z.object({
     email: z.string(),
     firstName: z.string().min(1, 'First name is required'),
     lastName: z.string().min(1, 'Last name is required'),
-    department: z.string(),
-    designation: z.string(),
-    joiningDate: z.string(),
-    salary: z.number(),
+    department: z.string().min(1, 'Department is required'),
+    designation: z.string().min(1, 'Designation is required'),
+    joiningDate: z.string().min(1, 'Joining date is required'),
+    salary: z.number().min(0, 'Salary must be a positive number'),
 })
 
 interface EmployeeFormProps {
     employee?: Employee
     onSuccess?: () => void
     formId?: string
+}
+
+function ErrorMessage({ field }: { field: any }) {
+    // Only show error if the field has been touched and has errors
+    if (!field.state.meta.isTouched || !field.state.meta.errors.length) return null
+
+    return (
+        <p className="text-sm text-red-500">
+            {field.state.meta.errors
+                .map((e: any) => (typeof e === 'object' && e?.message ? e.message : e))
+                .join(', ')}
+        </p>
+    )
 }
 
 export default function EmployeeForm({ employee, onSuccess, formId }: EmployeeFormProps) {
@@ -90,9 +103,7 @@ export default function EmployeeForm({ employee, onSuccess, formId }: EmployeeFo
                                     onBlur={field.handleBlur}
                                     onChange={(e) => field.handleChange(e.target.value)}
                                 />
-                                {field.state.meta.errors ? (
-                                    <p className="text-sm text-red-500">{field.state.meta.errors.join(', ')}</p>
-                                ) : null}
+                                <ErrorMessage field={field} />
                             </div>
                         )}
                     />
@@ -109,9 +120,7 @@ export default function EmployeeForm({ employee, onSuccess, formId }: EmployeeFo
                                     onBlur={field.handleBlur}
                                     onChange={(e) => field.handleChange(e.target.value)}
                                 />
-                                {field.state.meta.errors ? (
-                                    <p className="text-sm text-red-500">{field.state.meta.errors.join(', ')}</p>
-                                ) : null}
+                                <ErrorMessage field={field} />
                             </div>
                         )}
                     />
@@ -122,17 +131,13 @@ export default function EmployeeForm({ employee, onSuccess, formId }: EmployeeFo
                         name="phone"
                         children={(field) => (
                             <div className="space-y-1">
-                                <Label htmlFor={field.name} className={field.state.meta.errors ? "text-red-500" : ""}>Phone</Label>
+                                <Label htmlFor={field.name}>Phone</Label>
                                 <PhoneInput
                                     value={field.state.value}
                                     onChange={(phone) => field.handleChange(phone)}
-                                    error={!!field.state.meta.errors}
+                                    error={!!field.state.meta.errors.length && field.state.meta.isTouched}
                                 />
-                                {field.state.meta.errors ? (
-                                    <p className="text-sm text-red-500">
-                                        {field.state.meta.errors.map(e => typeof e === 'object' ? (e as any).message || JSON.stringify(e) : e).join(', ')}
-                                    </p>
-                                ) : null}
+                                <ErrorMessage field={field} />
                             </div>
                         )}
                     />
@@ -150,9 +155,7 @@ export default function EmployeeForm({ employee, onSuccess, formId }: EmployeeFo
                                     onBlur={field.handleBlur}
                                     onChange={(e) => field.handleChange(e.target.value)}
                                 />
-                                {field.state.meta.errors ? (
-                                    <p className="text-sm text-red-500">{field.state.meta.errors.join(', ')}</p>
-                                ) : null}
+                                <ErrorMessage field={field} />
                             </div>
                         )}
                     />
@@ -171,6 +174,7 @@ export default function EmployeeForm({ employee, onSuccess, formId }: EmployeeFo
                                     onBlur={field.handleBlur}
                                     onChange={(e) => field.handleChange(e.target.value)}
                                 />
+                                <ErrorMessage field={field} />
                             </div>
                         )}
                     />
@@ -186,6 +190,7 @@ export default function EmployeeForm({ employee, onSuccess, formId }: EmployeeFo
                                     onBlur={field.handleBlur}
                                     onChange={(e) => field.handleChange(e.target.value)}
                                 />
+                                <ErrorMessage field={field} />
                             </div>
                         )}
                     />
@@ -205,6 +210,7 @@ export default function EmployeeForm({ employee, onSuccess, formId }: EmployeeFo
                                     onBlur={field.handleBlur}
                                     onChange={(e) => field.handleChange(e.target.value)}
                                 />
+                                <ErrorMessage field={field} />
                             </div>
                         )}
                     />
@@ -221,6 +227,7 @@ export default function EmployeeForm({ employee, onSuccess, formId }: EmployeeFo
                                     onBlur={field.handleBlur}
                                     onChange={(e) => field.handleChange(Number(e.target.value))}
                                 />
+                                <ErrorMessage field={field} />
                             </div>
                         )}
                     />

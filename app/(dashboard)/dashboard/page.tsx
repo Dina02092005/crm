@@ -7,6 +7,8 @@ import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
+import { LeadAnalyticsGraph } from "@/components/dashboard/LeadAnalyticsGraph";
+import { LeadCustomerRatio } from "@/components/dashboard/LeadCustomerRatio";
 
 interface DashboardData {
     stats: {
@@ -15,6 +17,7 @@ interface DashboardData {
         newLeadsToday: number;
     };
     recentLeads: any[];
+    analytics: any[];
 }
 
 export default function DashboardPage() {
@@ -111,8 +114,25 @@ export default function DashboardPage() {
                 </div>
             </div>
 
-            {/* RIGHT COLUMN - Table */}
+            {/* RIGHT COLUMN - Table & Analytics */}
             <div className="flex-1 min-w-0 space-y-8">
+                {/* Analytics Section */}
+                <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+                    <div className="xl:col-span-2">
+                        <LeadAnalyticsGraph
+                            data={data?.analytics || []}
+                            isLoading={isLoading}
+                        />
+                    </div>
+                    <div className="xl:col-span-1">
+                        <LeadCustomerRatio
+                            totalLeads={stats.totalLeads}
+                            totalCustomers={stats.totalCustomers}
+                            isLoading={isLoading}
+                        />
+                    </div>
+                </div>
+
                 <div>
                     <div className="flex items-center justify-between mb-4">
                         <h2 className="text-[18px] font-medium leading-none tracking-normal font-sans text-foreground">Latest Leads Activity</h2>

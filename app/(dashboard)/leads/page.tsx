@@ -4,10 +4,9 @@ import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { useDebounce } from "@/hooks/use-debounce";
-import { useLeads } from "@/hooks/use-leads";
+import { useLeads, useLeadStats } from "@/hooks/use-leads";
 import { LeadsTable } from "@/components/dashboard/LeadsTable";
 import { CreateLeadSheet } from "@/components/dashboard/CreateLeadSheet";
-import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -35,14 +34,23 @@ export default function LeadsPage() {
         setPage(1);
     }, [debouncedSearch, status]);
 
-    return (
-        <div className="flex flex-col gap-4 p-4 sm:p-6">
 
-            {/* Search and Action Row */}
-            <div className="flex flex-col sm:flex-row gap-4 items-center">
-                <Card className="flex-1 border border-border rounded-xl bg-card shadow-sm w-full">
-                    <CardContent className="p-0 px-3">
-                        <div className="relative">
+    const { data: leadStats } = useLeadStats();
+
+    // Map stats to filter IDs
+    const getCount = (id: string) => {
+        if (!leadStats) return 0;
+        return leadStats[id as keyof typeof leadStats] || 0;
+    };
+
+    return (
+        <div className="flex flex-col gap-3 p-3 sm:p-4">
+
+            <Card className="border-0 rounded-3xl overflow-hidden bg-card">
+                <CardContent className="p-4">
+                    {/* Integrated Search and Action Row */}
+                    <div className="flex flex-row items-center justify-between gap-4">
+                        <div className="relative max-w-sm w-full">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
                             <Input
                                 placeholder="Search by name, email, or phone..."
@@ -51,48 +59,41 @@ export default function LeadsPage() {
                                 className="pl-9 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-9 text-[13px] placeholder:text-muted-foreground/40 font-sans w-full"
                             />
                         </div>
-                    </CardContent>
-                </Card>
-                <CreateLeadSheet onLeadCreated={() => { }} />
-            </div>
+                        <CreateLeadSheet onLeadCreated={() => { }} />
+                    </div>
 
-            {/* Filter Pills */}
-            <div className="flex flex-wrap gap-2">
-                {[
-                    { id: "ALL", label: "Total", color: "text-red-500", bg: "bg-red-500/10", border: "border-red-500/20" },
-                    { id: "NEW", label: "New", color: "text-cyan-500", bg: "bg-cyan-500/10", border: "border-cyan-500/20" },
-                    { id: "ASSIGNED", label: "Assigned", color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/20" },
-                    { id: "IN_PROGRESS", label: "In Progress", color: "text-indigo-500", bg: "bg-indigo-500/10", border: "border-indigo-500/20" },
-                    { id: "FOLLOW_UP", label: "Follow Up", color: "text-orange-500", bg: "bg-orange-500/10", border: "border-orange-500/20" },
-                    { id: "CONVERTED", label: "Converted", color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
-                    { id: "LOST", label: "Lost", color: "text-gray-500", bg: "bg-gray-500/10", border: "border-gray-500/20" },
-                ].map((f) => (
-                    <button
-                        key={f.id}
-                        onClick={() => setStatus(f.id)}
-                        className={`
-                            px-4 py-1.5 rounded-xl border flex items-center gap-3 transition-all
-                            ${status === f.id
-                                ? `${f.bg} ${f.border} shadow-sm ring-1 ring-inset ${f.color.replace('text-', 'ring-')}/30`
-                                : "bg-card border-border hover:bg-muted/50"
-                            }
-                        `}
-                    >
-                        <span className={`text-[10px] font-bold uppercase tracking-wider ${status === f.id ? f.color : "text-muted-foreground"}`}>
-                            {f.label}
-                        </span>
-                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${status === f.id ? f.color + " bg-white/50 dark:bg-black/20" : "bg-muted text-muted-foreground"}`}>
-                            {f.id === "ALL" ? totalLeads : "10"}
-                        </span>
-                    </button>
-                ))}
-            </div>
-
-            <Card className="border-0 rounded-3xl overflow-hidden bg-card">
-                <CardContent className="p-6">
-                    <div className="mb-6">
-                        <h2 className="text-xl font-bold text-foreground">All Leads</h2>
-                        <p className="text-sm text-muted-foreground">{totalLeads} leads found</p>
+                    {/* Filter Pills - Integrated below search */}
+                    <div className="flex flex-wrap gap-2 mt-3 mb-4">
+                        {[
+                            { id: "ALL", label: "All", color: "text-primary", bg: "bg-primary/10", border: "" },
+                            { id: "NEW", label: "New", color: "text-primary", bg: "bg-primary/10", border: "" },
+                            { id: "ASSIGNED", label: "Assigned", color: "text-blue-500", bg: "bg-blue-500/10", border: "" },
+                            { id: "IN_PROGRESS", label: "In Progress", color: "text-indigo-500", bg: "bg-indigo-500/10", border: "" },
+                            { id: "FOLLOW_UP", label: "Follow Up", color: "text-orange-500", bg: "bg-orange-500/10", border: "" },
+                            { id: "CONVERTED", label: "Converted", color: "text-emerald-500", bg: "bg-emerald-500/10", border: "" },
+                            { id: "LOST", label: "Lost", color: "text-gray-500", bg: "bg-gray-500/10", border: "" },
+                        ].map((f) => (
+                            <button
+                                key={f.id}
+                                onClick={() => setStatus(f.id)}
+                                className={`
+                                    px-3 py-1 rounded-lg flex items-center gap-2 transition-all
+                                    ${status === f.id
+                                        ? `${f.bg} shadow-sm ring-1 ring-inset ${f.color.replace('text-', 'ring-')}/30`
+                                        : "bg-muted/50 hover:bg-muted text-muted-foreground"
+                                    }
+                                `}
+                            >
+                                <div className="flex items-center gap-1.5">
+                                    <span className={`text-[10px] font-bold uppercase tracking-wider ${status === f.id ? f.color : "text-muted-foreground"}`}>
+                                        {f.label}
+                                    </span>
+                                    <span className={`text-[10px] font-bold ${status === f.id ? f.color : "text-muted-foreground/70"}`}>
+                                        ({getCount(f.id)})
+                                    </span>
+                                </div>
+                            </button>
+                        ))}
                     </div>
 
                     {isLoading ? (

@@ -2,10 +2,12 @@
 
 import { useState } from "react";
 import { useForm } from "@tanstack/react-form";
+import { zodValidator } from "@tanstack/zod-form-adapter";
 import { z } from "zod";
 import { toast } from "sonner";
 import {
     Sheet,
+    SheetClose,
     SheetContent,
     SheetDescription,
     SheetHeader,
@@ -36,6 +38,19 @@ const formSchema = z.object({
 
 type CreateLeadFormData = z.infer<typeof formSchema>;
 
+function ErrorMessage({ field }: { field: any }) {
+    // Only show error if the field has been touched and has errors
+    if (!field.state.meta.isTouched || !field.state.meta.errors.length) return null
+
+    return (
+        <p className="text-sm text-red-500">
+            {field.state.meta.errors
+                .map((e: any) => (typeof e === 'object' && e?.message ? e.message : e))
+                .join(', ')}
+        </p>
+    )
+}
+
 export function CreateLeadSheet({ onLeadCreated }: { onLeadCreated: () => void }) {
     const [open, setOpen] = useState(false);
     const createLeadMutation = useCreateLead();
@@ -48,6 +63,8 @@ export function CreateLeadSheet({ onLeadCreated }: { onLeadCreated: () => void }
             message: "",
             source: "WEBSITE_1" as const,
         } as CreateLeadFormData,
+        // @ts-ignore
+        validatorAdapter: zodValidator(),
         validators: {
             onChange: formSchema,
         },
@@ -64,22 +81,27 @@ export function CreateLeadSheet({ onLeadCreated }: { onLeadCreated: () => void }
         },
     });
 
+
     return (
         <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-                <Button className="bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl px-6">
+                <Button className="bg-primary hover:bg-primary/90 text-white rounded-xl px-6 font-bold shadow-sm">
                     <Plus className="mr-2 h-4 w-4" /> Add New Lead
                 </Button>
             </SheetTrigger>
-            <SheetContent className="overflow-y-auto w-full sm:max-w-sm">
-                <SheetHeader>
-                    <SheetTitle>Add New Lead</SheetTitle>
-                    <SheetDescription>
-                        Create a new lead manually.
-                    </SheetDescription>
-                </SheetHeader>
-                <div className="mt-6">
+            <SheetContent className="w-full sm:max-w-xl flex flex-col p-0">
+                <div className="p-6 pb-2">
+                    <SheetHeader>
+                        <SheetTitle>Add New Lead</SheetTitle>
+                        <SheetDescription>
+                            Create a new lead manually.
+                        </SheetDescription>
+                    </SheetHeader>
+                </div>
+
+                <div className="flex-1 overflow-y-auto px-6 py-2">
                     <form
+                        id="create-lead-form"
                         onSubmit={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -99,9 +121,7 @@ export function CreateLeadSheet({ onLeadCreated }: { onLeadCreated: () => void }
                                         onBlur={field.handleBlur}
                                         onChange={(e) => field.handleChange(e.target.value)}
                                     />
-                                    {field.state.meta.errors ? (
-                                        <p className="text-sm text-red-500">{field.state.meta.errors.join(", ")}</p>
-                                    ) : null}
+                                    <ErrorMessage field={field} />
                                 </div>
                             )}
                         />
@@ -117,9 +137,7 @@ export function CreateLeadSheet({ onLeadCreated }: { onLeadCreated: () => void }
                                         onBlur={field.handleBlur}
                                         onChange={(e) => field.handleChange(e.target.value)}
                                     />
-                                    {field.state.meta.errors ? (
-                                        <p className="text-sm text-red-500">{field.state.meta.errors.join(", ")}</p>
-                                    ) : null}
+                                    <ErrorMessage field={field} />
                                 </div>
                             )}
                         />
@@ -133,9 +151,7 @@ export function CreateLeadSheet({ onLeadCreated }: { onLeadCreated: () => void }
                                         onBlur={field.handleBlur}
                                         onChange={(value) => field.handleChange(value)}
                                     />
-                                    {field.state.meta.errors ? (
-                                        <p className="text-sm text-red-500">{field.state.meta.errors.join(", ")}</p>
-                                    ) : null}
+                                    <ErrorMessage field={field} />
                                 </div>
                             )}
                         />
@@ -158,9 +174,7 @@ export function CreateLeadSheet({ onLeadCreated }: { onLeadCreated: () => void }
                                             <SelectItem value="WEBSITE_4">Website 4</SelectItem>
                                         </SelectContent>
                                     </Select>
-                                    {field.state.meta.errors ? (
-                                        <p className="text-sm text-red-500">{field.state.meta.errors.join(", ")}</p>
-                                    ) : null}
+                                    <ErrorMessage field={field} />
                                 </div>
                             )}
                         />
@@ -176,21 +190,29 @@ export function CreateLeadSheet({ onLeadCreated }: { onLeadCreated: () => void }
                                         onBlur={field.handleBlur}
                                         onChange={(e) => field.handleChange(e.target.value)}
                                     />
-                                    {field.state.meta.errors ? (
-                                        <p className="text-sm text-red-500">{field.state.meta.errors.join(", ")}</p>
-                                    ) : null}
+                                    <ErrorMessage field={field} />
                                 </div>
                             )}
                         />
-                        <form.Subscribe
-                            selector={(state) => [state.canSubmit, state.isSubmitting]}
-                            children={([canSubmit, isSubmitting]) => (
-                                <Button type="submit" className="w-full bg-cyan-600 hover:bg-cyan-700" disabled={createLeadMutation.isPending || !canSubmit}>
-                                    {createLeadMutation.isPending ? "Creating..." : "Create Lead"}
-                                </Button>
-                            )}
-                        />
                     </form>
+                </div>
+
+                <div className="p-6 border-t bg-background sticky bottom-0 flex justify-end gap-3 custom-sheet-footer">
+                    <SheetClose asChild>
+                        <Button variant="outline" className="rounded-xl">Cancel</Button>
+                    </SheetClose>
+                    <form.Subscribe
+                        selector={(state) => [state.canSubmit, state.isSubmitting]}
+                        children={([canSubmit, isSubmitting]) => (
+                            <Button
+                                onClick={() => form.handleSubmit()}
+                                className="bg-primary hover:bg-primary/90 text-white rounded-xl font-bold px-6 shadow-sm"
+                                disabled={createLeadMutation.isPending || !canSubmit}
+                            >
+                                {createLeadMutation.isPending ? "Creating..." : "Create Lead"}
+                            </Button>
+                        )}
+                    />
                 </div>
             </SheetContent>
         </Sheet>

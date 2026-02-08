@@ -38,6 +38,16 @@ export default function CustomerDetailPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [showEditDialog, setShowEditDialog] = useState(false);
 
+    // Activity Pagination State
+    const [activities, setActivities] = useState<any[]>([]);
+    const [activityPagination, setActivityPagination] = useState({
+        page: 1,
+        totalPages: 1,
+        total: 0,
+        limit: 10
+    });
+    const [isActivitiesLoading, setIsActivitiesLoading] = useState(false);
+
     // Confirm Dialog State
     const [confirmConfig, setConfirmConfig] = useState({
         isOpen: false,
@@ -83,11 +93,39 @@ export default function CustomerDetailPage() {
         try {
             const response = await axios.get(`/api/customers/${params.id}`);
             setCustomer(response.data);
+            // Initial activities are already included in customer data, 
+            // but we'll fetch them separately for pagination consistency if needed.
+            // For now, we'll set the initial page and then the fetchActivities will handle changes.
+            if (response.data.lead?.id) {
+                fetchActivities(1, response.data.lead.id);
+            }
         } catch (error) {
             toast.error("Failed to fetch customer details");
             router.push("/customers");
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const fetchActivities = async (page: number, leadId?: string) => {
+        const targetLeadId = leadId || customer?.lead?.id;
+        if (!targetLeadId) return;
+
+        setIsActivitiesLoading(true);
+        try {
+            const response = await axios.get(`/api/leads/${targetLeadId}/activities?page=${page}&limit=${activityPagination.limit}`);
+            setActivities(response.data.activities);
+            setActivityPagination({
+                ...activityPagination,
+                page: response.data.pagination.page,
+                totalPages: response.data.pagination.totalPages,
+                total: response.data.pagination.total
+            });
+        } catch (error) {
+            console.error("Failed to fetch activities:", error);
+            toast.error("Failed to fetch activity history");
+        } finally {
+            setIsActivitiesLoading(false);
         }
     };
 
@@ -162,9 +200,9 @@ export default function CustomerDetailPage() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Customer Profile Card */}
-                <div className="col-span-1 space-y-6">
+                <div className="lg:col-span-1 space-y-6">
                     <Card className="border border-border rounded-2xl bg-card shadow-none">
                         <CardHeader className="pb-2 border-b border-border/50">
                             <div className="flex items-center gap-3">
@@ -214,7 +252,7 @@ export default function CustomerDetailPage() {
 
                             <div className="pt-4 border-t border-border/50 flex flex-col gap-2">
                                 <Button
-                                    className="w-full bg-primary hover:bg-primary/90 rounded-xl h-9 text-sm"
+                                    className="w-full bg-primary hover:bg-primary/90 rounded-xl h-9 text-sm font-bold shadow-sm"
                                     onClick={() => setShowEditDialog(true)}
                                 >
                                     <Pencil className="h-3.5 w-3.5 mr-2" />
@@ -236,43 +274,81 @@ export default function CustomerDetailPage() {
                 </div>
 
                 {/* Activity Timeline */}
-                <div className="col-span-2">
-                    <Card className="border border-border rounded-2xl bg-card shadow-none overflow-hidden">
+                <div className="lg:col-span-2">
+                    <Card className="border border-border rounded-2xl bg-card shadow-none overflow-hidden flex flex-col h-full">
                         <CardHeader className="pb-2 border-b border-border/50">
                             <CardTitle className="text-sm font-bold flex items-center gap-2">
                                 <History className="h-4 w-4 text-primary" />
                                 Activity History
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-0">
-                            {customer.lead?.activities && customer.lead.activities.length > 0 ? (
-                                <div className="divide-y divide-border/50">
-                                    {customer.lead.activities.map((activity: any) => (
-                                        <div
-                                            key={activity.id}
-                                            className="p-4 hover:bg-muted/30 transition-colors"
-                                        >
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <Badge variant="secondary" className="text-[9px] font-bold uppercase py-0 px-2 rounded-md bg-muted/50 border-0">
-                                                    {activity.type.replace("_", " ")}
-                                                </Badge>
-                                                <span className="text-[10px] text-muted-foreground font-medium">
-                                                    {new Date(activity.createdAt).toLocaleString()}
-                                                </span>
+                        <CardContent className="p-0 flex-1 flex flex-col">
+                            {isActivitiesLoading ? (
+                                <div className="flex-1 flex items-center justify-center py-20">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                </div>
+                            ) : activities && activities.length > 0 ? (
+                                <div className="flex-1 overflow-y-auto">
+                                    <div className="divide-y divide-border/50">
+                                        {activities.map((activity: any) => (
+                                            <div
+                                                key={activity.id}
+                                                className="p-4 hover:bg-muted/30 transition-colors"
+                                            >
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <div className="flex items-center gap-2">
+                                                        <Badge variant="secondary" className="text-[9px] font-bold uppercase py-0 px-2 rounded-md bg-primary/10 text-primary border-0">
+                                                            {activity.type.replace("_", " ")}
+                                                        </Badge>
+                                                        <span className="text-[10px] text-muted-foreground font-medium">
+                                                            {new Date(activity.createdAt).toLocaleString()}
+                                                        </span>
+                                                    </div>
+                                                    <p className="text-[10px] text-muted-foreground font-medium italic">
+                                                        {activity.user?.name || "System"}
+                                                    </p>
+                                                </div>
+                                                <p className="text-sm text-foreground/90 leading-relaxed">{activity.content}</p>
                                             </div>
-                                            <p className="text-sm text-foreground/90 leading-relaxed">{activity.content}</p>
-                                            <p className="text-[11px] text-muted-foreground mt-2 font-medium">
-                                                — {activity.user?.name || "System"}
-                                            </p>
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
                                 </div>
                             ) : (
-                                <div className="flex flex-col items-center justify-center py-16 text-muted-foreground/50">
+                                <div className="flex-1 flex flex-col items-center justify-center py-16 text-muted-foreground/50">
                                     <History className="h-10 w-10 mb-3 opacity-10" />
                                     <p className="text-xs font-medium italic tracking-tight">No activity recorded yet</p>
                                 </div>
                             )}
+
+                            {/* Activity Pagination Controls */}
+                            <div className="p-4 border-t border-border/50 bg-muted/20 flex items-center justify-between">
+                                <p className="text-xs text-muted-foreground font-medium">
+                                    Showing {activities.length} of {activityPagination.total} activities
+                                </p>
+                                <div className="flex items-center gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 rounded-xl text-xs border-primary/20 text-primary hover:bg-primary/5 shadow-sm"
+                                        onClick={() => fetchActivities(activityPagination.page - 1)}
+                                        disabled={activityPagination.page <= 1 || isActivitiesLoading}
+                                    >
+                                        Previous
+                                    </Button>
+                                    <span className="text-xs font-bold text-muted-foreground px-2">
+                                        {activityPagination.page} / {activityPagination.totalPages}
+                                    </span>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 rounded-xl text-xs border-primary/20 text-primary hover:bg-primary/5 shadow-sm"
+                                        onClick={() => fetchActivities(activityPagination.page + 1)}
+                                        disabled={activityPagination.page >= activityPagination.totalPages || isActivitiesLoading}
+                                    >
+                                        Next
+                                    </Button>
+                                </div>
+                            </div>
                         </CardContent>
                     </Card>
                 </div>
@@ -305,10 +381,10 @@ export default function CustomerDetailPage() {
                             </div>
                         </div>
                         <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)}>
+                            <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)} className="rounded-xl">
                                 Cancel
                             </Button>
-                            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+                            <Button type="submit" className="bg-primary hover:bg-primary/90 text-white rounded-xl font-bold shadow-sm">
                                 Save Changes
                             </Button>
                         </DialogFooter>

@@ -8,6 +8,22 @@ import { User } from "@prisma/client"; // Assuming Employee uses User model? Or 
 // But to proceed, I will use 'any' temporarily or 'User' if I can verify.
 // I'll stick to a generic approach or 'User'.
 
+interface EmployeeStats {
+    total: number;
+    active: number;
+    inactive: number;
+}
+
+export function useEmployeeStats() {
+    return useQuery({
+        queryKey: ["employee-stats"],
+        queryFn: async () => {
+            const { data } = await axios.get<EmployeeStats>("/api/employees/stats");
+            return data;
+        },
+    });
+}
+
 interface Employee extends User {
     // any extra fields
 }
@@ -50,6 +66,7 @@ export function useCreateEmployee() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["employees"] });
+            queryClient.invalidateQueries({ queryKey: ["employee-stats"] });
         },
     });
 }
@@ -64,6 +81,7 @@ export function useUpdateEmployee() {
         },
         onSuccess: (data, variables) => {
             queryClient.invalidateQueries({ queryKey: ["employees"] });
+            queryClient.invalidateQueries({ queryKey: ["employee-stats"] });
             queryClient.invalidateQueries({ queryKey: ["employee", variables.id] });
         },
     });
@@ -79,6 +97,7 @@ export function useToggleEmployeeStatus() {
         },
         onSuccess: (data, variables) => {
             queryClient.invalidateQueries({ queryKey: ["employees"] });
+            queryClient.invalidateQueries({ queryKey: ["employee-stats"] });
             queryClient.invalidateQueries({ queryKey: ["employee", variables.id] });
         },
     });
@@ -93,6 +112,7 @@ export function useDeleteEmployee() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["employees"] });
+            queryClient.invalidateQueries({ queryKey: ["employee-stats"] });
         },
     });
 }
