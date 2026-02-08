@@ -55,5 +55,5 @@ EXPOSE 3001
 ENV PORT 3001
 # set hostname to localhost
 ENV HOSTNAME "0.0.0.0"
-
+# test
 CMD ["node", "server.js"]
