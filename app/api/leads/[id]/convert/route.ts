@@ -55,6 +55,40 @@ export async function POST(
                 return newCustomer;
             });
 
+
+
+            // Notify Admins & Employee
+            try {
+                const { notifyAdmins, notifyUser } = await import('@/lib/notifications');
+                console.log(`[Notification] Lead converted (Convert Endpoint): ${lead.name}`);
+
+                // Notify Admins
+                await notifyAdmins(
+                    'Lead Converted',
+                    `Lead ${lead.name} has been converted to a customer.`,
+                    'LEAD_CONVERTED'
+                );
+
+                // Notify Assigned Employee (if any)
+                // We need to fetch assignments since lead variable only has basic info
+                const fullLead = await prisma.lead.findUnique({
+                    where: { id },
+                    include: { assignments: { take: 1, orderBy: { assignedAt: 'desc' } } }
+                });
+
+                const assignedEmployeeId = fullLead?.assignments[0]?.assignedTo;
+                if (assignedEmployeeId) {
+                    await notifyUser(
+                        assignedEmployeeId,
+                        'Lead Converted',
+                        `Your lead ${lead.name} has been successfully converted to a customer.`,
+                        'LEAD_CONVERTED'
+                    );
+                }
+            } catch (notifyError) {
+                console.error('Notification error in convert route:', notifyError);
+            }
+
             return NextResponse.json(customer, { status: 201 });
         } else if (action === 'LOST') {
             await prisma.$transaction(async (tx) => {

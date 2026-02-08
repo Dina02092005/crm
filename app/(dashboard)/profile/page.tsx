@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import axios from "axios";
+// import axios from "axios"; // Removing axios
+import { useProfile, useUpdateProfile, useUpdatePassword } from "@/hooks/use-profile";
 import { toast } from "sonner";
 import { User, Mail, Phone, Briefcase, Key, Shield, Save, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,10 +16,14 @@ import { Badge } from "@/components/ui/badge";
 
 export default function ProfilePage() {
     const { data: session } = useSession();
-    const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
 
-    // Profile State
+    // Profile Query
+    const { data: profileData, isLoading } = useProfile();
+    const updateProfileMutation = useUpdateProfile();
+    const updatePasswordMutation = useUpdatePassword();
+
+    // Profile State (initialized from query data)
     const [profile, setProfile] = useState({
         name: "",
         email: "",
@@ -27,6 +32,19 @@ export default function ProfilePage() {
         department: "",
     });
 
+    // Update local state when data is fetched
+    useEffect(() => {
+        if (profileData) {
+            setProfile({
+                name: profileData.name || "",
+                email: profileData.email || "",
+                role: profileData.role || "",
+                phone: profileData.employeeProfile?.phone || "",
+                department: profileData.employeeProfile?.department || "",
+            });
+        }
+    }, [profileData]);
+
     // Password State
     const [passwords, setPasswords] = useState({
         currentPassword: "",
@@ -34,33 +52,11 @@ export default function ProfilePage() {
         confirmPassword: "",
     });
 
-    useEffect(() => {
-        fetchProfile();
-    }, []);
-
-    const fetchProfile = async () => {
-        try {
-            const response = await axios.get("/api/profile");
-            const data = response.data;
-            setProfile({
-                name: data.name || "",
-                email: data.email || "",
-                role: data.role || "",
-                phone: data.employeeProfile?.phone || "",
-                department: data.employeeProfile?.department || "",
-            });
-        } catch (error) {
-            toast.error("Failed to load profile");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     const handleProfileUpdate = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSaving(true);
         try {
-            await axios.patch("/api/profile", {
+            await updateProfileMutation.mutateAsync({
                 name: profile.name,
                 phone: profile.phone,
                 department: profile.department,
@@ -83,7 +79,7 @@ export default function ProfilePage() {
 
         setIsSaving(true);
         try {
-            await axios.post("/api/profile/password", {
+            await updatePasswordMutation.mutateAsync({
                 currentPassword: passwords.currentPassword,
                 newPassword: passwords.newPassword,
             });
@@ -99,7 +95,7 @@ export default function ProfilePage() {
     if (isLoading) {
         return (
             <div className="flex items-center justify-center h-full">
-                <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+                <Loader2 className="h-8 w-8 animate-spin text-cyan-600" />
             </div>
         );
     }
@@ -129,7 +125,7 @@ export default function ProfilePage() {
                                 <div className="flex flex-col md:flex-row gap-6">
                                     {/* Avatar Placeholder */}
                                     <div className="flex flex-col items-center gap-3">
-                                        <div className="h-24 w-24 rounded-full bg-teal-50 flex items-center justify-center text-teal-600 text-3xl font-bold border-2 border-teal-100">
+                                        <div className="h-24 w-24 rounded-full bg-cyan-50 flex items-center justify-center text-cyan-600 text-3xl font-bold border-2 border-cyan-100">
                                             {profile.name.charAt(0).toUpperCase()}
                                         </div>
                                         <Badge variant="outline" className="capitalize">
@@ -193,7 +189,7 @@ export default function ProfilePage() {
                                         </div>
 
                                         <div className="pt-4 flex justify-end">
-                                            <Button type="submit" className="bg-teal-600 hover:bg-teal-700" disabled={isSaving}>
+                                            <Button type="submit" className="bg-cyan-600 hover:bg-cyan-700" disabled={isSaving}>
                                                 {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                                                 Save Changes
                                             </Button>

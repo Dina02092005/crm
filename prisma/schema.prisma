@@ -28,6 +28,26 @@ model User {
   assignedLeads      LeadAssignment[] @relation("AssignedTo")
   documents          LeadDocument[]
   tasks              LeadTask[]
+  notifications      Notification[]
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  title     String
+  message   String?
+  type      NotificationType
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  user      User             @relation(fields: [userId], references: [id])
+}
+
+enum NotificationType {
+  LEAD_CREATED
+  LEAD_ASSIGNED
+  LEAD_CONVERTED
+  TASK_REMINDER
+  SYSTEM
 }
 
 model EmployeeProfile {
@@ -67,7 +87,7 @@ model LeadAssignment {
   assignedBy String
   assignedAt DateTime @default(now())
   admin      User     @relation("AssignedBy", fields: [assignedBy], references: [id])
-  employee   User     @relation("AssignedTo", fields: [assignedTo], references: [id],onDelete: Cascade)
+  employee   User     @relation("AssignedTo", fields: [assignedTo], references: [id], onDelete: Cascade)
   lead       Lead     @relation(fields: [leadId], references: [id])
 }
 

@@ -187,7 +187,7 @@ export default function EmployeeDetailPage() {
                 {/* Employee Profile Card */}
                 <div className="col-span-1 space-y-6">
                     <Card className="border-0 shadow-sm rounded-3xl overflow-hidden">
-                        <CardHeader className="bg-gradient-to-b from-purple-500 to-purple-600 text-white p-6 relative">
+                        <CardHeader className="bg-gradient-to-b from-cyan-500 to-cyan-600 text-white p-6 relative">
                             <div className="flex items-center gap-4">
                                 <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-2xl font-bold">
                                     {employee.name.charAt(0).toUpperCase()}
@@ -254,7 +254,7 @@ export default function EmployeeDetailPage() {
 
                             <div className="pt-4 border-t space-y-2">
                                 <Button
-                                    className="w-full bg-purple-600 hover:bg-purple-700 rounded-xl"
+                                    className="w-full bg-cyan-600 hover:bg-cyan-700 rounded-xl"
                                     onClick={() => setShowEditDialog(true)}
                                     disabled={
                                         session?.user?.role !== "ADMIN" &&
@@ -289,7 +289,7 @@ export default function EmployeeDetailPage() {
                         <CardContent className="p-6 space-y-4">
                             <div className="flex items-center justify-between">
                                 <span className="text-sm text-gray-600">Assigned Leads</span>
-                                <span className="text-2xl font-bold text-purple-600">
+                                <span className="text-2xl font-bold text-cyan-600">
                                     {employee.assignedLeads?.length || 0}
                                 </span>
                             </div>
@@ -322,7 +322,7 @@ export default function EmployeeDetailPage() {
                                             onClick={() => router.push(`/leads/${assignment.lead.id}`)}
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-purple-100 text-purple-600 flex items-center justify-center font-bold">
+                                                <div className="w-10 h-10 rounded-full bg-cyan-100 text-cyan-600 flex items-center justify-center font-bold">
                                                     {assignment.lead.name.charAt(0).toUpperCase()}
                                                 </div>
                                                 <div>
@@ -436,7 +436,7 @@ export default function EmployeeDetailPage() {
                             <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)}>
                                 Cancel
                             </Button>
-                            <Button type="submit" className="bg-purple-600 hover:bg-purple-700">
+                            <Button type="submit" className="bg-cyan-600 hover:bg-cyan-700">
                                 Save Changes
                             </Button>
                         </DialogFooter>

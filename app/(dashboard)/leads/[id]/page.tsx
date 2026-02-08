@@ -355,14 +355,14 @@ export default function LeadDetailPage() {
                     <div className="flex items-center gap-2">
                         <Button
                             variant="outline"
-                            className="rounded-lg border-emerald-200 text-emerald-600 h-10 gap-2 hover:bg-emerald-50 bg-white"
+                            className="rounded-lg border-cyan-200 text-cyan-600 h-10 gap-2 hover:bg-cyan-50 bg-white"
                             onClick={() => handleLogActivity('CALL', 'First contact call', true)}
                         >
                             <Phone className="h-4 w-4" /> Log Call
                         </Button>
                         <Button
                             variant="outline"
-                            className="rounded-lg border-green-200 text-green-600 h-10 gap-2 hover:bg-green-50 bg-white"
+                            className="rounded-lg border-teal-200 text-teal-600 h-10 gap-2 hover:bg-teal-50 bg-white"
                             onClick={() => handleLogActivity('WHATSAPP', 'Sent WhatsApp message', true)}
                         >
                             <MessageSquare className="h-4 w-4" /> WhatsApp
@@ -371,7 +371,7 @@ export default function LeadDetailPage() {
                         <div className="w-px h-6 bg-gray-200 mx-1" />
 
                         <Button
-                            className="rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white h-10 gap-2 shadow-sm"
+                            className="rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white h-10 gap-2 shadow-sm"
                             disabled={lead.status === 'CONVERTED' || lead.status === 'LOST'}
                             onClick={() => {
                                 openConfirm(
@@ -484,7 +484,7 @@ export default function LeadDetailPage() {
                             {/* Left Column: Lead Information */}
                             <div className="space-y-8">
                                 <div>
-                                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6 border-l-4 border-emerald-500 pl-4">Lead Information</h3>
+                                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6 border-l-4 border-cyan-500 pl-4">Lead Information</h3>
                                     <div className="space-y-6 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-1">
@@ -513,7 +513,7 @@ export default function LeadDetailPage() {
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-1">
                                                 <label className="text-xs font-semibold text-gray-400 uppercase">Lead value</label>
-                                                <p className="text-emerald-600 font-bold">$0.00</p>
+                                                <p className="text-cyan-600 font-bold">$0.00</p>
                                             </div>
                                             <div className="space-y-1">
                                                 <label className="text-xs font-semibold text-gray-400 uppercase">Company</label>
@@ -554,7 +554,7 @@ export default function LeadDetailPage() {
                                             <div className="space-y-1">
                                                 <label className="text-xs font-semibold text-gray-400 uppercase">Status</label>
                                                 <div>
-                                                    <Badge className={`rounded-lg py-1 px-3 text-xs font-bold border-none ${lead.status === 'CONVERTED' ? 'bg-emerald-100 text-emerald-700' :
+                                                    <Badge className={`rounded-lg py-1 px-3 text-xs font-bold border-none ${lead.status === 'CONVERTED' ? 'bg-cyan-100 text-cyan-700' :
                                                         lead.status === 'LOST' ? 'bg-red-100 text-red-700' :
                                                             lead.status === 'ASSIGNED' ? 'bg-blue-100 text-blue-700' :
                                                                 lead.status === 'IN_PROGRESS' ? 'bg-amber-100 text-amber-700' :

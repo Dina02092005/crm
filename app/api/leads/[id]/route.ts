@@ -86,14 +86,56 @@ export async function PATCH(
                 return updatedLead;
             });
 
+            // Notify Assigned Employee
+            const { notifyUser } = await import('@/lib/notifications');
+            await notifyUser(
+                employeeId,
+                'New Lead Assigned',
+                `You have been assigned a new lead: ${lead.name}`,
+                'LEAD_ASSIGNED'
+            );
+
             return NextResponse.json(lead);
         }
 
         // Standard update logic
+        const previousLead = await prisma.lead.findUnique({
+            where: { id },
+            include: {
+                assignments: {
+                    orderBy: { assignedAt: 'desc' },
+                    take: 1
+                }
+            }
+        });
+
         const lead = await prisma.lead.update({
             where: { id },
             data: body,
         });
+
+        // Check for conversion
+        if (previousLead?.status !== 'CONVERTED' && body.status === 'CONVERTED') {
+            const { notifyAdmins, notifyUser } = await import('@/lib/notifications');
+
+            // Notify Admins
+            await notifyAdmins(
+                'Lead Converted',
+                `Lead ${lead.name} has been converted to a customer.`,
+                'LEAD_CONVERTED'
+            );
+
+            // Notify Assigned Employee
+            const assignedEmployeeId = previousLead?.assignments[0]?.assignedTo;
+            if (assignedEmployeeId) {
+                await notifyUser(
+                    assignedEmployeeId,
+                    'Lead Converted',
+                    `Your lead ${lead.name} has been successfully converted.`,
+                    'LEAD_CONVERTED'
+                );
+            }
+        }
 
         return NextResponse.json(lead);
     } catch (error) {

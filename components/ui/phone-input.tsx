@@ -23,13 +23,13 @@ export const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(
                 )}
                 style={{
                     '--react-international-phone-border-radius': 'calc(var(--radius) - 2px)',
-                    '--react-international-phone-border-color': 'hsl(var(--input))',
-                    '--react-international-phone-background-color': 'hsl(var(--background))',
-                    '--react-international-phone-text-color': 'hsl(var(--foreground))',
-                    '--react-international-phone-selected-dropdown-item-background-color': 'hsl(var(--accent))',
+                    '--react-international-phone-border-color': 'var(--input)',
+                    '--react-international-phone-background-color': 'var(--background)',
+                    '--react-international-phone-text-color': 'var(--foreground)',
+                    '--react-international-phone-selected-dropdown-item-background-color': 'var(--accent)',
                     '--react-international-phone-country-selector-background-color': 'transparent',
-                    '--react-international-phone-country-selector-border-color': 'hsl(var(--input))',
-                    '--react-international-phone-country-selector-arrow-color': 'hsl(var(--foreground))',
+                    '--react-international-phone-country-selector-border-color': 'var(--input)',
+                    '--react-international-phone-country-selector-arrow-color': 'var(--foreground)',
                 } as React.CSSProperties}
                 {...props}
             />

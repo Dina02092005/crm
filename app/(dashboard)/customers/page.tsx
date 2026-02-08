@@ -110,15 +110,15 @@ export default function CustomersPage() {
         <div className="p-10">
             <div className="flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-800 flex items-center gap-3">
-                        <Users className="h-8 w-8 text-teal-600" />
+                    <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
+                        <Users className="h-8 w-8 text-cyan-600" />
                         Customers
                     </h1>
-                    <p className="text-gray-500 mt-1">Manage your customer database</p>
+                    <p className="text-muted-foreground mt-1">Manage your customer database</p>
                 </div>
                 <Button
                     onClick={() => setShowCreateDialog(true)}
-                    className="bg-teal-600 hover:bg-teal-700 rounded-xl"
+                    className="bg-cyan-600 hover:bg-cyan-700 rounded-xl"
                 >
                     <Plus className="h-4 w-4 mr-2" />
                     Add Customer
@@ -126,24 +126,24 @@ export default function CustomersPage() {
             </div>
 
             {/* Search Bar */}
-            <Card className="mb-6 border-0 rounded-3xl">
+            <Card className="mb-6 border-0 rounded-3xl bg-card">
                 <CardContent className="p-6">
                     <div className="relative">
-                        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                         <Input
                             placeholder="Search by name, email, or phone..."
                             value={search}
                             onChange={(e) => setSearch(e.target.value)}
-                            className="pl-12 bg-white border-gray-200 rounded-2xl h-12"
+                            className="pl-12 bg-background border-input rounded-2xl h-12"
                         />
                     </div>
                 </CardContent>
             </Card>
 
             {/* Customers Table */}
-            <Card className="border-0 rounded-3xl overflow-hidden">
-                <CardHeader className="bg-white border-b border-gray-100">
-                    <CardTitle className="text-lg font-bold text-gray-800">
+            <Card className="border-0 rounded-3xl overflow-hidden bg-card">
+                <CardHeader className="bg-card border-b border-border">
+                    <CardTitle className="text-lg font-bold text-foreground">
                         {pagination.total} Customers
                     </CardTitle>
                 </CardHeader>
@@ -206,7 +206,7 @@ export default function CustomersPage() {
                             <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>
                                 Cancel
                             </Button>
-                            <Button type="submit" className="bg-teal-600 hover:bg-teal-700">
+                            <Button type="submit" className="bg-cyan-600 hover:bg-cyan-700">
                                 Create Customer
                             </Button>
                         </DialogFooter>

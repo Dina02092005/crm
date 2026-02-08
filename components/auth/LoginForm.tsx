@@ -113,7 +113,7 @@ function LoginFormContent() {
               required
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="h-11 rounded-lg border-gray-300 bg-gray-50 transition-colors placeholder:text-gray-400 hover:border-gray-400 focus-visible:border-green-500 focus-visible:ring-2 focus-visible:ring-green-500/20 focus-visible:bg-white"
+              className="h-11 rounded-lg border-gray-300 bg-gray-50 transition-colors placeholder:text-gray-400 hover:border-gray-400 focus-visible:border-cyan-500 focus-visible:ring-2 focus-visible:ring-cyan-500/20 focus-visible:bg-white"
             />
           </div>
           <div className="space-y-2">
@@ -126,7 +126,7 @@ function LoginFormContent() {
               </Label>
               <Link
                 href="/forgot-password"
-                className="text-sm font-medium text-green-600 hover:text-green-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 rounded"
+                className="text-sm font-medium text-cyan-600 hover:text-cyan-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 rounded"
               >
                 Forgot Password?
               </Link>
@@ -139,13 +139,13 @@ function LoginFormContent() {
               required
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="h-11 rounded-lg border-gray-300 bg-gray-50 transition-colors placeholder:text-gray-400 hover:border-gray-400 focus-visible:border-green-500 focus-visible:ring-2 focus-visible:ring-green-500/20 focus-visible:bg-white"
+              className="h-11 rounded-lg border-gray-300 bg-gray-50 transition-colors placeholder:text-gray-400 hover:border-gray-400 focus-visible:border-cyan-500 focus-visible:ring-2 focus-visible:ring-cyan-500/20 focus-visible:bg-white"
             />
           </div>
           <Button
             type="submit"
             disabled={isLoading}
-            className="h-12 w-full rounded-lg bg-green-600 text-base font-semibold text-white shadow-md transition-all hover:bg-green-700 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
+            className="h-12 w-full rounded-lg bg-cyan-600 text-base font-semibold text-white shadow-md transition-all hover:bg-cyan-700 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2"
           >
             {isLoading ? "Logging in..." : "Login"}
           </Button>
@@ -153,7 +153,7 @@ function LoginFormContent() {
 
         <div className="text-center text-sm text-gray-600">
           Don't have an account?{" "}
-          <Link href="/register" className="text-green-600 font-medium hover:underline">
+          <Link href="/register" className="text-cyan-600 font-medium hover:underline">
             Register
           </Link>
         </div>

@@ -37,11 +37,11 @@ export function CustomersTable({ data, onUpdate, onDelete }: CustomersTableProps
             header: "Customer",
             cell: ({ row }) => (
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center font-bold">
+                    <div className="w-10 h-10 rounded-full bg-cyan-50 text-cyan-600 flex items-center justify-center font-bold">
                         {row.original.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                        <p className="font-bold text-gray-900">{row.original.name}</p>
+                        <p className="font-bold text-foreground">{row.original.name}</p>
                         {row.original.lead?.source && (
                             <Badge variant="outline" className="text-[10px] mt-1">
                                 {row.original.lead.source}
@@ -56,12 +56,12 @@ export function CustomersTable({ data, onUpdate, onDelete }: CustomersTableProps
             header: "Contact",
             cell: ({ row }) => (
                 <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Phone className="h-3.5 w-3.5" />
                         {row.original.phone}
                     </div>
                     {row.original.email && (
-                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Mail className="h-3.5 w-3.5" />
                             {row.original.email}
                         </div>
@@ -73,14 +73,14 @@ export function CustomersTable({ data, onUpdate, onDelete }: CustomersTableProps
             accessorKey: "onboardedBy",
             header: "Onboarded By",
             cell: ({ row }) => (
-                <p className="text-sm text-gray-900">{row.original.user?.name || "N/A"}</p>
+                <p className="text-sm text-foreground">{row.original.user?.name || "N/A"}</p>
             ),
         },
         {
             accessorKey: "createdAt",
             header: "Date",
             cell: ({ row }) => (
-                <div className="flex items-center gap-2 text-sm text-gray-600">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Calendar className="h-3.5 w-3.5" />
                     {new Date(row.original.createdAt).toLocaleDateString()}
                 </div>
@@ -146,13 +146,13 @@ export function CustomersTable({ data, onUpdate, onDelete }: CustomersTableProps
             <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                     <thead>
-                        <tr className="border-b border-gray-100">
+                        <tr className="border-b border-border">
                             {table.getHeaderGroups().map((headerGroup) =>
                                 headerGroup.headers.map((header, index) => (
                                     <th
                                         key={header.id}
                                         className={`
-                                            py-3 px-4 text-left text-xs font-medium uppercase tracking-wider text-gray-400
+                                            py-3 px-4 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground
                                             ${index === 0 ? "pl-6" : ""}
                                             ${index === headerGroup.headers.length - 1 ? "pr-6" : ""}
                                         `}
@@ -167,7 +167,7 @@ export function CustomersTable({ data, onUpdate, onDelete }: CustomersTableProps
                         {table.getRowModel().rows.map((row) => (
                             <tr
                                 key={row.id}
-                                className="group hover:bg-gray-50/50 transition-colors border-b border-gray-50 last:border-0"
+                                className="group hover:bg-muted/50 transition-colors border-b border-border last:border-0"
                             >
                                 {row.getVisibleCells().map((cell, index) => (
                                     <td

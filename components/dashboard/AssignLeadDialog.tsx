@@ -120,7 +120,7 @@ export function AssignLeadDialog({
                     <Button
                         onClick={handleAssign}
                         disabled={!selectedEmployee || isSaving}
-                        className="bg-teal-600 hover:bg-teal-700"
+                        className="bg-cyan-600 hover:bg-cyan-700"
                     >
                         {isSaving ? "Assigning..." : "Assign Lead"}
                     </Button>

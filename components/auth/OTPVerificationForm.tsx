@@ -109,14 +109,14 @@ function OTPVerificationFormContent() {
                                 value={digit}
                                 onChange={(e) => handleChange(index, e.target.value)}
                                 onKeyDown={(e) => handleKeyDown(index, e)}
-                                className="h-12 w-12 sm:h-14 sm:w-14 text-center text-xl font-semibold rounded-lg border-gray-300 bg-gray-50 transition-colors hover:border-gray-400 focus-visible:border-green-500 focus-visible:ring-2 focus-visible:ring-green-500/20 focus-visible:bg-white"
+                                className="h-12 w-12 sm:h-14 sm:w-14 text-center text-xl font-semibold rounded-lg border-gray-300 bg-gray-50 transition-colors hover:border-gray-400 focus-visible:border-cyan-500 focus-visible:ring-2 focus-visible:ring-cyan-500/20 focus-visible:bg-white"
                             />
                         ))}
                     </div>
                     <Button
                         type="submit"
                         disabled={isLoading}
-                        className="h-12 w-full rounded-lg bg-green-600 text-base font-semibold text-white shadow-md transition-all hover:bg-green-700 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
+                        className="h-12 w-full rounded-lg bg-cyan-600 text-base font-semibold text-white shadow-md transition-all hover:bg-cyan-700 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2"
                     >
                         {isLoading ? "Verifying..." : "Verify Code"}
                     </Button>
@@ -128,7 +128,7 @@ function OTPVerificationFormContent() {
                         <button
                             type="button"
                             onClick={handleResend}
-                            className="font-semibold text-green-600 hover:text-green-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2 rounded"
+                            className="font-semibold text-cyan-600 hover:text-cyan-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 rounded"
                         >
                             Resend Code
                         </button>

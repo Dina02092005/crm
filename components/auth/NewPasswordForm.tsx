@@ -114,14 +114,14 @@ function NewPasswordFormContent() {
                     <Button
                         type="submit"
                         disabled={isLoading}
-                        className="h-12 w-full rounded-lg bg-green-600 text-base font-semibold text-white shadow-md transition-all hover:bg-green-700 focus-visible:ring-2 focus-visible:ring-green-500 focus-visible:ring-offset-2"
+                        className="h-12 w-full rounded-lg bg-cyan-600 text-base font-semibold text-white shadow-md transition-all hover:bg-cyan-700 focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2"
                     >
                         {isLoading ? "Resetting..." : "Reset Password"}
                     </Button>
                 </form>
 
                 <p className="text-center text-sm text-gray-600 pt-2">
-                    <Link href="/login" className="font-semibold text-blue-600 hover:text-blue-700 hover:underline">
+                    <Link href="/login" className="font-semibold text-cyan-600 hover:text-cyan-700 hover:underline">
                         Back to Login
                     </Link>
                 </p>

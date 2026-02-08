@@ -42,7 +42,7 @@ export function RolesTable({ data, onUpdate, onDelete }: RolesTableProps) {
             header: "Role Name",
             cell: ({ row }) => (
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center font-bold">
+                    <div className="w-10 h-10 rounded-full bg-cyan-50 text-cyan-600 flex items-center justify-center font-bold">
                         {row.original.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
@@ -71,9 +71,9 @@ export function RolesTable({ data, onUpdate, onDelete }: RolesTableProps) {
             cell: ({ row }) => (
                 <div className={`
                     inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium
-                    ${row.original.status === "Active" ? "text-teal-700 bg-teal-50" : "text-gray-600 bg-gray-100"}
+                    ${row.original.status === "Active" ? "text-cyan-700 bg-cyan-50" : "text-gray-600 bg-gray-100"}
                 `}>
-                    <div className={`w-1.5 h-1.5 rounded-full ${row.original.status === "Active" ? "bg-teal-600" : "bg-gray-500"}`} />
+                    <div className={`w-1.5 h-1.5 rounded-full ${row.original.status === "Active" ? "bg-cyan-600" : "bg-gray-500"}`} />
                     {row.original.status}
                 </div>
             ),

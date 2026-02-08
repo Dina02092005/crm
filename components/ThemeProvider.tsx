@@ -1,66 +1,13 @@
-'use client'
+"use client"
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
+import * as React from "react"
+import { ThemeProvider as NextThemesProvider } from "next-themes"
 
-type Theme = 'light' | 'dark' | 'system'
-
-interface ThemeContextType {
-    theme: Theme
-    setTheme: (theme: Theme) => void
+export function ThemeProvider({
+    children,
+    ...props
+}: React.ComponentProps<typeof NextThemesProvider>) {
+    return <NextThemesProvider {...props}>{children}</NextThemesProvider>
 }
 
-const ThemeContext = createContext<ThemeContextType>({
-    theme: 'light',
-    setTheme: () => null,
-})
-
-export function ThemeProvider({ children }: { children: ReactNode }) {
-    const [theme, setTheme] = useState<Theme>('light')
-    const [mounted, setMounted] = useState(false)
-
-    useEffect(() => {
-        setMounted(true)
-        // Load theme from localStorage
-        const savedTheme = localStorage.getItem('theme') as Theme
-        if (savedTheme) {
-            setTheme(savedTheme)
-        }
-    }, [])
-
-    useEffect(() => {
-        if (!mounted) return
-
-        const root = window.document.documentElement
-        root.classList.remove('light', 'dark')
-
-        if (theme === 'system') {
-            const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches
-                ? 'dark'
-                : 'light'
-            root.classList.add(systemTheme)
-        } else {
-            root.classList.add(theme)
-        }
-
-        // Save to localStorage
-        localStorage.setItem('theme', theme)
-    }, [theme, mounted])
-
-    if (!mounted) {
-        return <>{children}</>
-    }
-
-    return (
-        <ThemeContext.Provider value={{ theme, setTheme }}>
-            {children}
-        </ThemeContext.Provider>
-    )
-}
-
-export const useTheme = () => {
-    const context = useContext(ThemeContext)
-    if (context === undefined) {
-        throw new Error('useTheme must be used within a ThemeProvider')
-    }
-    return context
-}
+export { useTheme } from "next-themes"

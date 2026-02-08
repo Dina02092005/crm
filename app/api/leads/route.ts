@@ -15,9 +15,12 @@ export async function GET(req: Request) {
         const status = searchParams.get('status');
         const source = searchParams.get('source');
         const temperature = searchParams.get('temperature');
+        const page = parseInt(searchParams.get('page') || '1');
+        const limit = parseInt(searchParams.get('limit') || '10');
+        const skip = (page - 1) * limit;
 
         const where: any = {};
-        if (status) where.status = status;
+        if (status && status !== 'ALL') where.status = status;
         if (source) where.source = source;
         if (temperature) where.temperature = temperature;
 
@@ -38,22 +41,34 @@ export async function GET(req: Request) {
             };
         }
 
-        const leads = await prisma.lead.findMany({
-            where,
-            orderBy: { createdAt: 'desc' },
-            include: {
-                assignments: {
-                    include: {
-                        employee: {
-                            select: { name: true, email: true }
+        const [leads, total] = await Promise.all([
+            prisma.lead.findMany({
+                where,
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take: limit,
+                include: {
+                    assignments: {
+                        include: {
+                            employee: {
+                                select: { name: true, email: true }
+                            }
                         }
                     }
                 }
+            }),
+            prisma.lead.count({ where })
+        ]);
+
+        return NextResponse.json({
+            leads,
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
             }
         });
-
-
-        return NextResponse.json(leads);
     } catch (error) {
         console.error('Fetch leads error:', error);
         return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
@@ -97,8 +112,26 @@ export async function POST(req: Request) {
                 phone,
                 message,
                 source,
+                // If Creator is Employee, automatically assign to them
+                ...(session.user.role === 'EMPLOYEE' ? {
+                    assignments: {
+                        create: {
+                            assignedTo: session.user.id,
+                            assignedBy: session.user.id, // Self-assigned
+                        }
+                    },
+                    status: 'ASSIGNED' // Auto-update status
+                } : {})
             },
         });
+
+        // Notify Admins
+        const { notifyAdmins } = await import('@/lib/notifications');
+        await notifyAdmins(
+            'New Lead Created',
+            `A new lead has been created: ${name} (${phone}) from ${source}.`,
+            'LEAD_CREATED'
+        );
 
         return NextResponse.json(lead, { status: 201 });
     } catch (error) {

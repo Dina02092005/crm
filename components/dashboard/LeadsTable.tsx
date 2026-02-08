@@ -19,22 +19,19 @@ import { Button } from "@/components/ui/button";
 import { AssignLeadDialog } from "./AssignLeadDialog";
 import { useSession } from "next-auth/react";
 
-import axios from "axios";
 import { toast } from "sonner";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { LeadForm } from "./LeadForm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useUpdateLead, useDeleteLead } from "@/hooks/use-leads";
+import { Lead as PrismaLead } from "@prisma/client";
 
-interface Lead {
-    id: string;
-    name: string;
-    email: string | null;
-    phone: string;
-    source: string;
-    status: string;
-    temperature: string;
-    createdAt: string;
+// Extended Lead type to include assignments (if not in PrismaLead)
+// PrismaLead usually has basic fields. We need to match what useLeads returns.
+interface Lead extends Omit<PrismaLead, "createdAt" | "updatedAt"> {
+    createdAt: string | Date;
+    updatedAt: string | Date;
     assignments?: {
         employee: {
             name: string;
@@ -46,12 +43,28 @@ interface Lead {
 const statusOptions = ["NEW", "ASSIGNED", "IN_PROGRESS", "FOLLOW_UP", "CONVERTED", "LOST"];
 const tempOptions = ["COLD", "WARM", "HOT"];
 
-export function LeadsTable({ data, onUpdate }: { data: Lead[], onUpdate: () => void }) {
+export function LeadsTable({
+    data,
+    onUpdate,
+    pagination
+}: {
+    data: Lead[]; // Use the local extended Lead type
+    onUpdate: () => void;
+    pagination?: {
+        page: number;
+        totalPages: number;
+        onPageChange: (page: number) => void;
+    }
+}) {
     const { data: session } = useSession() as any;
     const [assignDialogOpen, setAssignDialogOpen] = useState(false);
     const [selectedLead, setSelectedLead] = useState<{ id: string; name: string } | null>(null);
     const [editSheetOpen, setEditSheetOpen] = useState(false);
     const [editingLeadId, setEditingLeadId] = useState<string | null>(null);
+
+    // Mutations
+    const updateLeadMutation = useUpdateLead();
+    const deleteLeadMutation = useDeleteLead();
 
     // Delete Dialog State
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -59,7 +72,7 @@ export function LeadsTable({ data, onUpdate }: { data: Lead[], onUpdate: () => v
 
     const handleUpdate = async (id: string, field: string, value: string) => {
         try {
-            await axios.patch(`/api/leads/${id}`, { [field]: value });
+            await updateLeadMutation.mutateAsync({ id, data: { [field]: value } });
             toast.success(`${field.charAt(0).toUpperCase() + field.slice(1)} updated`);
             onUpdate();
         } catch (error) {
@@ -76,7 +89,7 @@ export function LeadsTable({ data, onUpdate }: { data: Lead[], onUpdate: () => v
         if (!leadToDelete) return;
 
         try {
-            await axios.delete(`/api/leads/${leadToDelete}`);
+            await deleteLeadMutation.mutateAsync(leadToDelete);
             toast.success("Lead deleted successfully");
             onUpdate();
         } catch (error) {
@@ -98,7 +111,7 @@ export function LeadsTable({ data, onUpdate }: { data: Lead[], onUpdate: () => v
             header: "Name",
             cell: ({ row }) => (
                 <div>
-                    <p className="text-sm font-semibold text-gray-900">{row.getValue("name")}</p>
+                    <p className="text-sm font-semibold text-foreground">{row.getValue("name")}</p>
                     <p className="text-xs text-muted-foreground">{row.original.phone}</p>
                 </div>
             ),
@@ -107,7 +120,7 @@ export function LeadsTable({ data, onUpdate }: { data: Lead[], onUpdate: () => v
             accessorKey: "email",
             header: "Email",
             cell: ({ row }) => (
-                <div className="text-sm text-gray-600">{row.getValue("email") || "N/A"}</div>
+                <div className="text-sm text-muted-foreground">{row.getValue("email") || "N/A"}</div>
             ),
         },
         {
@@ -126,7 +139,7 @@ export function LeadsTable({ data, onUpdate }: { data: Lead[], onUpdate: () => v
                 const assignments = row.original.assignments;
                 const assignee = assignments && assignments.length > 0 ? assignments[0].employee.name : "Unassigned";
                 return (
-                    <div className="text-sm font-medium text-gray-700">
+                    <div className="text-sm font-medium text-foreground">
                         {assignee}
                     </div>
                 );
@@ -146,12 +159,12 @@ export function LeadsTable({ data, onUpdate }: { data: Lead[], onUpdate: () => v
                                 cursor-pointer hover:bg-gray-100 transition-all
                                 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium
                                 ${status === "NEW" ? "text-blue-600" :
-                                    status === "CONVERTED" ? "text-teal-600" :
+                                    status === "CONVERTED" ? "text-cyan-600" :
                                         status === "LOST" ? "text-red-500" : "text-gray-600"}
                             `}>
                                 <div className={`w-1.5 h-1.5 rounded-full 
                                     ${status === "NEW" ? "bg-blue-600" :
-                                        status === "CONVERTED" ? "bg-teal-600" :
+                                        status === "CONVERTED" ? "bg-cyan-600" :
                                             status === "LOST" ? "bg-red-500" : "bg-gray-400"}
                                 `} />
                                 {status}
@@ -162,7 +175,7 @@ export function LeadsTable({ data, onUpdate }: { data: Lead[], onUpdate: () => v
                                 <DropdownMenuItem
                                     key={opt}
                                     onClick={() => handleUpdate(row.original.id, "status", opt)}
-                                    className={opt === status ? "bg-teal-50 text-teal-700 font-medium" : ""}
+                                    className={opt === status ? "bg-cyan-50 text-cyan-700 font-medium" : ""}
                                 >
                                     {opt}
                                 </DropdownMenuItem>
@@ -196,7 +209,7 @@ export function LeadsTable({ data, onUpdate }: { data: Lead[], onUpdate: () => v
                                 <DropdownMenuItem
                                     key={opt}
                                     onClick={() => handleUpdate(row.original.id, "temperature", opt)}
-                                    className={opt === temp ? "bg-teal-50 text-teal-700 font-medium" : ""}
+                                    className={opt === temp ? "bg-cyan-50 text-cyan-700 font-medium" : ""}
                                 >
                                     {opt}
                                 </DropdownMenuItem>
@@ -215,7 +228,7 @@ export function LeadsTable({ data, onUpdate }: { data: Lead[], onUpdate: () => v
                             variant="ghost"
                             size="sm"
                             onClick={() => handleAssignClick(row.original)}
-                            className="h-8 w-8 p-0 text-teal-600 hover:text-teal-700 hover:bg-teal-50"
+                            className="h-8 w-8 p-0 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50"
                             title="Assign Lead"
                         >
                             <UserPlus className="h-4 w-4" />
@@ -231,7 +244,7 @@ export function LeadsTable({ data, onUpdate }: { data: Lead[], onUpdate: () => v
                             {(session?.user?.role === "ADMIN" || session?.user?.role === "MANAGER") && (
                                 <DropdownMenuItem
                                     onClick={() => handleAssignClick(row.original)}
-                                    className="cursor-pointer text-teal-600"
+                                    className="cursor-pointer text-cyan-600"
                                 >
                                     <UserPlus className="mr-2 h-4 w-4" /> Assign Lead
                                 </DropdownMenuItem>
@@ -275,7 +288,7 @@ export function LeadsTable({ data, onUpdate }: { data: Lead[], onUpdate: () => v
             <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                     <thead>
-                        <tr className="border-b border-gray-100">
+                        <tr className="border-b border-border">
                             {table.getHeaderGroups().map((headerGroup) =>
                                 headerGroup.headers.map((header, index) => (
                                     <th
@@ -293,28 +306,63 @@ export function LeadsTable({ data, onUpdate }: { data: Lead[], onUpdate: () => v
                         </tr>
                     </thead>
                     <tbody>
-                        {table.getRowModel().rows.map((row) => (
-                            <tr
-                                key={row.id}
-                                className="group hover:bg-gray-50/50 transition-colors border-b border-gray-50 last:border-0"
-                            >
-                                {row.getVisibleCells().map((cell, index) => (
-                                    <td
-                                        key={cell.id}
-                                        className={`
+                        {table.getRowModel().rows.length > 0 ? (
+                            table.getRowModel().rows.map((row) => (
+                                <tr
+                                    key={row.id}
+                                    className="group hover:bg-muted/50 transition-colors border-b border-border last:border-0"
+                                >
+                                    {row.getVisibleCells().map((cell, index) => (
+                                        <td
+                                            key={cell.id}
+                                            className={`
                                             py-4 px-4 align-middle 
                                             ${index === 0 ? "pl-6" : ""}
                                             ${index === row.getVisibleCells().length - 1 ? "pr-6" : ""}
                                         `}
-                                    >
-                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                    </td>
-                                ))}
+                                        >
+                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                        </td>
+                                    ))}
+                                </tr>
+                            ))
+                        ) : (
+                            <tr>
+                                <td colSpan={columns.length} className="h-24 text-center">
+                                    No results.
+                                </td>
                             </tr>
-                        ))}
+                        )}
                     </tbody>
                 </table>
             </div>
+
+            {/* Pagination Controls */}
+            {pagination && pagination.totalPages > 1 && (
+                <div className="flex items-center justify-end space-x-2 py-4 pr-6 border-t border-gray-100">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => pagination.onPageChange(Math.max(1, pagination.page - 1))}
+                        disabled={pagination.page <= 1}
+                        className="rounded-xl h-8"
+                    >
+                        Previous
+                    </Button>
+                    <div className="text-sm font-medium text-gray-600">
+                        Page {pagination.page} of {pagination.totalPages}
+                    </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => pagination.onPageChange(Math.min(pagination.totalPages, pagination.page + 1))}
+                        disabled={pagination.page >= pagination.totalPages}
+                        className="rounded-xl h-8"
+                    >
+                        Next
+                    </Button>
+                </div>
+            )}
 
             <AssignLeadDialog
                 isOpen={assignDialogOpen}

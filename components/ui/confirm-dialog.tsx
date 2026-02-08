@@ -48,7 +48,7 @@ export function ConfirmDialog({
                         variant={variant}
                         onClick={onConfirm}
                         disabled={isLoading}
-                        className={variant === "destructive" ? "bg-red-600 hover:bg-red-700" : "bg-teal-600 hover:bg-teal-700"}
+                        className={variant === "destructive" ? "bg-red-600 hover:bg-red-700" : "bg-cyan-600 hover:bg-cyan-700"}
                     >
                         {isLoading ? "Processing..." : confirmText}
                     </Button>

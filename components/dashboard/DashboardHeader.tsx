@@ -12,6 +12,8 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { NotificationBell } from "@/components/dashboard/NotificationBell";
 
 import { useSession } from "next-auth/react";
 
@@ -45,7 +47,7 @@ export function DashboardHeader({ title, description, action }: DashboardHeaderP
     };
 
     return (
-        <header className="flex items-center justify-between px-2 py-4 mb-6 border-b border-gray-200 sticky top-0 z-50 bg-white">
+        <header className="flex items-center justify-between px-2 py-4 mb-6 border-b border-border sticky top-0 z-50 bg-background">
             {/* Greeting */}
             <div className="min-w-[180px]">
                 <h2 className="font-bold text-[18px] leading-none tracking-normal font-sans text-foreground">
@@ -63,14 +65,14 @@ export function DashboardHeader({ title, description, action }: DashboardHeaderP
 
             {/* Right side: Actions, Notifications, Profile */}
             <div className="flex items-center gap-4 justify-end">
+                <ThemeToggle />
+
                 {/* Custom Action (replaces hardcoded button) */}
                 {action}
 
                 {/* Notifications */}
-                <button className="p-2.5 rounded-lg hover:bg-accent transition-all relative">
-                    <Bell className="w-5 h-5 text-[#484848]" />
-                    <span className="absolute top-2 right-2.5 w-2 h-2 bg-destructive rounded-full border-2 border-background"></span>
-                </button>
+                {/* Notifications */}
+                <NotificationBell />
 
                 {/* User Avatar Dropdown */}
                 <DropdownMenu>
@@ -83,7 +85,7 @@ export function DashboardHeader({ title, description, action }: DashboardHeaderP
                             </div>
                         </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56 bg-white">
+                    <DropdownMenuContent align="end" className="w-56">
                         <DropdownMenuLabel>My Account</DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem asChild>

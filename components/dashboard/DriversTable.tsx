@@ -37,7 +37,7 @@ export function DriversTable({ data, onUpdate, onDelete }: DriversTableProps) {
             header: "Driver",
             cell: ({ row }) => (
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-teal-50 text-teal-600 flex items-center justify-center font-bold">
+                    <div className="w-10 h-10 rounded-full bg-cyan-50 text-cyan-600 flex items-center justify-center font-bold">
                         {row.original.firstName?.charAt(0) || row.original.phone?.charAt(0)}
                     </div>
                     <div>
