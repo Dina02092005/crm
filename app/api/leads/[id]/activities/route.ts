@@ -1,0 +1,147 @@
+import { NextResponse } from 'next/server';
+import prisma from '@/lib/prisma';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { LeadActivityType, LeadStatus, LeadTemperature } from '@prisma/client';
+
+export async function POST(
+    req: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const session = await getServerSession(authOptions) as any;
+        if (!session) {
+            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+        }
+
+        const { id } = await params;
+        const body = await req.json();
+        const { type, content, updateLead } = body;
+
+        if (!type) {
+            return NextResponse.json({ message: 'Activity type is required' }, { status: 400 });
+        }
+
+        const activity = await prisma.$transaction(async (tx) => {
+            const newActivity = await tx.leadActivity.create({
+                data: {
+                    leadId: id,
+                    userId: session.user.id,
+                    type: type as LeadActivityType,
+                    content: content || `Action: ${type}`,
+                }
+            });
+
+            if (updateLead) {
+                await tx.lead.update({
+                    where: { id },
+                    data: {
+                        status: LeadStatus.IN_PROGRESS,
+                        temperature: LeadTemperature.WARM
+                    }
+                });
+
+                await tx.leadActivity.create({
+                    data: {
+                        leadId: id,
+                        userId: session.user.id,
+                        type: LeadActivityType.STATUS_CHANGE,
+                        content: `Status changed to IN_PROGRESS`
+                    }
+                });
+
+                await tx.leadActivity.create({
+                    data: {
+                        leadId: id,
+                        userId: session.user.id,
+                        type: LeadActivityType.TEMPERATURE_CHANGE,
+                        content: `Temperature changed to WARM`
+                    }
+                });
+            }
+
+            return newActivity;
+        });
+
+        return NextResponse.json(activity, { status: 201 });
+    } catch (error) {
+        console.error('Create activity error:', error);
+        return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+    }
+}
+
+export async function PATCH(
+    req: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const session = await getServerSession(authOptions) as any;
+        if (!session) {
+            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+        }
+
+        const { id } = await params;
+        const body = await req.json();
+        const { activityId, content } = body;
+
+        if (!activityId || !content) {
+            return NextResponse.json({ message: 'Activity ID and content required' }, { status: 400 });
+        }
+
+        // Only allow editing NOTE type activities
+        const activity = await prisma.leadActivity.findUnique({
+            where: { id: activityId }
+        });
+
+        if (!activity) {
+            return NextResponse.json({ message: 'Activity not found' }, { status: 404 });
+        }
+
+        if (activity.type !== LeadActivityType.NOTE) {
+            return NextResponse.json({ message: 'Only notes can be edited' }, { status: 400 });
+        }
+
+        const updated = await prisma.leadActivity.update({
+            where: { id: activityId },
+            data: { content }
+        });
+
+        return NextResponse.json(updated);
+    } catch (error) {
+        console.error('Update activity error:', error);
+        return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+    }
+}
+
+export async function DELETE(
+    req: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const session = await getServerSession(authOptions) as any;
+        if (!session) {
+            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+        }
+
+        // Only admins can delete activities
+        if (session.user.role !== 'ADMIN') {
+            return NextResponse.json({ message: 'Only admins can delete activities' }, { status: 403 });
+        }
+
+        const { searchParams } = new URL(req.url);
+        const activityId = searchParams.get('activityId');
+
+        if (!activityId) {
+            return NextResponse.json({ message: 'Activity ID required' }, { status: 400 });
+        }
+
+        await prisma.leadActivity.delete({
+            where: { id: activityId }
+        });
+
+        return NextResponse.json({ message: 'Activity deleted successfully' });
+    } catch (error) {
+        console.error('Delete activity error:', error);
+        return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+    }
+}

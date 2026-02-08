@@ -1,0 +1,1 @@
+datasource db { provider = "postgresql" url = "postgresql://localhost" } generator client { provider = "prisma-client-js" }
