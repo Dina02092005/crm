@@ -146,83 +146,87 @@ export default function CustomerDetailPage() {
     if (!customer) return null;
 
     return (
-        <div className="p-10">
-            <div className="flex items-center gap-4 mb-6">
+        <div className="flex flex-col gap-6 p-4 sm:p-6">
+            <div className="flex items-center gap-4">
                 <Button
-                    variant="outline"
+                    variant="ghost"
                     size="icon"
-                    className="rounded-full h-10 w-10"
+                    className="rounded-xl h-8 w-8 hover:bg-muted"
                     onClick={() => router.back()}
                 >
-                    <ArrowLeft className="h-5 w-5 text-gray-500" />
+                    <ArrowLeft className="h-4 w-4 text-muted-foreground" />
                 </Button>
-                <h1 className="text-3xl font-bold text-gray-800">Customer Details</h1>
+                <div>
+                    <h1 className="text-xl font-bold text-foreground">Customer Details</h1>
+                    <p className="text-xs text-muted-foreground">Detailed view of the customer profile</p>
+                </div>
             </div>
 
             <div className="grid grid-cols-3 gap-6">
                 {/* Customer Profile Card */}
                 <div className="col-span-1 space-y-6">
-                    <Card className="border-0 shadow-sm rounded-3xl overflow-hidden">
-                        <CardHeader className="bg-gradient-to-b from-blue-500 to-blue-600 text-white p-6 relative">
-                            <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-2xl font-bold">
+                    <Card className="border border-border rounded-2xl bg-card shadow-none">
+                        <CardHeader className="pb-2 border-b border-border/50">
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-xl font-bold">
                                     {customer.name.charAt(0).toUpperCase()}
                                 </div>
-                                <div>
-                                    <CardTitle className="text-2xl font-bold">{customer.name}</CardTitle>
-                                    <p className="text-blue-100/80 text-sm mt-1">Customer</p>
+                                <div className="space-y-0.5">
+                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Customer</p>
+                                    <CardTitle className="text-lg font-bold">{customer.name}</CardTitle>
                                 </div>
                             </div>
                         </CardHeader>
-                        <CardContent className="p-6 space-y-4">
-                            <div className="flex items-center gap-3">
-                                <Phone className="h-5 w-5 text-gray-400" />
-                                <div>
-                                    <p className="font-medium text-sm text-gray-600">Phone</p>
-                                    <p className="font-bold text-gray-900">{customer.phone}</p>
-                                </div>
-                            </div>
-                            {customer.email && (
-                                <div className="flex items-center gap-3">
-                                    <Mail className="h-5 w-5 text-gray-400" />
-                                    <div>
-                                        <p className="font-medium text-sm text-gray-600">Email</p>
-                                        <p className="font-bold text-gray-900">{customer.email}</p>
+                        <CardContent className="p-5 space-y-5">
+                            <div className="grid gap-4">
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Contact Information</p>
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-muted-foreground">Phone</span>
+                                            <span className="font-semibold">{customer.phone}</span>
+                                        </div>
+                                        {customer.email && (
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-muted-foreground">Email</span>
+                                                <span className="font-semibold">{customer.email}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-                            )}
-                            <div className="flex items-center gap-3">
-                                <Briefcase className="h-5 w-5 text-gray-400" />
-                                <div>
-                                    <p className="font-medium text-sm text-gray-600">Onboarded By</p>
-                                    <p className="font-bold text-gray-900">{customer.user.name}</p>
-                                </div>
-                            </div>
-                            <div className="flex items-center gap-3">
-                                <Calendar className="h-5 w-5 text-gray-400" />
-                                <div>
-                                    <p className="font-medium text-sm text-gray-600">Joined</p>
-                                    <p className="font-bold text-gray-900">
-                                        {new Date(customer.createdAt).toLocaleDateString()}
-                                    </p>
+
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">System Info</p>
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-muted-foreground">Onboarded By</span>
+                                            <span className="font-semibold">{customer.user.name}</span>
+                                        </div>
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-muted-foreground">Joined</span>
+                                            <span className="font-semibold">
+                                                {new Date(customer.createdAt).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <div className="pt-4 border-t space-y-2">
+                            <div className="pt-4 border-t border-border/50 flex flex-col gap-2">
                                 <Button
-                                    className="w-full bg-blue-600 hover:bg-blue-700 rounded-xl"
+                                    className="w-full bg-primary hover:bg-primary/90 rounded-xl h-9 text-sm"
                                     onClick={() => setShowEditDialog(true)}
                                 >
-                                    <Pencil className="h-4 w-4 mr-2" />
+                                    <Pencil className="h-3.5 w-3.5 mr-2" />
                                     Edit Customer
                                 </Button>
                                 {session?.user?.role === "ADMIN" && (
                                     <Button
-                                        variant="outline"
-                                        className="w-full border-red-200 text-red-600 hover:bg-red-50 rounded-xl"
+                                        variant="ghost"
+                                        className="w-full text-destructive hover:text-destructive hover:bg-destructive/5 rounded-xl h-9 text-sm"
                                         onClick={handleDeleteCustomer}
                                     >
-                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        <Trash2 className="h-3.5 w-3.5 mr-2" />
                                         Delete Customer
                                     </Button>
                                 )}
@@ -233,45 +237,40 @@ export default function CustomerDetailPage() {
 
                 {/* Activity Timeline */}
                 <div className="col-span-2">
-                    <Card className="border-0 shadow-sm rounded-3xl">
-                        <CardHeader className="border-b">
-                            <CardTitle className="flex items-center gap-2">
-                                <History className="h-5 w-5" />
-                                Activity Timeline
+                    <Card className="border border-border rounded-2xl bg-card shadow-none overflow-hidden">
+                        <CardHeader className="pb-2 border-b border-border/50">
+                            <CardTitle className="text-sm font-bold flex items-center gap-2">
+                                <History className="h-4 w-4 text-primary" />
+                                Activity History
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-6">
+                        <CardContent className="p-0">
                             {customer.lead?.activities && customer.lead.activities.length > 0 ? (
-                                <div className="space-y-4">
+                                <div className="divide-y divide-border/50">
                                     {customer.lead.activities.map((activity: any) => (
                                         <div
                                             key={activity.id}
-                                            className="flex gap-4 pb-4 border-b last:border-0"
+                                            className="p-4 hover:bg-muted/30 transition-colors"
                                         >
-                                            <div className="flex-shrink-0 w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center">
-                                                <History className="h-5 w-5 text-blue-600" />
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <Badge variant="secondary" className="text-[9px] font-bold uppercase py-0 px-2 rounded-md bg-muted/50 border-0">
+                                                    {activity.type.replace("_", " ")}
+                                                </Badge>
+                                                <span className="text-[10px] text-muted-foreground font-medium">
+                                                    {new Date(activity.createdAt).toLocaleString()}
+                                                </span>
                                             </div>
-                                            <div className="flex-1">
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <Badge variant="outline" className="text-[9px] font-bold uppercase">
-                                                        {activity.type.replace("_", " ")}
-                                                    </Badge>
-                                                    <span className="text-xs text-gray-400">
-                                                        {new Date(activity.createdAt).toLocaleString()}
-                                                    </span>
-                                                </div>
-                                                <p className="text-sm text-gray-600">{activity.content}</p>
-                                                <p className="text-xs text-gray-400 mt-1">
-                                                    by {activity.user?.name || "System"}
-                                                </p>
-                                            </div>
+                                            <p className="text-sm text-foreground/90 leading-relaxed">{activity.content}</p>
+                                            <p className="text-[11px] text-muted-foreground mt-2 font-medium">
+                                                — {activity.user?.name || "System"}
+                                            </p>
                                         </div>
                                     ))}
                                 </div>
                             ) : (
-                                <div className="flex flex-col items-center justify-center py-10 text-gray-400">
-                                    <History className="h-12 w-12 mb-2 opacity-20" />
-                                    <p className="text-sm italic">No activity found</p>
+                                <div className="flex flex-col items-center justify-center py-16 text-muted-foreground/50">
+                                    <History className="h-10 w-10 mb-3 opacity-10" />
+                                    <p className="text-xs font-medium italic tracking-tight">No activity recorded yet</p>
                                 </div>
                             )}
                         </CardContent>

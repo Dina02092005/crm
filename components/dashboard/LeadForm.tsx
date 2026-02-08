@@ -139,8 +139,9 @@ export function LeadForm({ leadId, onSuccess }: LeadFormProps) {
                         <Label htmlFor="phone">Phone Number</Label>
                         <PhoneInput
                             value={field.state.value}
-                            onChange={(phone) => field.handleChange(phone)}
-                            error={!!field.state.meta.errors}
+                            onBlur={field.handleBlur}
+                            onChange={(value) => field.handleChange(value)}
+                            className="rounded-xl"
                         />
                         {field.state.meta.errors ? (
                             <p className="text-sm text-red-500">{field.state.meta.errors.join(", ")}</p>

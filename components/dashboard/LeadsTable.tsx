@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { MoreHorizontal, Eye, Pencil, Trash2, UserPlus } from "lucide-react";
 import {
     DropdownMenu,
@@ -16,7 +17,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
-import { AssignLeadDialog } from "./AssignLeadDialog";
+import { AssignLeadSheet } from "./AssignLeadSheet";
 import { useSession } from "next-auth/react";
 
 import { toast } from "sonner";
@@ -277,6 +278,8 @@ export function LeadsTable({
     ];
 
 
+    const router = useRouter();
+
     const table = useReactTable({
         data,
         columns,
@@ -294,7 +297,7 @@ export function LeadsTable({
                                     <th
                                         key={header.id}
                                         className={`
-                                            py-3 px-4 text-left text-xs font-medium uppercase tracking-wider text-gray-400
+                                            py-3 px-4 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground
                                             ${index === 0 ? "pl-6" : ""}
                                             ${index === headerGroup.headers.length - 1 ? "pr-6" : ""}
                                         `}
@@ -310,7 +313,8 @@ export function LeadsTable({
                             table.getRowModel().rows.map((row) => (
                                 <tr
                                     key={row.id}
-                                    className="group hover:bg-muted/50 transition-colors border-b border-border last:border-0"
+                                    onClick={() => router.push(`/leads/${row.original.id}`)}
+                                    className="group hover:bg-muted/50 transition-colors border-b border-border last:border-0 cursor-pointer"
                                 >
                                     {row.getVisibleCells().map((cell, index) => (
                                         <td
@@ -320,6 +324,13 @@ export function LeadsTable({
                                             ${index === 0 ? "pl-6" : ""}
                                             ${index === row.getVisibleCells().length - 1 ? "pr-6" : ""}
                                         `}
+                                            onClick={(e) => {
+                                                // Prevent row click if the click is on an interactive element inside the cell
+                                                // This is a safety measure, though specific buttons should also call stopPropagation
+                                                if ((e.target as HTMLElement).closest('button, a, [role="menuitem"], [role="button"]')) {
+                                                    e.stopPropagation();
+                                                }
+                                            }}
                                         >
                                             {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                         </td>
@@ -364,7 +375,7 @@ export function LeadsTable({
                 </div>
             )}
 
-            <AssignLeadDialog
+            <AssignLeadSheet
                 isOpen={assignDialogOpen}
                 onClose={() => setAssignDialogOpen(false)}
                 leadId={selectedLead?.id || null}

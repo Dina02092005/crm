@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { User, Mail, Phone, Briefcase, Key, Shield, Save, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -101,99 +103,82 @@ export default function ProfilePage() {
     }
 
     return (
-        <div className="max-w-4xl mx-auto p-6 space-y-8">
-            <div>
-                <h1 className="text-2xl font-bold text-gray-900">My Profile</h1>
-                <p className="text-muted-foreground">Manage your account settings and preferences.</p>
+        <div className="max-w-4xl mx-auto p-4 sm:p-6 space-y-6">
+            <div className="space-y-1">
+                <h1 className="text-xl font-bold text-foreground">My Profile</h1>
+                <p className="text-xs text-muted-foreground">Manage your personal settings and account security</p>
             </div>
 
             <Tabs defaultValue="details" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
-                    <TabsTrigger value="details">Account Details</TabsTrigger>
-                    <TabsTrigger value="security">Security</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 max-w-[320px] bg-muted/50 p-1 rounded-xl">
+                    <TabsTrigger value="details" className="rounded-lg text-xs font-semibold">Account</TabsTrigger>
+                    <TabsTrigger value="security" className="rounded-lg text-xs font-semibold">Security</TabsTrigger>
                 </TabsList>
 
                 {/* Account Details Tab */}
                 <TabsContent value="details" className="mt-6">
-                    <Card className="border-0">
-                        <CardHeader>
-                            <CardTitle>Personal Information</CardTitle>
-                            <CardDescription>Update your personal details here.</CardDescription>
+                    <Card className="border border-border rounded-2xl bg-card shadow-none">
+                        <CardHeader className="pb-4 border-b border-border/50">
+                            <CardTitle className="text-sm font-bold">Personal Information</CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <form onSubmit={handleProfileUpdate} className="space-y-6">
-                                <div className="flex flex-col md:flex-row gap-6">
-                                    {/* Avatar Placeholder */}
-                                    <div className="flex flex-col items-center gap-3">
-                                        <div className="h-24 w-24 rounded-full bg-cyan-50 flex items-center justify-center text-cyan-600 text-3xl font-bold border-2 border-cyan-100">
-                                            {profile.name.charAt(0).toUpperCase()}
+                        <CardContent className="pt-6">
+                            <form onSubmit={handleProfileUpdate} className="grid grid-cols-1 md:grid-cols-[120px_1fr] gap-8">
+                                {/* Avatar Section */}
+                                <div className="flex flex-col items-center gap-3">
+                                    <div className="h-20 w-20 rounded-2xl bg-primary/10 flex items-center justify-center text-primary text-2xl font-bold border border-primary/20">
+                                        {profile.name.charAt(0).toUpperCase()}
+                                    </div>
+                                    <Badge variant="secondary" className="text-[10px] font-bold uppercase tracking-wider py-0.5 px-2 bg-muted/50 border-0">
+                                        {profile.role}
+                                    </Badge>
+                                </div>
+
+                                {/* Form Fields */}
+                                <div className="space-y-5">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                                        <div className="space-y-1.5">
+                                            <Label htmlFor="name" className="text-xs font-bold text-muted-foreground uppercase tracking-tight">Full Name</Label>
+                                            <Input
+                                                id="name"
+                                                value={profile.name}
+                                                onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                                                className="h-9 text-sm rounded-xl bg-muted/30 focus:bg-background transition-colors"
+                                            />
                                         </div>
-                                        <Badge variant="outline" className="capitalize">
-                                            {profile.role.toLowerCase()}
-                                        </Badge>
+                                        <div className="space-y-1.5">
+                                            <Label htmlFor="email" className="text-xs font-bold text-muted-foreground uppercase tracking-tight">Email</Label>
+                                            <Input
+                                                id="email"
+                                                value={profile.email}
+                                                disabled
+                                                className="h-9 text-sm rounded-xl bg-muted/30 border-dashed"
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <Label htmlFor="phone" className="text-xs font-bold text-muted-foreground uppercase tracking-tight">Phone</Label>
+                                            <PhoneInput
+                                                value={profile.phone}
+                                                onChange={(value) => setProfile({ ...profile, phone: value })}
+                                                className="h-9 text-sm"
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <Label htmlFor="department" className="text-xs font-bold text-muted-foreground uppercase tracking-tight">Department</Label>
+                                            <Input
+                                                id="department"
+                                                value={profile.department}
+                                                onChange={(e) => setProfile({ ...profile, department: e.target.value })}
+                                                className="h-9 text-sm rounded-xl bg-muted/30 focus:bg-background transition-colors"
+                                                placeholder="e.g. Sales"
+                                            />
+                                        </div>
                                     </div>
 
-                                    {/* Form Fields */}
-                                    <div className="flex-1 space-y-4">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="name">Full Name</Label>
-                                                <div className="relative">
-                                                    <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                                    <Input
-                                                        id="name"
-                                                        value={profile.name}
-                                                        onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                                                        className="pl-9"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="email">Email Address</Label>
-                                                <div className="relative">
-                                                    <Mail className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                                    <Input
-                                                        id="email"
-                                                        value={profile.email}
-                                                        disabled
-                                                        className="pl-9 bg-gray-50"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="phone">Phone Number</Label>
-                                                <div className="relative">
-                                                    <Phone className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                                    <Input
-                                                        id="phone"
-                                                        value={profile.phone}
-                                                        onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
-                                                        className="pl-9"
-                                                        placeholder="+1 234 567 890"
-                                                    />
-                                                </div>
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label htmlFor="department">Department</Label>
-                                                <div className="relative">
-                                                    <Briefcase className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                                    <Input
-                                                        id="department"
-                                                        value={profile.department}
-                                                        onChange={(e) => setProfile({ ...profile, department: e.target.value })}
-                                                        className="pl-9"
-                                                        placeholder="Sales, Marketing, etc."
-                                                    />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div className="pt-4 flex justify-end">
-                                            <Button type="submit" className="bg-cyan-600 hover:bg-cyan-700" disabled={isSaving}>
-                                                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                                                Save Changes
-                                            </Button>
-                                        </div>
+                                    <div className="pt-4 flex justify-end">
+                                        <Button type="submit" className="bg-primary hover:bg-primary/90 h-9 rounded-xl text-sm px-6" disabled={isSaving}>
+                                            {isSaving ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <Save className="mr-2 h-3.5 w-3.5" />}
+                                            Update Profile
+                                        </Button>
                                     </div>
                                 </div>
                             </form>
@@ -203,58 +188,46 @@ export default function ProfilePage() {
 
                 {/* Security Tab */}
                 <TabsContent value="security" className="mt-6">
-                    <Card className="border-0">
-                        <CardHeader>
-                            <CardTitle>Password & Security</CardTitle>
-                            <CardDescription>Manage your password and security settings.</CardDescription>
+                    <Card className="border border-border rounded-2xl bg-card shadow-none">
+                        <CardHeader className="pb-4 border-b border-border/50">
+                            <CardTitle className="text-sm font-bold">Account Security</CardTitle>
                         </CardHeader>
-                        <CardContent>
-                            <form onSubmit={handlePasswordChange} className="space-y-4 max-w-md">
-                                <div className="space-y-2">
-                                    <Label htmlFor="current">Current Password</Label>
-                                    <div className="relative">
-                                        <Key className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                        <Input
-                                            id="current"
-                                            type="password"
-                                            value={passwords.currentPassword}
-                                            onChange={(e) => setPasswords({ ...passwords, currentPassword: e.target.value })}
-                                            className="pl-9"
-                                        />
-                                    </div>
+                        <CardContent className="pt-6">
+                            <form onSubmit={handlePasswordChange} className="space-y-5 max-w-sm">
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="current" className="text-xs font-bold text-muted-foreground uppercase tracking-tight">Current Password</Label>
+                                    <PasswordInput
+                                        id="current"
+                                        value={passwords.currentPassword}
+                                        onChange={(e) => setPasswords({ ...passwords, currentPassword: e.target.value })}
+                                        className="h-9 text-sm rounded-xl bg-muted/30 focus:bg-background transition-colors"
+                                    />
                                 </div>
-                                <Separator className="my-2" />
-                                <div className="space-y-2">
-                                    <Label htmlFor="new">New Password</Label>
-                                    <div className="relative">
-                                        <Shield className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                        <Input
+                                <div className="space-y-4 pt-4 border-t border-border/50">
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="new" className="text-xs font-bold text-muted-foreground uppercase tracking-tight">New Password</Label>
+                                        <PasswordInput
                                             id="new"
-                                            type="password"
                                             value={passwords.newPassword}
                                             onChange={(e) => setPasswords({ ...passwords, newPassword: e.target.value })}
-                                            className="pl-9"
+                                            className="h-9 text-sm rounded-xl bg-muted/30 focus:bg-background transition-colors"
                                         />
                                     </div>
-                                </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="confirm">Confirm New Password</Label>
-                                    <div className="relative">
-                                        <Shield className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                                        <Input
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="confirm" className="text-xs font-bold text-muted-foreground uppercase tracking-tight">Confirm Password</Label>
+                                        <PasswordInput
                                             id="confirm"
-                                            type="password"
                                             value={passwords.confirmPassword}
                                             onChange={(e) => setPasswords({ ...passwords, confirmPassword: e.target.value })}
-                                            className="pl-9"
+                                            className="h-9 text-sm rounded-xl bg-muted/30 focus:bg-background transition-colors"
                                         />
                                     </div>
                                 </div>
 
                                 <div className="pt-4">
-                                    <Button type="submit" variant="destructive" disabled={isSaving}>
-                                        {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                                        Change Password
+                                    <Button type="submit" variant="destructive" className="h-9 rounded-xl text-xs px-6 font-bold uppercase tracking-wider" disabled={isSaving}>
+                                        {isSaving && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+                                        Secure Account
                                     </Button>
                                 </div>
                             </form>

@@ -321,17 +321,17 @@ export default function LeadDetailPage() {
     ];
 
     return (
-        <div className="flex flex-col min-h-screen bg-gray-50/50">
+        <div className="flex flex-col min-h-screen bg-background">
             {/* Top Navigation Tabs */}
-            <div className="bg-white border-b border-gray-200 px-4 sm:px-8 py-2 overflow-x-auto scrollbar-hide">
+            <div className="bg-card border-b border-border px-4 sm:px-8 py-2 overflow-x-auto scrollbar-hide">
                 <div className="flex items-center gap-1 min-w-max">
                     {tabs.map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
                             className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-colors ${activeTab === tab.id
-                                ? "bg-gray-100 text-gray-900 shadow-sm"
-                                : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                                ? "bg-muted text-foreground shadow-sm"
+                                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                                 }`}
                         >
                             {tab.icon}
@@ -347,7 +347,7 @@ export default function LeadDetailPage() {
                     <Button
                         variant="ghost"
                         onClick={() => router.push("/leads")}
-                        className="rounded-xl text-gray-500 hover:text-gray-900 px-0"
+                        className="rounded-xl text-muted-foreground hover:text-foreground px-0"
                     >
                         <ArrowLeft className="h-4 w-4 mr-2" /> Back to Leads
                     </Button>
@@ -355,20 +355,20 @@ export default function LeadDetailPage() {
                     <div className="flex items-center gap-2">
                         <Button
                             variant="outline"
-                            className="rounded-lg border-cyan-200 text-cyan-600 h-10 gap-2 hover:bg-cyan-50 bg-white"
+                            className="rounded-lg border-cyan-500/20 text-cyan-600 dark:text-cyan-400 h-10 gap-2 hover:bg-cyan-500/10 bg-card"
                             onClick={() => handleLogActivity('CALL', 'First contact call', true)}
                         >
                             <Phone className="h-4 w-4" /> Log Call
                         </Button>
                         <Button
                             variant="outline"
-                            className="rounded-lg border-teal-200 text-teal-600 h-10 gap-2 hover:bg-teal-50 bg-white"
+                            className="rounded-lg border-teal-500/20 text-teal-600 dark:text-teal-400 h-10 gap-2 hover:bg-teal-500/10 bg-card"
                             onClick={() => handleLogActivity('WHATSAPP', 'Sent WhatsApp message', true)}
                         >
                             <MessageSquare className="h-4 w-4" /> WhatsApp
                         </Button>
 
-                        <div className="w-px h-6 bg-gray-200 mx-1" />
+                        <div className="w-px h-6 bg-border mx-1" />
 
                         <Button
                             className="rounded-lg bg-cyan-600 hover:bg-cyan-700 text-white h-10 gap-2 shadow-sm"
@@ -396,11 +396,11 @@ export default function LeadDetailPage() {
 
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="rounded-lg h-10 w-10 border border-gray-200 bg-white">
-                                    <MoreHorizontal className="h-4 w-4 text-gray-500" />
+                                <Button variant="ghost" size="icon" className="rounded-lg h-10 w-10 border border-border bg-card">
+                                    <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48 rounded-xl border-gray-100 shadow-xl">
+                            <DropdownMenuContent align="end" className="w-48 rounded-xl border-border shadow-xl">
                                 <DropdownMenuItem
                                     className="text-red-600 focus:text-red-700 focus:bg-red-50 gap-2 font-bold cursor-pointer"
                                     disabled={lead.status === 'CONVERTED' || lead.status === 'LOST'}
@@ -427,15 +427,15 @@ export default function LeadDetailPage() {
 
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="rounded-lg border-gray-200 h-10 gap-2 hover:bg-gray-50 bg-white" disabled={isAssigning}>
-                                        <UserPlus className="h-4 w-4 text-gray-400" />
+                                    <Button variant="outline" className="rounded-lg border-border h-10 gap-2 hover:bg-muted bg-card" disabled={isAssigning}>
+                                        <UserPlus className="h-4 w-4 text-muted-foreground" />
                                         {isAssigning ? "Assigning..." : "Assign To"}
                                     </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-56 rounded-xl p-1 shadow-xl border-gray-100">
-                                    <div className="px-2 py-1.5 text-xs font-semibold text-gray-500 uppercase tracking-wider">Select Employee</div>
+                                <DropdownMenuContent align="end" className="w-56 rounded-xl p-1 shadow-xl border-border">
+                                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Select Employee</div>
                                     {employees.length === 0 ? (
-                                        <div className="px-2 py-3 text-sm text-gray-400 text-center italic">No employees found</div>
+                                        <div className="px-2 py-3 text-sm text-muted-foreground text-center italic">No employees found</div>
                                     ) : (
                                         employees.map((emp) => (
                                             <DropdownMenuItem
@@ -445,7 +445,7 @@ export default function LeadDetailPage() {
                                             >
                                                 <div className="flex flex-col">
                                                     <span className="font-medium">{emp.name}</span>
-                                                    <span className="text-[10px] text-gray-400">{emp.email}</span>
+                                                    <span className="text-[10px] text-muted-foreground">{emp.email}</span>
                                                 </div>
                                             </DropdownMenuItem>
                                         ))
@@ -458,18 +458,18 @@ export default function LeadDetailPage() {
                         <Button
                             variant="outline"
                             size="icon"
-                            className="rounded-lg border-gray-200 h-10 w-10 hover:bg-gray-50"
+                            className="rounded-lg border-border h-10 w-10 hover:bg-muted"
                             onClick={() => router.push(`/leads/${params.id}/edit`)}
                         >
-                            <Pencil className="h-4 w-4 text-gray-600" />
+                            <Pencil className="h-4 w-4 text-muted-foreground" />
                         </Button>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button variant="outline" className="rounded-lg border-gray-200 h-10 gap-2 hover:bg-gray-50">
-                                    More <MoreHorizontal className="h-4 w-4 text-gray-400" />
+                                <Button variant="outline" className="rounded-lg border-border h-10 gap-2 hover:bg-muted">
+                                    More <MoreHorizontal className="h-4 w-4 text-muted-foreground" />
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48 rounded-xl p-1 shadow-xl border-gray-100">
+                            <DropdownMenuContent align="end" className="w-48 rounded-xl p-1 shadow-xl border-border">
                                 <DropdownMenuItem className="rounded-lg cursor-pointer">Export detail</DropdownMenuItem>
                                 <DropdownMenuItem className="rounded-lg cursor-pointer">Archive lead</DropdownMenuItem>
                                 <DropdownMenuItem className="rounded-lg cursor-pointer text-red-600">Delete lead</DropdownMenuItem>
@@ -484,60 +484,60 @@ export default function LeadDetailPage() {
                             {/* Left Column: Lead Information */}
                             <div className="space-y-8">
                                 <div>
-                                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6 border-l-4 border-cyan-500 pl-4">Lead Information</h3>
-                                    <div className="space-y-6 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                                    <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-6 border-l-4 border-cyan-500 pl-4">Lead Information</h3>
+                                    <div className="space-y-6 bg-card p-6 rounded-2xl shadow-sm border border-border">
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-1">
-                                                <label className="text-xs font-semibold text-gray-400 uppercase">Name</label>
-                                                <p className="text-gray-900 font-medium text-lg italic">{lead.name}</p>
+                                                <label className="text-xs font-semibold text-muted-foreground uppercase">Name</label>
+                                                <p className="text-foreground font-medium text-lg italic">{lead.name}</p>
                                             </div>
                                             <div className="space-y-1">
-                                                <label className="text-xs font-semibold text-gray-400 uppercase">Position</label>
-                                                <p className="text-gray-400">-</p>
+                                                <label className="text-xs font-semibold text-muted-foreground uppercase">Position</label>
+                                                <p className="text-muted-foreground">-</p>
                                             </div>
                                         </div>
                                         <div className="space-y-1">
-                                            <label className="text-xs font-semibold text-gray-400 uppercase">Email Address</label>
-                                            <p className="text-blue-600 font-medium underline decoration-blue-200 underline-offset-4">{lead.email || "-"}</p>
+                                            <label className="text-xs font-semibold text-muted-foreground uppercase">Email Address</label>
+                                            <p className="text-blue-500 dark:text-blue-400 font-medium underline decoration-blue-500/20 underline-offset-4">{lead.email || "-"}</p>
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-1">
-                                                <label className="text-xs font-semibold text-gray-400 uppercase">Website</label>
-                                                <p className="text-gray-400">-</p>
+                                                <label className="text-xs font-semibold text-muted-foreground uppercase">Website</label>
+                                                <p className="text-muted-foreground">-</p>
                                             </div>
                                             <div className="space-y-1">
-                                                <label className="text-xs font-semibold text-gray-400 uppercase">Phone</label>
-                                                <p className="text-gray-900 font-medium">{lead.phone || "-"}</p>
+                                                <label className="text-xs font-semibold text-muted-foreground uppercase">Phone</label>
+                                                <p className="text-foreground font-medium">{lead.phone || "-"}</p>
                                             </div>
                                         </div>
                                         <div className="grid grid-cols-2 gap-4">
                                             <div className="space-y-1">
-                                                <label className="text-xs font-semibold text-gray-400 uppercase">Lead value</label>
-                                                <p className="text-cyan-600 font-bold">$0.00</p>
+                                                <label className="text-xs font-semibold text-muted-foreground uppercase">Lead value</label>
+                                                <p className="text-cyan-600 dark:text-cyan-400 font-bold">$0.00</p>
                                             </div>
                                             <div className="space-y-1">
-                                                <label className="text-xs font-semibold text-gray-400 uppercase">Company</label>
-                                                <p className="text-gray-400">-</p>
+                                                <label className="text-xs font-semibold text-muted-foreground uppercase">Company</label>
+                                                <p className="text-muted-foreground">-</p>
                                             </div>
                                         </div>
-                                        <div className="space-y-1 pt-2 border-t border-gray-50">
-                                            <label className="text-xs font-semibold text-gray-400 uppercase">Address Details</label>
+                                        <div className="space-y-1 pt-2 border-t border-border">
+                                            <label className="text-xs font-semibold text-muted-foreground uppercase">Address Details</label>
                                             <div className="grid grid-cols-2 gap-4 pt-2">
                                                 <div>
-                                                    <p className="text-xs text-gray-400">Street</p>
-                                                    <p className="text-sm font-medium text-gray-700">-</p>
+                                                    <p className="text-xs text-muted-foreground">Street</p>
+                                                    <p className="text-sm font-medium text-foreground">-</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs text-gray-400">City</p>
-                                                    <p className="text-sm font-medium text-gray-700">-</p>
+                                                    <p className="text-xs text-muted-foreground">City</p>
+                                                    <p className="text-sm font-medium text-foreground">-</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs text-gray-400">State</p>
-                                                    <p className="text-sm font-medium text-gray-700">-</p>
+                                                    <p className="text-xs text-muted-foreground">State</p>
+                                                    <p className="text-sm font-medium text-foreground">-</p>
                                                 </div>
                                                 <div>
-                                                    <p className="text-xs text-gray-400">Zip Code</p>
-                                                    <p className="text-sm font-medium text-gray-700">-</p>
+                                                    <p className="text-xs text-muted-foreground">Zip Code</p>
+                                                    <p className="text-sm font-medium text-foreground">-</p>
                                                 </div>
                                             </div>
                                         </div>
@@ -548,17 +548,17 @@ export default function LeadDetailPage() {
                             {/* Right Column: General Information */}
                             <div className="space-y-8">
                                 <div>
-                                    <h3 className="text-sm font-bold text-gray-400 uppercase tracking-widest mb-6 border-l-4 border-blue-500 pl-4">General Information</h3>
-                                    <div className="space-y-6 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                                    <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-widest mb-6 border-l-4 border-blue-500 pl-4">General Information</h3>
+                                    <div className="space-y-6 bg-card p-6 rounded-2xl shadow-sm border border-border">
                                         <div className="grid grid-cols-2 gap-6">
                                             <div className="space-y-1">
-                                                <label className="text-xs font-semibold text-gray-400 uppercase">Status</label>
+                                                <label className="text-xs font-semibold text-muted-foreground uppercase">Status</label>
                                                 <div>
-                                                    <Badge className={`rounded-lg py-1 px-3 text-xs font-bold border-none ${lead.status === 'CONVERTED' ? 'bg-cyan-100 text-cyan-700' :
-                                                        lead.status === 'LOST' ? 'bg-red-100 text-red-700' :
-                                                            lead.status === 'ASSIGNED' ? 'bg-blue-100 text-blue-700' :
-                                                                lead.status === 'IN_PROGRESS' ? 'bg-amber-100 text-amber-700' :
-                                                                    'bg-gray-100 text-gray-700'
+                                                    <Badge className={`rounded-lg py-1 px-3 text-xs font-bold border-none ${lead.status === 'CONVERTED' ? 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400' :
+                                                        lead.status === 'LOST' ? 'bg-red-500/10 text-red-600 dark:text-red-400' :
+                                                            lead.status === 'ASSIGNED' ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400' :
+                                                                lead.status === 'IN_PROGRESS' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' :
+                                                                    'bg-muted text-muted-foreground'
                                                         }`}>
                                                         {lead.status}
                                                     </Badge>
@@ -566,7 +566,7 @@ export default function LeadDetailPage() {
                                             </div>
 
                                             <div className="space-y-3">
-                                                <label className="text-xs font-bold text-gray-400 uppercase tracking-wider">Temperature</label>
+                                                <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Temperature</label>
                                                 <div className="flex gap-2">
                                                     {[
                                                         { label: 'COLD', color: 'blue', value: 'COLD' },
@@ -591,7 +591,7 @@ export default function LeadDetailPage() {
                                                             }}
                                                             className={`flex-1 py-2 px-3 rounded-xl text-[10px] font-bold transition-all border ${lead.temperature === t.value
                                                                 ? `bg-${t.color}-500 text-white border-${t.color}-500 shadow-md scale-105`
-                                                                : `bg-white text-${t.color}-500 border-${t.color}-100 hover:bg-${t.color}-50`
+                                                                : `bg-card text-${t.color}-500 border-${t.color}-500/20 hover:bg-${t.color}-500/10`
                                                                 }`}
                                                         >
                                                             {t.label}
@@ -602,18 +602,18 @@ export default function LeadDetailPage() {
                                         </div>
                                         <div className="grid grid-cols-2 gap-6">
                                             <div className="space-y-1">
-                                                <label className="text-xs font-semibold text-gray-400 uppercase">Source</label>
-                                                <p className="text-gray-900 font-semibold capitalize flex items-center gap-2">
+                                                <label className="text-xs font-semibold text-muted-foreground uppercase">Source</label>
+                                                <p className="text-foreground font-semibold capitalize flex items-center gap-2">
                                                     <Zap className="h-3 w-3 text-yellow-500" />
                                                     {lead.source?.toLowerCase().replace('_', ' ') || "Direct call"}
                                                 </p>
                                             </div>
                                             <div className="space-y-1">
-                                                <label className="text-xs font-semibold text-gray-400 uppercase">Assigned</label>
-                                                <p className="text-gray-900 font-medium flex items-center gap-2">
+                                                <label className="text-xs font-semibold text-muted-foreground uppercase">Assigned</label>
+                                                <p className="text-foreground font-medium flex items-center gap-2">
                                                     {lead.assignments && lead.assignments.length > 0 ? (
                                                         <>
-                                                            <div className="w-6 h-6 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[10px] font-bold uppercase">
+                                                            <div className="w-6 h-6 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center text-[10px] font-bold uppercase">
                                                                 {lead.assignments[lead.assignments.length - 1].employee.name.charAt(0)}
                                                             </div>
                                                             {lead.assignments[lead.assignments.length - 1].employee.name}
@@ -625,31 +625,31 @@ export default function LeadDetailPage() {
                                             </div>
 
                                             <div className="space-y-1">
-                                                <label className="text-xs font-semibold text-gray-400 uppercase">Public</label>
+                                                <label className="text-xs font-semibold text-muted-foreground uppercase">Public</label>
                                                 <p className="text-red-500 font-bold">No</p>
                                             </div>
                                         </div>
                                         <div className="space-y-1">
-                                            <label className="text-xs font-semibold text-gray-400 uppercase">Tags</label>
+                                            <label className="text-xs font-semibold text-muted-foreground uppercase">Tags</label>
                                             <div className="flex flex-wrap gap-2 pt-1">
-                                                <Badge variant="outline" className="bg-gray-50 text-gray-500 border-gray-200 rounded-md px-2 py-0.5 text-[10px] uppercase font-bold tracking-tighter">android</Badge>
-                                                <Badge variant="outline" className="bg-gray-50 text-gray-500 border-gray-200 rounded-md px-2 py-0.5 text-[10px] uppercase font-bold tracking-tighter">ios app</Badge>
-                                                <Button variant="ghost" size="icon" className="h-5 w-5 rounded-md hover:bg-gray-100">
-                                                    <UserPlus className="h-3 w-3 text-gray-400" />
+                                                <Badge variant="outline" className="bg-muted text-muted-foreground border-border rounded-md px-2 py-0.5 text-[10px] uppercase font-bold tracking-tighter">android</Badge>
+                                                <Badge variant="outline" className="bg-muted text-muted-foreground border-border rounded-md px-2 py-0.5 text-[10px] uppercase font-bold tracking-tighter">ios app</Badge>
+                                                <Button variant="ghost" size="icon" className="h-5 w-5 rounded-md hover:bg-muted">
+                                                    <UserPlus className="h-3 w-3 text-muted-foreground" />
                                                 </Button>
                                             </div>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-6 pt-2 border-t border-gray-50">
+                                        <div className="grid grid-cols-2 gap-6 pt-2 border-t border-border">
                                             <div className="space-y-1">
-                                                <label className="text-xs font-semibold text-gray-400 uppercase">Created</label>
-                                                <p className="text-gray-500 text-sm flex items-center gap-1.5">
+                                                <label className="text-xs font-semibold text-muted-foreground uppercase">Created</label>
+                                                <p className="text-muted-foreground text-sm flex items-center gap-1.5">
                                                     <Clock className="h-3 w-3" />
                                                     {formatRelativeTime(lead.createdAt)}
                                                 </p>
                                             </div>
                                             <div className="space-y-1">
-                                                <label className="text-xs font-semibold text-gray-400 uppercase">Last Contact</label>
-                                                <p className="text-gray-500 text-sm flex items-center gap-1.5">
+                                                <label className="text-xs font-semibold text-muted-foreground uppercase">Last Contact</label>
+                                                <p className="text-muted-foreground text-sm flex items-center gap-1.5">
                                                     <Calendar className="h-3 w-3" />
                                                     {formatRelativeTime(lead.updatedAt)}
                                                 </p>
@@ -662,13 +662,13 @@ export default function LeadDetailPage() {
                     )}
 
                     {activeTab === "proposals" && (
-                        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
+                        <div className="bg-card rounded-3xl p-6 border border-border shadow-sm">
                             <div className="flex items-center justify-between mb-8">
-                                <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                                <h3 className="font-bold text-foreground flex items-center gap-2">
                                     <FileText className="h-5 w-5 text-blue-500" /> Proposals & Quotations
                                 </h3>
                                 <div className="flex items-center gap-3">
-                                    <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
+                                    <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20">
                                         {lead.documents?.filter((d: any) => d.type === 'QUOTATION').length || 0} Proposals
                                     </Badge>
                                     <Button
@@ -683,14 +683,14 @@ export default function LeadDetailPage() {
                             <div className="space-y-4">
                                 {lead.documents && lead.documents.filter((d: any) => d.type === 'QUOTATION').length > 0 ? (
                                     lead.documents.filter((d: any) => d.type === 'QUOTATION').map((doc: any, idx: number) => (
-                                        <div key={idx} className="p-4 rounded-3xl border border-gray-50 bg-white hover:bg-gray-50/50 transition-colors flex items-center justify-between group">
+                                        <div key={idx} className="p-4 rounded-3xl border border-border bg-card hover:bg-muted/50 transition-colors flex items-center justify-between group">
                                             <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-2xl bg-blue-50 text-blue-500 flex items-center justify-center shrink-0">
+                                                <div className="w-10 h-10 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
                                                     <FileText className="h-5 w-5" />
                                                 </div>
                                                 <div>
-                                                    <p className="font-bold text-gray-900 text-sm">{doc.fileName}</p>
-                                                    <p className="text-xs text-gray-400">Uploaded {formatRelativeTime(doc.createdAt)} by {doc.user.name}</p>
+                                                    <p className="font-bold text-foreground text-sm">{doc.fileName}</p>
+                                                    <p className="text-xs text-muted-foreground">Uploaded {formatRelativeTime(doc.createdAt)} by {doc.user.name}</p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2">
@@ -698,7 +698,7 @@ export default function LeadDetailPage() {
                                                     href={doc.fileUrl}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="bg-white border border-gray-100 rounded-xl h-8 px-4 text-[10px] font-bold flex items-center justify-center hover:bg-gray-50 transition-colors"
+                                                    className="bg-card border border-border rounded-xl h-8 px-4 text-[10px] font-bold flex items-center justify-center hover:bg-muted transition-colors"
                                                 >
                                                     VIEW
                                                 </a>
@@ -714,7 +714,7 @@ export default function LeadDetailPage() {
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+                                    <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
                                         <FileText className="h-12 w-12 mb-2 opacity-20" />
                                         <p className="text-sm italic">No proposals uploaded yet</p>
                                     </div>
@@ -724,13 +724,13 @@ export default function LeadDetailPage() {
                     )}
 
                     {activeTab === "tasks" && (
-                        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
+                        <div className="bg-card rounded-3xl p-6 border border-border shadow-sm">
                             <div className="flex items-center justify-between mb-8">
-                                <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                                <h3 className="font-bold text-foreground flex items-center gap-2">
                                     <CheckSquare className="h-5 w-5 text-emerald-500" /> Pending Tasks
                                 </h3>
                                 <div className="flex gap-2">
-                                    <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100">
+                                    <Badge className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20">
                                         {lead.tasks?.filter((t: any) => t.status === 'PENDING').length || 0} Open
                                     </Badge>
                                 </div>
@@ -738,6 +738,7 @@ export default function LeadDetailPage() {
 
                             {/* Add Task Form */}
                             <form onSubmit={async (e: any) => {
+                                // ... (handlers unchanged)
                                 e.preventDefault();
                                 const formData = new FormData(e.target);
                                 const title = formData.get('title') as string;
@@ -758,30 +759,30 @@ export default function LeadDetailPage() {
                                         toast.error("Failed to schedule task");
                                     }
                                 }
-                            }} className="mb-8 p-4 bg-gray-50 rounded-2xl space-y-4">
+                            }} className="mb-8 p-4 bg-muted/30 rounded-2xl space-y-4">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <input
                                         name="title"
                                         placeholder="Task title (e.g. Call back tomorrow)"
                                         required
-                                        className="bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+                                        className="bg-card border border-border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                                     />
                                     <div className="flex gap-2">
                                         <div className="flex flex-col flex-1">
-                                            <label className="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1">Due Date</label>
+                                            <label className="text-[10px] font-bold text-muted-foreground uppercase ml-2 mb-1">Due Date</label>
                                             <input
                                                 name="dueAt"
                                                 type="datetime-local"
                                                 required
-                                                className="bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+                                                className="bg-card border border-border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                                             />
                                         </div>
                                         <div className="flex flex-col flex-1">
-                                            <label className="text-[10px] font-bold text-gray-400 uppercase ml-2 mb-1">Reminder</label>
+                                            <label className="text-[10px] font-bold text-muted-foreground uppercase ml-2 mb-1">Reminder</label>
                                             <input
                                                 name="remindAt"
                                                 type="datetime-local"
-                                                className="bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100"
+                                                className="bg-card border border-border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                                             />
                                         </div>
                                     </div>
@@ -794,21 +795,21 @@ export default function LeadDetailPage() {
                             <div className="space-y-4">
                                 {lead.tasks && lead.tasks.length > 0 ? (
                                     lead.tasks.map((task: any, idx: number) => (
-                                        <div key={idx} className="flex items-center gap-4 p-4 rounded-3xl border border-gray-50 bg-white hover:bg-gray-50/50 transition-colors group">
-                                            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${task.status === 'COMPLETED' ? 'bg-emerald-50 text-emerald-500' : 'bg-amber-50 text-amber-500'
+                                        <div key={idx} className="flex items-center gap-4 p-4 rounded-3xl border border-border bg-card hover:bg-muted/50 transition-colors group">
+                                            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${task.status === 'COMPLETED' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'
                                                 }`}>
                                                 {task.status === 'COMPLETED' ? <CheckSquare className="h-5 w-5" /> : <Clock className="h-5 w-5" />}
                                             </div>
                                             <div className="flex-1">
-                                                <h4 className={`font-bold text-sm ${task.status === 'COMPLETED' ? 'text-gray-400 line-through' : 'text-gray-800'}`}>
+                                                <h4 className={`font-bold text-sm ${task.status === 'COMPLETED' ? 'text-muted-foreground line-through' : 'text-foreground'}`}>
                                                     {task.title}
                                                 </h4>
                                                 <div className="flex items-center gap-3 mt-1">
-                                                    <p className="text-xs text-gray-400 flex items-center gap-1">
+                                                    <p className="text-xs text-muted-foreground flex items-center gap-1">
                                                         <Calendar className="h-3 w-3" /> Due {new Date(task.dueAt).toLocaleString()}
                                                     </p>
                                                     {task.reminders?.length > 0 && (
-                                                        <Badge variant="outline" className="text-[9px] font-bold text-amber-500 border-amber-100 bg-amber-50/50 gap-1 rounded-full cursor-pointer hover:bg-amber-100"
+                                                        <Badge variant="outline" className="text-[9px] font-bold text-amber-500 border-amber-500/20 bg-amber-500/10 gap-1 rounded-full cursor-pointer hover:bg-amber-500/20"
                                                             onClick={() => openEditReminder(task.reminders[0])} // Editing the first one for simplicity
                                                         >
                                                             <Bell className="h-2.5 w-2.5 outline-none" />
@@ -822,7 +823,7 @@ export default function LeadDetailPage() {
                                                 <Button
                                                     variant="ghost"
                                                     size="sm"
-                                                    className="h-8 rounded-xl text-xs gap-1 text-blue-600 hover:bg-blue-50"
+                                                    className="h-8 rounded-xl text-xs gap-1 text-blue-500 hover:bg-blue-500/10"
                                                     onClick={() => openCreateReminder(task)}
                                                 >
                                                     <Bell className="h-3 w-3" /> +Reminder
@@ -831,7 +832,7 @@ export default function LeadDetailPage() {
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+                                    <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
                                         <CheckSquare className="h-12 w-12 mb-2 opacity-20" />
                                         <p className="text-sm italic">No tasks scheduled yet</p>
                                     </div>
@@ -841,23 +842,23 @@ export default function LeadDetailPage() {
                     )}
 
                     {activeTab === "attachments" && (
-                        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
+                        <div className="bg-card rounded-3xl p-6 border border-border shadow-sm">
                             <div className="flex items-center justify-between mb-8">
-                                <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                                <h3 className="font-bold text-foreground flex items-center gap-2">
                                     <Paperclip className="h-5 w-5 text-blue-500" /> Lead Documents
                                 </h3>
-                                <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">
+                                <Badge className="bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500/20">
                                     {lead.documents?.length || 0} Files
                                 </Badge>
                             </div>
 
                             {/* Upload Area */}
-                            <div className="mb-8 p-6 border-2 border-dashed border-gray-100 rounded-3xl flex flex-col items-center justify-center bg-gray-50/50 hover:bg-gray-50 transition-colors group">
-                                <div className="w-12 h-12 rounded-2xl bg-white shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                    <Paperclip className="h-6 w-6 text-gray-400" />
+                            <div className="mb-8 p-6 border-2 border-dashed border-border rounded-3xl flex flex-col items-center justify-center bg-muted/30 hover:bg-muted/50 transition-colors group">
+                                <div className="w-12 h-12 rounded-2xl bg-card shadow-sm flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+                                    <Paperclip className="h-6 w-6 text-muted-foreground" />
                                 </div>
-                                <p className="text-sm font-bold text-gray-900 mb-1">Upload requirement or quotation</p>
-                                <p className="text-xs text-gray-400 mb-6 text-center max-w-[200px]">PDF, PNG, JPG or DOC up to 10MB</p>
+                                <p className="text-sm font-bold text-foreground mb-1">Upload requirement or quotation</p>
+                                <p className="text-xs text-muted-foreground mb-6 text-center max-w-[200px]">PDF, PNG, JPG or DOC up to 10MB</p>
 
                                 <input
                                     type="file"
@@ -880,7 +881,7 @@ export default function LeadDetailPage() {
                                 />
                                 <Button
                                     onClick={() => document.getElementById('file-upload')?.click()}
-                                    className="bg-white text-gray-900 border border-gray-200 hover:bg-gray-50 rounded-xl px-6 h-10 font-bold shadow-sm"
+                                    className="bg-card text-foreground border border-border hover:bg-muted rounded-xl px-6 h-10 font-bold shadow-sm"
                                 >
                                     Select File
                                 </Button>
@@ -889,23 +890,23 @@ export default function LeadDetailPage() {
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {lead.documents && lead.documents.length > 0 ? (
                                     lead.documents.map((doc: any, idx: number) => (
-                                        <div key={idx} className="p-4 rounded-3xl border border-gray-50 bg-white hover:bg-gray-50/50 transition-colors flex flex-col items-center text-center group">
-                                            <div className="w-12 h-12 rounded-2xl mb-4 bg-blue-50 text-blue-500 flex items-center justify-center shrink-0">
+                                        <div key={idx} className="p-4 rounded-3xl border border-border bg-card hover:bg-muted/50 transition-colors flex flex-col items-center text-center group">
+                                            <div className="w-12 h-12 rounded-2xl mb-4 bg-blue-500/10 text-blue-500 flex items-center justify-center shrink-0">
                                                 {doc.fileName.toLowerCase().endsWith('.pdf') ? <FileText className="h-6 w-6" /> : <Paperclip className="h-6 w-6" />}
                                             </div>
-                                            <p className="font-bold text-gray-900 text-sm truncate w-full">{doc.fileName}</p>
+                                            <p className="font-bold text-foreground text-sm truncate w-full">{doc.fileName}</p>
                                             <div className="flex items-center gap-2 mt-1">
-                                                <Badge variant="outline" className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter rounded-full">
+                                                <Badge variant="outline" className="text-[9px] font-bold text-muted-foreground uppercase tracking-tighter rounded-full">
                                                     {doc.type}
                                                 </Badge>
-                                                <span className="text-[10px] text-gray-400">{formatRelativeTime(doc.createdAt)}</span>
+                                                <span className="text-[10px] text-muted-foreground">{formatRelativeTime(doc.createdAt)}</span>
                                             </div>
                                             <div className="flex gap-2 mt-4 w-full">
                                                 <a
                                                     href={doc.fileUrl}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="flex-1 bg-white border border-gray-100 rounded-xl h-8 text-[10px] font-bold flex items-center justify-center hover:bg-gray-50 transition-colors"
+                                                    className="flex-1 bg-card border border-border rounded-xl h-8 text-[10px] font-bold flex items-center justify-center hover:bg-muted transition-colors"
                                                 >
                                                     VIEW
                                                 </a>
@@ -913,7 +914,7 @@ export default function LeadDetailPage() {
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="col-span-full py-10 flex flex-col items-center justify-center text-gray-300">
+                                    <div className="col-span-full py-10 flex flex-col items-center justify-center text-muted-foreground">
                                         <Paperclip className="h-10 w-10 mb-2 opacity-20" />
                                         <p className="text-xs uppercase font-bold tracking-widest italic">No documents attached</p>
                                     </div>
@@ -923,9 +924,9 @@ export default function LeadDetailPage() {
                     )}
 
                     {activeTab === "reminders" && (
-                        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
+                        <div className="bg-card rounded-3xl p-6 border border-border shadow-sm">
                             <div className="flex items-center justify-between mb-8">
-                                <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                                <h3 className="font-bold text-foreground flex items-center gap-2">
                                     <Bell className="h-5 w-5 text-amber-500" /> Reminders
                                 </h3>
                             </div>
@@ -933,17 +934,17 @@ export default function LeadDetailPage() {
                             <div className="space-y-4">
                                 {lead.tasks?.flatMap((t: any) => t.reminders || []).length > 0 ? (
                                     lead.tasks.flatMap((t: any) => t.reminders || []).map((reminder: any) => (
-                                        <div key={reminder.id} className="flex items-center justify-between p-4 rounded-3xl border border-gray-50 bg-white hover:bg-gray-50/50 transition-colors">
+                                        <div key={reminder.id} className="flex items-center justify-between p-4 rounded-3xl border border-border bg-card hover:bg-muted/50 transition-colors">
                                             <div className="flex items-center gap-4">
-                                                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${new Date(reminder.remindAt) < new Date() ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-500'
+                                                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${new Date(reminder.remindAt) < new Date() ? 'bg-red-500/10 text-red-500' : 'bg-amber-500/10 text-amber-500'
                                                     }`}>
                                                     <Bell className="h-5 w-5" />
                                                 </div>
                                                 <div>
-                                                    <p className="font-bold text-gray-900 text-sm">
+                                                    <p className="font-bold text-foreground text-sm">
                                                         {new Date(reminder.remindAt).toLocaleString()}
                                                     </p>
-                                                    <p className="text-xs text-gray-400">
+                                                    <p className="text-xs text-muted-foreground">
                                                         Task: {lead.tasks.find((t: any) => t.reminders?.some((r: any) => r.id === reminder.id))?.title || "Unknown Task"}
                                                     </p>
                                                 </div>
@@ -952,15 +953,15 @@ export default function LeadDetailPage() {
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="h-8 w-8 rounded-xl hover:bg-gray-100"
+                                                    className="h-8 w-8 rounded-xl hover:bg-muted"
                                                     onClick={() => openEditReminder(reminder)}
                                                 >
-                                                    <Pencil className="h-3.5 w-3.5 text-gray-500" />
+                                                    <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
                                                 </Button>
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    className="h-8 w-8 rounded-xl hover:bg-red-50 text-red-500"
+                                                    className="h-8 w-8 rounded-xl hover:bg-red-500/10 text-red-500"
                                                     onClick={() => handleDeleteReminder(reminder.id)}
                                                 >
                                                     <MoreHorizontal className="h-3.5 w-3.5 rotate-90" />
@@ -969,7 +970,7 @@ export default function LeadDetailPage() {
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+                                    <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
                                         <Bell className="h-12 w-12 mb-2 opacity-20" />
                                         <p className="text-sm italic">No reminders set</p>
                                     </div>
@@ -980,10 +981,10 @@ export default function LeadDetailPage() {
 
 
                     {activeTab === "notes" && (
-                        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col h-[500px]">
-                            <div className="p-4 border-b border-gray-50 flex items-center justify-between bg-gray-50/30">
-                                <h3 className="font-bold text-gray-800">Internal Notes</h3>
-                                <Badge className="bg-gray-200 text-gray-600 hover:bg-gray-200">
+                        <div className="bg-card rounded-3xl border border-border shadow-sm overflow-hidden flex flex-col h-[500px]">
+                            <div className="p-4 border-b border-border flex items-center justify-between bg-muted/30">
+                                <h3 className="font-bold text-foreground">Internal Notes</h3>
+                                <Badge className="bg-muted text-muted-foreground hover:bg-muted">
                                     {lead.activities?.filter((a: any) => a.type === 'NOTE').length || 0} Notes
                                 </Badge>
                             </div>
@@ -993,14 +994,14 @@ export default function LeadDetailPage() {
                                         .filter((a: any) => a.type === 'NOTE')
                                         .map((note: any, idx: number) => (
                                             <div key={idx} className="flex gap-3 group">
-                                                <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-[10px] font-bold shrink-0">
+                                                <div className="w-8 h-8 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center text-[10px] font-bold shrink-0">
                                                     {note.user?.name?.charAt(0) || 'U'}
                                                 </div>
-                                                <div className="bg-gray-50 p-4 rounded-2xl rounded-tl-none flex-1">
+                                                <div className="bg-muted/50 p-4 rounded-2xl rounded-tl-none flex-1">
                                                     <div className="flex justify-between items-center mb-1">
-                                                        <span className="text-xs font-bold text-gray-900">{note.user?.name || 'User'}</span>
+                                                        <span className="text-xs font-bold text-foreground">{note.user?.name || 'User'}</span>
                                                         <div className="flex items-center gap-2">
-                                                            <span className="text-[10px] text-gray-400">{formatRelativeTime(note.createdAt)}</span>
+                                                            <span className="text-[10px] text-muted-foreground">{formatRelativeTime(note.createdAt)}</span>
                                                             {session?.user?.id === note.userId && (
                                                                 <>
                                                                     <Button
@@ -1015,7 +1016,7 @@ export default function LeadDetailPage() {
                                                                         <Button
                                                                             variant="ghost"
                                                                             size="icon"
-                                                                            className="h-6 w-6 rounded-lg text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                            className="h-6 w-6 rounded-lg text-red-500 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-opacity"
                                                                             onClick={() => handleDeleteActivity(note.id)}
                                                                         >
                                                                             <Pencil className="h-3 w-3" />
@@ -1025,19 +1026,20 @@ export default function LeadDetailPage() {
                                                             )}
                                                         </div>
                                                     </div>
-                                                    <p className="text-sm text-gray-600 leading-relaxed">{note.content}</p>
+                                                    <p className="text-sm text-muted-foreground leading-relaxed">{note.content}</p>
                                                 </div>
                                             </div>
                                         ))
                                 ) : (
-                                    <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                                         <MessageSquare className="h-10 w-10 mb-2 opacity-20" />
                                         <p className="text-sm italic">No notes added yet</p>
                                     </div>
                                 )}
                             </div>
-                            <div className="p-4 border-t border-gray-50 bg-gray-50/30">
+                            <div className="p-4 border-t border-border bg-muted/30">
                                 <form onSubmit={(e: any) => {
+                                    // ...
                                     e.preventDefault();
                                     const content = e.target.note.value;
                                     if (content) {
@@ -1048,7 +1050,7 @@ export default function LeadDetailPage() {
                                     <textarea
                                         name="note"
                                         placeholder="Add a note..."
-                                        className="flex-1 bg-white border border-gray-200 rounded-2xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 resize-none h-12"
+                                        className="flex-1 bg-card border border-border rounded-2xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none h-12"
                                     />
                                     <Button type="submit" className="rounded-2xl h-12 w-12 bg-blue-600 hover:bg-blue-700" size="icon">
                                         <Zap className="h-4 w-4 text-white" />
@@ -1059,12 +1061,12 @@ export default function LeadDetailPage() {
                     )}
 
                     {activeTab === "activity" && (
-                        <div className="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
+                        <div className="bg-card rounded-3xl p-6 border border-border shadow-sm">
                             <div className="flex items-center justify-between mb-8">
-                                <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                                <h3 className="font-bold text-foreground flex items-center gap-2">
                                     <History className="h-5 w-5 text-purple-500" /> Activity Timeline
                                 </h3>
-                                <Badge className="bg-purple-100 text-purple-700 hover:bg-purple-100">
+                                <Badge className="bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500/20">
                                     {lead.activities?.length || 0} Events
                                 </Badge>
                             </div>
@@ -1072,12 +1074,12 @@ export default function LeadDetailPage() {
                             <div className="space-y-4">
                                 {lead.activities && lead.activities.length > 0 ? (
                                     lead.activities.map((act: any, idx: number) => (
-                                        <div key={idx} className="flex items-start gap-4 p-4 rounded-3xl border border-gray-50 bg-white hover:bg-gray-50/50 transition-colors group">
-                                            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${act.type === 'CALL' ? 'bg-emerald-50 text-emerald-500' :
-                                                act.type === 'WHATSAPP' ? 'bg-green-50 text-green-500' :
-                                                    act.type === 'EMAIL' ? 'bg-blue-50 text-blue-500' :
-                                                        act.type === 'NOTE' ? 'bg-purple-50 text-purple-500' :
-                                                            'bg-gray-50 text-gray-500'
+                                        <div key={idx} className="flex items-start gap-4 p-4 rounded-3xl border border-border bg-card hover:bg-muted/50 transition-colors group">
+                                            <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${act.type === 'CALL' ? 'bg-emerald-500/10 text-emerald-500' :
+                                                act.type === 'WHATSAPP' ? 'bg-green-500/10 text-green-500' :
+                                                    act.type === 'EMAIL' ? 'bg-blue-500/10 text-blue-500' :
+                                                        act.type === 'NOTE' ? 'bg-purple-500/10 text-purple-500' :
+                                                            'bg-muted text-muted-foreground'
                                                 }`}>
                                                 {act.type === 'CALL' && <Phone className="h-5 w-5" />}
                                                 {act.type === 'WHATSAPP' && <MessageSquare className="h-5 w-5" />}
@@ -1087,13 +1089,13 @@ export default function LeadDetailPage() {
                                             </div>
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2 mb-1">
-                                                    <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-tighter rounded-full">
+                                                    <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-tighter rounded-full border-border">
                                                         {act.type.replace('_', ' ')}
                                                     </Badge>
-                                                    <span className="text-xs text-gray-400">{formatRelativeTime(act.createdAt)}</span>
+                                                    <span className="text-xs text-muted-foreground">{formatRelativeTime(act.createdAt)}</span>
                                                 </div>
-                                                <p className="text-sm text-gray-600">{act.content}</p>
-                                                <p className="text-xs text-gray-400 mt-1">by {act.user?.name || 'System'}</p>
+                                                <p className="text-sm text-foreground/80">{act.content}</p>
+                                                <p className="text-xs text-muted-foreground mt-1">by {act.user?.name || 'System'}</p>
                                             </div>
                                             {/* Edit/Delete buttons for activities */}
                                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -1101,7 +1103,7 @@ export default function LeadDetailPage() {
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
-                                                        className="rounded-xl h-8 w-8 text-blue-500 hover:bg-blue-50"
+                                                        className="rounded-xl h-8 w-8 text-blue-500 hover:bg-blue-500/10"
                                                         onClick={() => setEditingItem(act)}
                                                     >
                                                         <Pencil className="h-3.5 w-3.5" />
@@ -1111,7 +1113,7 @@ export default function LeadDetailPage() {
                                                     <Button
                                                         variant="ghost"
                                                         size="icon"
-                                                        className="rounded-xl h-8 w-8 text-red-500 hover:bg-red-50"
+                                                        className="rounded-xl h-8 w-8 text-red-500 hover:bg-red-500/10"
                                                         onClick={() => handleDeleteActivity(act.id)}
                                                     >
                                                         <Pencil className="h-3.5 w-3.5" />
@@ -1121,7 +1123,7 @@ export default function LeadDetailPage() {
                                         </div>
                                     ))
                                 ) : (
-                                    <div className="flex flex-col items-center justify-center py-10 text-gray-400">
+                                    <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
                                         <History className="h-12 w-12 mb-2 opacity-20" />
                                         <p className="text-sm italic">No activity found</p>
                                     </div>
@@ -1158,8 +1160,8 @@ export default function LeadDetailPage() {
                         <div className="space-y-4 py-4">
                             <div className="space-y-2">
                                 <Label htmlFor="file">Select File</Label>
-                                <Input id="file" name="file" type="file" required accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" />
-                                <p className="text-xs text-gray-500">PDF, DOC, or Image files</p>
+                                <Input id="file" name="file" type="file" required accept=".pdf,.doc,.docx,.png,.jpg,.jpeg" className="bg-card border-border" />
+                                <p className="text-xs text-muted-foreground">PDF, DOC, or Image files</p>
                             </div>
                         </div>
                         <DialogFooter>
@@ -1184,7 +1186,7 @@ export default function LeadDetailPage() {
                         <div className="space-y-4 py-4">
                             <div className="space-y-2">
                                 <Label>Task</Label>
-                                <p className="text-sm font-medium text-gray-700">
+                                <p className="text-sm font-medium text-foreground">
                                     {activeTaskForReminder?.title ||
                                         (editingReminder && lead.tasks?.find((t: any) => t.reminders?.some((r: any) => r.id === editingReminder.id))?.title) ||
                                         "Unknown Task"}
@@ -1197,6 +1199,7 @@ export default function LeadDetailPage() {
                                     name="remindAt"
                                     type="datetime-local"
                                     required
+                                    className="bg-card border-border"
                                     defaultValue={editingReminder ? new Date(editingReminder.remindAt).toISOString().slice(0, 16) : ""}
                                 />
                             </div>
@@ -1235,7 +1238,7 @@ export default function LeadDetailPage() {
                                     defaultValue={editingItem?.content || ''}
                                     required
                                     rows={4}
-                                    className="w-full bg-white border border-gray-200 rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-100 resize-none"
+                                    className="w-full bg-card border border-border rounded-xl px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
                                 />
                             </div>
                         </div>

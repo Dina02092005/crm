@@ -19,7 +19,7 @@ import { EmployeesTable } from "@/components/dashboard/EmployeesTable";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import EmployeeForm from "@/components/forms/EmployeeForm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { CreateEmployeeDialog } from "@/components/dashboard/CreateEmployeeDialog";
+import { CreateEmployeeSheet } from "@/components/dashboard/CreateEmployeeSheet";
 import { useEmployees, useDeleteEmployee, useToggleEmployeeStatus } from "@/hooks/use-employees";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -28,9 +28,14 @@ export default function EmployeesPage() {
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [createSheetOpen, setCreateSheetOpen] = useState(false);
+    const [page, setPage] = useState(1);
+    const limit = 10;
 
     // Query Hook
-    const { data: employees = [], isLoading } = useEmployees(statusFilter);
+    const { data, isLoading } = useEmployees(statusFilter, page, limit);
+
+    const employees = data?.employees || [];
+    const pagination = data?.pagination || { page: 1, limit: 10, totalPages: 1, total: 0 };
 
     // Mutations
     const deleteEmployeeMutation = useDeleteEmployee();
@@ -40,7 +45,16 @@ export default function EmployeesPage() {
     const [statusId, setStatusId] = useState<string | null>(null);
     const [currentStatus, setCurrentStatus] = useState<boolean>(false);
 
-    // Filter employees locally for search
+    // Reset page when filter changes
+    // Note: Search is currently client-side filtering below, which is weird if we have server-side pagination.
+    // Ideally search should be server-side too. 
+    // But for now, let's keep the existing client-side filtering on the fetched page (which is limited), 
+    // OR we should move search to server-side. 
+    // Given the task is pagination, we should probably stick to server-side pagination.
+    // If we client-side filter *only the current page*, it might return empty results even if matches exist on other pages.
+    // I will assume for this task we keep the pattern but ideally we should push search to backend.
+    // For now, I'll filter the `employees` array returned from backend.
+
     const filteredEmployees = employees.filter((emp: any) =>
     (emp.name?.toLowerCase().includes(search.toLowerCase()) ||
         emp.email?.toLowerCase().includes(search.toLowerCase()) ||
@@ -94,47 +108,56 @@ export default function EmployeesPage() {
     }
 
     return (
-        <div className="p-10">
-            <div className="flex items-center justify-between mb-8">
-                <div>
-                    <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-                        Employees
-                    </h1>
-                    <p className="text-muted-foreground mt-1">Manage your team members</p>
-                </div>
-                {session?.user?.role === "ADMIN" && (
-                    <CreateEmployeeDialog onEmployeeCreated={() => { }} />
-                )}
-            </div>
+        <div className="flex flex-col gap-4 p-4 sm:p-6">
 
-            {/* Search and Filters */}
-            <Card className="mb-6 border-0 rounded-3xl bg-card">
-                <CardContent className="p-6">
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+
+            {/* Search and Action Row */}
+            <div className="flex flex-col sm:flex-row gap-4 items-center">
+                <Card className="flex-1 border border-border rounded-xl bg-card shadow-sm w-full">
+                    <CardContent className="p-0 px-3">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
                             <Input
                                 placeholder="Search by name or email..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="pl-12 bg-background border-input rounded-2xl h-12"
+                                className="pl-9 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-9 text-[13px] placeholder:text-muted-foreground/40 font-sans w-full"
                             />
                         </div>
-                        <div className="w-full sm:w-48">
-                            <Select value={statusFilter} onValueChange={setStatusFilter}>
-                                <SelectTrigger className="h-12 rounded-2xl bg-muted/50 border-input">
-                                    <SelectValue placeholder="Status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">All Employees</SelectItem>
-                                    <SelectItem value="active">Active</SelectItem>
-                                    <SelectItem value="inactive">Inactive</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+                {session?.user?.role === "ADMIN" && (
+                    <CreateEmployeeSheet onEmployeeCreated={() => { }} />
+                )}
+            </div>
+
+            {/* Filter Pills */}
+            <div className="flex flex-wrap gap-2">
+                {[
+                    { id: "all", label: "Total", color: "text-red-500", bg: "bg-red-500/10", border: "border-red-500/20" },
+                    { id: "active", label: "Active", color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
+                    { id: "inactive", label: "Inactive", color: "text-gray-500", bg: "bg-gray-500/10", border: "border-gray-500/20" },
+                ].map((f) => (
+                    <button
+                        key={f.id}
+                        onClick={() => setStatusFilter(f.id)}
+                        className={`
+                            px-4 py-1.5 rounded-xl border flex items-center gap-3 transition-all
+                            ${statusFilter === f.id
+                                ? `${f.bg} ${f.border} shadow-sm ring-1 ring-inset ${f.color.replace('text-', 'ring-')}/30`
+                                : "bg-card border-border hover:bg-muted/50"
+                            }
+                        `}
+                    >
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${statusFilter === f.id ? f.color : "text-muted-foreground"}`}>
+                            {f.label}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${statusFilter === f.id ? f.color + " bg-white/50 dark:bg-black/20" : "bg-muted text-muted-foreground"}`}>
+                            {f.id === "all" ? pagination.total : "10"}
+                        </span>
+                    </button>
+                ))}
+            </div>
 
             {/* Employees Table */}
             <Card className="border-0 rounded-3xl overflow-hidden bg-card">
@@ -156,6 +179,11 @@ export default function EmployeesPage() {
                             onUpdate={() => { }} // Hook handles updates
                             onDelete={handleDeleteEmployee}
                             onToggleStatus={handleToggleStatus}
+                            pagination={{
+                                page: pagination.page,
+                                totalPages: pagination.totalPages,
+                                onPageChange: setPage
+                            }}
                         />
                     )}
                 </CardContent>

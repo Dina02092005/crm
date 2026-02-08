@@ -6,7 +6,7 @@ import { Search } from "lucide-react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useLeads } from "@/hooks/use-leads";
 import { LeadsTable } from "@/components/dashboard/LeadsTable";
-import { CreateLeadDialog } from "@/components/dashboard/CreateLeadDialog";
+import { CreateLeadSheet } from "@/components/dashboard/CreateLeadSheet";
 import { DashboardHeader } from "@/components/dashboard/DashboardHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -36,48 +36,63 @@ export default function LeadsPage() {
     }, [debouncedSearch, status]);
 
     return (
-        <div className="flex flex-col gap-6 p-4 sm:p-8">
+        <div className="flex flex-col gap-4 p-4 sm:p-6">
 
-            {/* Search and Filter Bar */}
-            <Card className="border-0 rounded-3xl bg-card">
-                <CardContent className="p-6">
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <div className="relative flex-1">
-                            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+            {/* Search and Action Row */}
+            <div className="flex flex-col sm:flex-row gap-4 items-center">
+                <Card className="flex-1 border border-border rounded-xl bg-card shadow-sm w-full">
+                    <CardContent className="p-0 px-3">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
                             <Input
                                 placeholder="Search by name, email, or phone..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="pl-12 bg-muted/50 border-input rounded-2xl h-12 focus-visible:ring-offset-0 focus-visible:ring-1 focus-visible:ring-ring"
+                                className="pl-9 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-9 text-[13px] placeholder:text-muted-foreground/40 font-sans w-full"
                             />
                         </div>
-                        <div className="w-full sm:w-48">
-                            <select
-                                value={status}
-                                onChange={(e) => setStatus(e.target.value)}
-                                className="w-full h-12 px-4 bg-muted/50 border border-input rounded-2xl focus:outline-none focus:ring-1 focus:ring-ring text-foreground"
-                            >
-                                <option value="ALL">All Status</option>
-                                <option value="NEW">New</option>
-                                <option value="ASSIGNED">Assigned</option>
-                                <option value="IN_PROGRESS">In Progress</option>
-                                <option value="FOLLOW_UP">Follow Up</option>
-                                <option value="CONVERTED">Converted</option>
-                                <option value="LOST">Lost</option>
-                            </select>
-                        </div>
-                    </div>
-                </CardContent>
-            </Card>
+                    </CardContent>
+                </Card>
+                <CreateLeadSheet onLeadCreated={() => { }} />
+            </div>
+
+            {/* Filter Pills */}
+            <div className="flex flex-wrap gap-2">
+                {[
+                    { id: "ALL", label: "Total", color: "text-red-500", bg: "bg-red-500/10", border: "border-red-500/20" },
+                    { id: "NEW", label: "New", color: "text-cyan-500", bg: "bg-cyan-500/10", border: "border-cyan-500/20" },
+                    { id: "ASSIGNED", label: "Assigned", color: "text-blue-500", bg: "bg-blue-500/10", border: "border-blue-500/20" },
+                    { id: "IN_PROGRESS", label: "In Progress", color: "text-indigo-500", bg: "bg-indigo-500/10", border: "border-indigo-500/20" },
+                    { id: "FOLLOW_UP", label: "Follow Up", color: "text-orange-500", bg: "bg-orange-500/10", border: "border-orange-500/20" },
+                    { id: "CONVERTED", label: "Converted", color: "text-emerald-500", bg: "bg-emerald-500/10", border: "border-emerald-500/20" },
+                    { id: "LOST", label: "Lost", color: "text-gray-500", bg: "bg-gray-500/10", border: "border-gray-500/20" },
+                ].map((f) => (
+                    <button
+                        key={f.id}
+                        onClick={() => setStatus(f.id)}
+                        className={`
+                            px-4 py-1.5 rounded-xl border flex items-center gap-3 transition-all
+                            ${status === f.id
+                                ? `${f.bg} ${f.border} shadow-sm ring-1 ring-inset ${f.color.replace('text-', 'ring-')}/30`
+                                : "bg-card border-border hover:bg-muted/50"
+                            }
+                        `}
+                    >
+                        <span className={`text-[10px] font-bold uppercase tracking-wider ${status === f.id ? f.color : "text-muted-foreground"}`}>
+                            {f.label}
+                        </span>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${status === f.id ? f.color + " bg-white/50 dark:bg-black/20" : "bg-muted text-muted-foreground"}`}>
+                            {f.id === "ALL" ? totalLeads : "10"}
+                        </span>
+                    </button>
+                ))}
+            </div>
 
             <Card className="border-0 rounded-3xl overflow-hidden bg-card">
                 <CardContent className="p-6">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
-                        <div>
-                            <h2 className="text-xl font-bold text-foreground">All Leads</h2>
-                            <p className="text-sm text-muted-foreground">{totalLeads} leads found</p>
-                        </div>
-                        <CreateLeadDialog onLeadCreated={() => { }} />
+                    <div className="mb-6">
+                        <h2 className="text-xl font-bold text-foreground">All Leads</h2>
+                        <p className="text-sm text-muted-foreground">{totalLeads} leads found</p>
                     </div>
 
                     {isLoading ? (

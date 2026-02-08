@@ -12,20 +12,22 @@ interface Employee extends User {
     // any extra fields
 }
 
-export function useEmployees(status: string = "active") {
+export const useEmployees = (status: string = "all", page: number = 1, limit: number = 10) => {
     return useQuery({
-        queryKey: ["employees", { status }],
+        queryKey: ["employees", status, page, limit],
         queryFn: async () => {
-            const params = new URLSearchParams();
-            if (status !== "all") params.append("status", status);
-            // Default limit might be needed or supported by API
-            params.append("limit", "100");
-
-            const { data } = await axios.get<Employee[]>(`/api/employees?${params.toString()}`);
+            const params = new URLSearchParams({
+                status,
+                page: page.toString(),
+                limit: limit.toString(),
+            });
+            const { data } = await axios.get(`/api/employees?${params}`);
+            // If the API returns { employees, pagination }, handle it.
+            // Assuming current API might return array, but we updated api/employees/route.ts to return { employees, pagination }
             return data;
         },
     });
-}
+};
 
 export function useEmployee(id: string) {
     return useQuery({

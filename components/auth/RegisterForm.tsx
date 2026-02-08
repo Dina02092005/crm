@@ -11,6 +11,7 @@ import {
     CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import axios from "axios";
@@ -83,9 +84,8 @@ export function RegisterForm() {
                     </div>
                     <div className="space-y-2">
                         <Label htmlFor="reg-password">Password</Label>
-                        <Input
+                        <PasswordInput
                             id="reg-password"
-                            type="password"
                             placeholder="At least 8 characters"
                             required
                             value={formData.password}

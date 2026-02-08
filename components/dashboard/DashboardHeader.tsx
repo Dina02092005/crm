@@ -41,13 +41,12 @@ export function DashboardHeader({ title, description, action }: DashboardHeaderP
         if (pathname.includes("/leads")) return "Lead Management";
         if (pathname.includes("/employees")) return "Employees";
         if (pathname.includes("/customers")) return "Customers";
-        if (pathname.includes("/drivers-list")) return "Drivers";
         if (pathname.includes("/roles")) return "Roles";
         return `${getGreeting()}, ${session?.user?.name || 'User'}`;
     };
 
     return (
-        <header className="flex items-center justify-between px-2 py-4 mb-6 border-b border-border sticky top-0 z-50 bg-background">
+        <header className="flex items-center justify-between px-2 py-4 mb-6 border-b border-border sticky top-0 z-50 bg-background dark:bg-sidebar">
             {/* Greeting */}
             <div className="min-w-[180px]">
                 <h2 className="font-bold text-[18px] leading-none tracking-normal font-sans text-foreground">

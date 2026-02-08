@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { useState, useEffect } from 'react';
 import L from 'leaflet';
-import { FaMapMarkerAlt, FaCar, FaUser } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaUser } from 'react-icons/fa';
 
 // Fix for default marker icon in Next.js
 if (typeof window !== 'undefined') {
@@ -30,8 +30,6 @@ const createCustomIcon = (color: string) => {
 // Sample locations
 const locations = [
     { id: 1, name: 'Pickup Location', position: [28.6139, 77.2090] as [number, number], type: 'pickup' },
-    { id: 2, name: 'Driver 1', position: [28.6189, 77.2140] as [number, number], type: 'driver' },
-    { id: 3, name: 'Driver 2', position: [28.6089, 77.2040] as [number, number], type: 'driver' },
     { id: 4, name: 'Drop Location', position: [28.6239, 77.2190] as [number, number], type: 'dropoff' },
 ];
 
@@ -66,7 +64,6 @@ export default function LeafletMapComponent() {
                             onClick={() => setCenter(location.position)}
                         >
                             {location.type === 'pickup' && <FaUser className="mr-2" />}
-                            {location.type === 'driver' && <FaCar className="mr-2" />}
                             {location.type === 'dropoff' && <FaMapMarkerAlt className="mr-2" />}
                             {location.name}
                         </Button>
@@ -90,9 +87,7 @@ export default function LeafletMapComponent() {
 
                         {locations.map((location) => {
                             const iconColor =
-                                location.type === 'pickup' ? '#3b82f6' :
-                                    location.type === 'driver' ? '#10b981' :
-                                        '#ef4444';
+                                location.type === 'pickup' ? '#3b82f6' : '#ef4444';
 
                             return (
                                 <Marker

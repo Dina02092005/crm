@@ -170,107 +170,104 @@ export default function EmployeeDetailPage() {
     if (!employee) return null;
 
     return (
-        <div className="p-10">
-            <div className="flex items-center gap-4 mb-6">
+        <div className="flex flex-col gap-6 p-4 sm:p-6">
+            <div className="flex items-center gap-4">
                 <Button
-                    variant="outline"
+                    variant="ghost"
                     size="icon"
-                    className="rounded-full h-10 w-10"
+                    className="rounded-xl h-8 w-8 hover:bg-muted"
                     onClick={() => router.back()}
                 >
-                    <ArrowLeft className="h-5 w-5 text-gray-500" />
+                    <ArrowLeft className="h-4 w-4 text-muted-foreground" />
                 </Button>
-                <h1 className="text-3xl font-bold text-gray-800">Employee Details</h1>
+                <div>
+                    <h1 className="text-xl font-bold text-foreground">Employee Details</h1>
+                    <p className="text-xs text-muted-foreground">Manage and view employee information</p>
+                </div>
             </div>
 
             <div className="grid grid-cols-3 gap-6">
                 {/* Employee Profile Card */}
                 <div className="col-span-1 space-y-6">
-                    <Card className="border-0 shadow-sm rounded-3xl overflow-hidden">
-                        <CardHeader className="bg-gradient-to-b from-cyan-500 to-cyan-600 text-white p-6 relative">
-                            <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center text-2xl font-bold">
-                                    {employee.name.charAt(0).toUpperCase()}
+                    <Card className="border border-border rounded-2xl bg-card shadow-none overflow-hidden">
+                        <CardHeader className="pb-3 border-b border-border/50">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-12 h-12 rounded-xl bg-cyan-500/10 flex items-center justify-center text-cyan-600 text-xl font-bold">
+                                        {employee.name.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div className="space-y-0.5">
+                                        <CardTitle className="text-lg font-bold">{employee.name}</CardTitle>
+                                        <p className="text-[10px] font-bold text-cyan-600 uppercase tracking-wider">{employee.role}</p>
+                                    </div>
                                 </div>
-                                <div>
-                                    <CardTitle className="text-2xl font-bold">{employee.name}</CardTitle>
-                                    <Badge
-                                        variant="outline"
-                                        className="mt-2 border-white/50 text-white"
-                                    >
-                                        {employee.role}
-                                    </Badge>
-                                </div>
+                                <Badge
+                                    variant="secondary"
+                                    className={`text-[10px] py-0 px-2 rounded-md ${employee.isActive
+                                        ? "bg-green-500/10 text-green-600 border-0"
+                                        : "bg-muted text-muted-foreground border-0"
+                                        }`}
+                                >
+                                    {employee.isActive ? "Active" : "Inactive"}
+                                </Badge>
                             </div>
-                            <Badge
-                                variant={employee.isActive ? "default" : "secondary"}
-                                className={`absolute top-4 right-4 ${employee.isActive
-                                    ? "bg-green-100 text-green-700"
-                                    : "bg-gray-100 text-gray-700"
-                                    }`}
-                            >
-                                {employee.isActive ? "Active" : "Inactive"}
-                            </Badge>
                         </CardHeader>
-                        <CardContent className="p-6 space-y-4">
-                            <div className="flex items-center gap-3">
-                                <Mail className="h-5 w-5 text-gray-400" />
-                                <div>
-                                    <p className="font-medium text-sm text-gray-600">Email</p>
-                                    <p className="font-bold text-gray-900">{employee.email}</p>
-                                </div>
-                            </div>
-                            {employee.employeeProfile?.phone && (
-                                <div className="flex items-center gap-3">
-                                    <Phone className="h-5 w-5 text-gray-400" />
-                                    <div>
-                                        <p className="font-medium text-sm text-gray-600">Phone</p>
-                                        <p className="font-bold text-gray-900">
-                                            {employee.employeeProfile.phone}
-                                        </p>
+                        <CardContent className="p-5 space-y-5">
+                            <div className="grid gap-4">
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Contact Information</p>
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-muted-foreground">Email</span>
+                                            <span className="font-semibold">{employee.email}</span>
+                                        </div>
+                                        {employee.employeeProfile?.phone && (
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-muted-foreground">Phone</span>
+                                                <span className="font-semibold">{employee.employeeProfile.phone}</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-                            )}
-                            {employee.employeeProfile?.department && (
-                                <div className="flex items-center gap-3">
-                                    <Briefcase className="h-5 w-5 text-gray-400" />
-                                    <div>
-                                        <p className="font-medium text-sm text-gray-600">Department</p>
-                                        <p className="font-bold text-gray-900">
-                                            {employee.employeeProfile.department}
-                                        </p>
+
+                                <div className="space-y-1">
+                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Employment Info</p>
+                                    <div className="space-y-2">
+                                        {employee.employeeProfile?.department && (
+                                            <div className="flex items-center justify-between text-sm">
+                                                <span className="text-muted-foreground">Department</span>
+                                                <span className="font-semibold">{employee.employeeProfile.department}</span>
+                                            </div>
+                                        )}
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-muted-foreground">Joined</span>
+                                            <span className="font-semibold">
+                                                {new Date(employee.createdAt).toLocaleDateString()}
+                                            </span>
+                                        </div>
                                     </div>
-                                </div>
-                            )}
-                            <div className="flex items-center gap-3">
-                                <Calendar className="h-5 w-5 text-gray-400" />
-                                <div>
-                                    <p className="font-medium text-sm text-gray-600">Joined</p>
-                                    <p className="font-bold text-gray-900">
-                                        {new Date(employee.createdAt).toLocaleDateString()}
-                                    </p>
                                 </div>
                             </div>
 
-                            <div className="pt-4 border-t space-y-2">
+                            <div className="pt-4 border-t border-border/50 flex flex-col gap-2">
                                 <Button
-                                    className="w-full bg-cyan-600 hover:bg-cyan-700 rounded-xl"
+                                    className="w-full bg-cyan-600 hover:bg-cyan-700 rounded-xl h-9 text-sm"
                                     onClick={() => setShowEditDialog(true)}
                                     disabled={
                                         session?.user?.role !== "ADMIN" &&
                                         session?.user?.id !== employee.id
                                     }
                                 >
-                                    <Pencil className="h-4 w-4 mr-2" />
+                                    <Pencil className="h-3.5 w-3.5 mr-2" />
                                     Edit Profile
                                 </Button>
                                 {session?.user?.role === "ADMIN" && employee.isActive && (
                                     <Button
-                                        variant="outline"
-                                        className="w-full border-red-200 text-red-600 hover:bg-red-50 rounded-xl"
+                                        variant="ghost"
+                                        className="w-full text-destructive hover:text-destructive hover:bg-destructive/5 rounded-xl h-9 text-sm"
                                         onClick={handleDeactivateEmployee}
                                     >
-                                        <UserX className="h-4 w-4 mr-2" />
+                                        <UserX className="h-3.5 w-3.5 mr-2" />
                                         Deactivate Employee
                                     </Button>
                                 )}
@@ -279,25 +276,25 @@ export default function EmployeeDetailPage() {
                     </Card>
 
                     {/* Stats Card */}
-                    <Card className="border-0 shadow-sm rounded-3xl">
-                        <CardHeader className="border-b">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                                <TrendingUp className="h-5 w-5" />
-                                Statistics
+                    <Card className="border border-border rounded-2xl bg-card shadow-none">
+                        <CardHeader className="pb-2 border-b border-border/50">
+                            <CardTitle className="text-xs font-bold flex items-center gap-2">
+                                <TrendingUp className="h-3.5 w-3.5 text-cyan-600" />
+                                Performance Insight
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-6 space-y-4">
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm text-gray-600">Assigned Leads</span>
-                                <span className="text-2xl font-bold text-cyan-600">
+                        <CardContent className="p-4 grid grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase">Leads</span>
+                                <p className="text-xl font-bold text-foreground">
                                     {employee.assignedLeads?.length || 0}
-                                </span>
+                                </p>
                             </div>
-                            <div className="flex items-center justify-between">
-                                <span className="text-sm text-gray-600">Total Activities</span>
-                                <span className="text-2xl font-bold text-blue-600">
+                            <div className="space-y-1 border-l pl-4 border-border/50">
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase">Activities</span>
+                                <p className="text-xl font-bold text-foreground">
                                     {employee.activities?.length || 0}
-                                </span>
+                                </p>
                             </div>
                         </CardContent>
                     </Card>
@@ -305,60 +302,57 @@ export default function EmployeeDetailPage() {
 
                 {/* Assigned Leads */}
                 <div className="col-span-2">
-                    <Card className="border-0 shadow-sm rounded-3xl">
-                        <CardHeader className="border-b">
-                            <CardTitle className="flex items-center gap-2">
-                                <UserCheck className="h-5 w-5" />
-                                Assigned Leads
+                    <Card className="border border-border rounded-2xl bg-card shadow-none overflow-hidden h-full">
+                        <CardHeader className="pb-2 border-b border-border/50">
+                            <CardTitle className="text-sm font-bold flex items-center gap-2">
+                                <UserCheck className="h-4 w-4 text-cyan-600" />
+                                Current Assignments
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-6">
+                        <CardContent className="p-0">
                             {employee.assignedLeads && employee.assignedLeads.length > 0 ? (
-                                <div className="space-y-3">
+                                <div className="divide-y divide-border/50">
                                     {employee.assignedLeads.map((assignment: any) => (
                                         <div
                                             key={assignment.id}
-                                            className="flex items-center justify-between p-4 bg-gray-50 rounded-2xl hover:bg-gray-100 transition-colors cursor-pointer"
+                                            className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors cursor-pointer"
                                             onClick={() => router.push(`/leads/${assignment.lead.id}`)}
                                         >
                                             <div className="flex items-center gap-3">
-                                                <div className="w-10 h-10 rounded-full bg-cyan-100 text-cyan-600 flex items-center justify-center font-bold">
+                                                <div className="w-9 h-9 rounded-lg bg-cyan-100 text-cyan-600 flex items-center justify-center font-bold text-xs">
                                                     {assignment.lead.name.charAt(0).toUpperCase()}
                                                 </div>
                                                 <div>
-                                                    <p className="font-bold text-gray-900">
+                                                    <p className="text-sm font-bold text-foreground">
                                                         {assignment.lead.name}
                                                     </p>
-                                                    <p className="text-xs text-gray-500">
-                                                        Assigned{" "}
-                                                        {new Date(assignment.assignedAt).toLocaleDateString()}
+                                                    <p className="text-[10px] text-muted-foreground">
+                                                        Since {new Date(assignment.assignedAt).toLocaleDateString()}
                                                     </p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <Badge
-                                                    variant="outline"
-                                                    className={
-                                                        assignment.lead.status === "NEW"
-                                                            ? "bg-blue-50 text-blue-700"
-                                                            : assignment.lead.status === "IN_PROGRESS"
-                                                                ? "bg-yellow-50 text-yellow-700"
-                                                                : assignment.lead.status === "CONVERTED"
-                                                                    ? "bg-green-50 text-green-700"
-                                                                    : "bg-gray-50 text-gray-700"
-                                                    }
+                                                    variant="secondary"
+                                                    className={`text-[9px] font-bold py-0.5 px-1.5 border-0 ${assignment.lead.status === "NEW"
+                                                        ? "bg-blue-500/10 text-blue-600"
+                                                        : assignment.lead.status === "IN_PROGRESS"
+                                                            ? "bg-yellow-500/10 text-yellow-600"
+                                                            : assignment.lead.status === "CONVERTED"
+                                                                ? "bg-green-500/10 text-green-600"
+                                                                : "bg-muted text-muted-foreground"
+                                                        }`}
                                                 >
                                                     {assignment.lead.status}
                                                 </Badge>
                                                 <Badge
-                                                    variant="outline"
-                                                    className={
-                                                        assignment.lead.temperature === "HOT"
-                                                            ? "bg-red-50 text-red-700"
-                                                            : assignment.lead.temperature === "WARM"
-                                                                ? "bg-orange-50 text-orange-700"
-                                                                : "bg-blue-50 text-blue-700"
-                                                    }
+                                                    variant="secondary"
+                                                    className={`text-[9px] font-bold py-0.5 px-1.5 border-0 ${assignment.lead.temperature === "HOT"
+                                                        ? "bg-red-500/10 text-red-600"
+                                                        : assignment.lead.temperature === "WARM"
+                                                            ? "bg-orange-500/10 text-orange-600"
+                                                            : "bg-blue-500/10 text-blue-600"
+                                                        }`}
                                                 >
                                                     {assignment.lead.temperature}
                                                 </Badge>
@@ -367,9 +361,9 @@ export default function EmployeeDetailPage() {
                                     ))}
                                 </div>
                             ) : (
-                                <div className="flex flex-col items-center justify-center py-10 text-gray-400">
-                                    <UserCheck className="h-12 w-12 mb-2 opacity-20" />
-                                    <p className="text-sm italic">No leads assigned</p>
+                                <div className="flex flex-col items-center justify-center py-20 text-muted-foreground/50">
+                                    <UserCheck className="h-10 w-10 mb-3 opacity-10" />
+                                    <p className="text-xs font-medium italic tracking-tight">No leads assigned</p>
                                 </div>
                             )}
                         </CardContent>

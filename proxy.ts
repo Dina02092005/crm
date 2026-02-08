@@ -17,7 +17,6 @@ export const config = {
         "/employees/:path*",
         "/leads/:path*",
         "/settings/:path*",
-        "/drivers-list/:path*",
         "/roles/:path*",
     ],
 };

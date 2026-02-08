@@ -51,26 +51,6 @@ export interface Employee {
     updatedAt?: string;
 }
 
-export interface Driver {
-    id: string;
-    phone: string;
-    email?: string;
-    firstName?: string;
-    lastName?: string;
-    dob?: string;
-    gender?: string;
-    address?: string;
-    licenseNumber?: string;
-    licenseExpiry?: string;
-    vehicleType?: string;
-    vehicleModel?: string;
-    vehiclePlate?: string;
-    vehicleColor?: string;
-    documents?: any;
-    bankAccountDetails?: any;
-    createdAt?: string;
-    updatedAt?: string;
-}
 
 export interface ApiResponse<T = any> {
     status: 'success' | 'error';

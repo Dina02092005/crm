@@ -128,8 +128,8 @@ export function CreateLeadDialog({ onLeadCreated }: { onLeadCreated: () => void 
                                     <Label htmlFor="phone">Phone</Label>
                                     <PhoneInput
                                         value={field.state.value}
-                                        onChange={(phone) => field.handleChange(phone)}
-                                        error={!!field.state.meta.errors}
+                                        onBlur={field.handleBlur}
+                                        onChange={(value) => field.handleChange(value)}
                                     />
                                     {field.state.meta.errors ? (
                                         <p className="text-sm text-red-500">{field.state.meta.errors.join(", ")}</p>

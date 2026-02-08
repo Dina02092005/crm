@@ -1,19 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
     getCustomers, createCustomer, updateCustomer, deleteCustomer,
-    getDrivers, createDriver, updateDriver, deleteDriver,
     getEmployees, createEmployee, updateEmployee, deleteEmployee
 } from '../services/api';
 
 import { toast } from 'sonner';
 
 // Customers
-export const useCustomers = () => {
+export const useCustomers = (page = 1, limit = 10) => {
     return useQuery({
-        queryKey: ['customers'],
+        queryKey: ['customers', page, limit],
         queryFn: async () => {
-            const response = await getCustomers();
-            return response.data;
+            return await getCustomers(page, limit);
         },
     });
 };
@@ -22,8 +20,8 @@ export const useCreateCustomer = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: createCustomer,
-        onSuccess: (response) => {
-            toast.success(response.message);
+        onSuccess: (response: any) => {
+            toast.success(response.message || 'Customer created successfully');
             queryClient.invalidateQueries({ queryKey: ['customers'] });
         },
     });
@@ -33,8 +31,8 @@ export const useUpdateCustomer = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: ({ id, data }: { id: string; data: any }) => updateCustomer(id, data),
-        onSuccess: (response) => {
-            toast.success(response.message);
+        onSuccess: (response: any) => {
+            toast.success(response.message || 'Customer updated successfully');
             queryClient.invalidateQueries({ queryKey: ['customers'] });
         },
     });
@@ -44,20 +42,19 @@ export const useDeleteCustomer = () => {
     const queryClient = useQueryClient();
     return useMutation({
         mutationFn: deleteCustomer,
-        onSuccess: (response) => {
-            toast.success(response.message);
+        onSuccess: (response: any) => {
+            toast.success(response?.message || 'Customer deleted successfully');
             queryClient.invalidateQueries({ queryKey: ['customers'] });
         },
     });
 };
 
 // Employees
-export const useEmployees = () => {
+export const useEmployees = (page = 1, limit = 10) => {
     return useQuery({
-        queryKey: ['employees'],
+        queryKey: ['employees', page, limit],
         queryFn: async () => {
-            const response = await getEmployees();
-            return response.data;
+            return await getEmployees(page, limit);
         },
     });
 };
@@ -92,43 +89,3 @@ export const useDeleteEmployee = () => {
     });
 };
 
-// Drivers
-export const useDrivers = () => {
-    return useQuery({
-        queryKey: ['drivers'],
-        queryFn: async () => {
-            const response = await getDrivers();
-            return response.data;
-        },
-    });
-};
-
-export const useCreateDriver = () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: createDriver,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['drivers'] });
-        },
-    });
-};
-
-export const useUpdateDriver = () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: ({ id, data }: { id: string; data: any }) => updateDriver(id, data),
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['drivers'] });
-        },
-    });
-};
-
-export const useDeleteDriver = () => {
-    const queryClient = useQueryClient();
-    return useMutation({
-        mutationFn: deleteDriver,
-        onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['drivers'] });
-        },
-    });
-};

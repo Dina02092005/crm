@@ -16,18 +16,24 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Eye, Pencil, Trash2, Phone, Mail, Calendar } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import CustomerForm from "@/components/forms/CustomerForm";
 import { Customer } from "@/types/api";
 
 interface CustomersTableProps {
-    data: any[]; // Using any because the API response structure might be slightly different from the strict Type
+    data: Customer[];
     onUpdate: () => void;
     onDelete: (id: string) => void;
+    pagination?: {
+        page: number;
+        totalPages: number;
+        onPageChange: (page: number) => void;
+    }
 }
 
-export function CustomersTable({ data, onUpdate, onDelete }: CustomersTableProps) {
+export function CustomersTable({ data, onUpdate, onDelete, pagination }: CustomersTableProps) {
     const [editSheetOpen, setEditSheetOpen] = useState(false);
     const [editingCustomer, setEditingCustomer] = useState<Customer | undefined>(undefined);
 
@@ -135,6 +141,8 @@ export function CustomersTable({ data, onUpdate, onDelete }: CustomersTableProps
         },
     ];
 
+    const router = useRouter();
+
     const table = useReactTable({
         data,
         columns,
@@ -167,7 +175,8 @@ export function CustomersTable({ data, onUpdate, onDelete }: CustomersTableProps
                         {table.getRowModel().rows.map((row) => (
                             <tr
                                 key={row.id}
-                                className="group hover:bg-muted/50 transition-colors border-b border-border last:border-0"
+                                onClick={() => router.push(`/customers/${row.original.id}`)}
+                                className="group hover:bg-muted/50 transition-colors border-b border-border last:border-0 cursor-pointer"
                             >
                                 {row.getVisibleCells().map((cell, index) => (
                                     <td
@@ -177,6 +186,11 @@ export function CustomersTable({ data, onUpdate, onDelete }: CustomersTableProps
                                             ${index === 0 ? "pl-6" : ""}
                                             ${index === row.getVisibleCells().length - 1 ? "pr-6" : ""}
                                         `}
+                                        onClick={(e) => {
+                                            if ((e.target as HTMLElement).closest('button, a, [role="menuitem"], [role="button"]')) {
+                                                e.stopPropagation();
+                                            }
+                                        }}
                                     >
                                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                     </td>
@@ -186,6 +200,33 @@ export function CustomersTable({ data, onUpdate, onDelete }: CustomersTableProps
                     </tbody>
                 </table>
             </div>
+
+            {/* Pagination Controls */}
+            {pagination && pagination.totalPages > 1 && (
+                <div className="flex items-center justify-end space-x-2 py-4 pr-6 border-t border-gray-100">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => pagination.onPageChange(Math.max(1, pagination.page - 1))}
+                        disabled={pagination.page <= 1}
+                        className="rounded-xl h-8"
+                    >
+                        Previous
+                    </Button>
+                    <div className="text-sm font-medium text-gray-600">
+                        Page {pagination.page} of {pagination.totalPages}
+                    </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => pagination.onPageChange(Math.min(pagination.totalPages, pagination.page + 1))}
+                        disabled={pagination.page >= pagination.totalPages}
+                        className="rounded-xl h-8"
+                    >
+                        Next
+                    </Button>
+                </div>
+            )}
 
             <Sheet open={editSheetOpen} onOpenChange={setEditSheetOpen}>
                 <SheetContent className="overflow-y-auto w-full sm:max-w-sm">

@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { FaGoogle, FaFacebookF } from "react-icons/fa";
 import { toast } from "sonner";
@@ -131,9 +132,8 @@ function LoginFormContent() {
                 Forgot Password?
               </Link>
             </div>
-            <Input
+            <PasswordInput
               id="login-password"
-              type="password"
               placeholder="Enter your password"
               autoComplete="current-password"
               required

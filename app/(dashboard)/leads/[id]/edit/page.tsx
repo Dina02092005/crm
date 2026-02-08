@@ -89,7 +89,7 @@ export default function EditLeadPage() {
                 description={`Updating details for ${formData.name}`}
             />
 
-            <Card className="max-w-2xl mx-auto rounded-3xl shadow-xl border-0 overflow-hidden bg-white">
+            <Card className="max-w-2xl mx-auto rounded-3xl shadow-xl border-0 overflow-hidden bg-card">
                 <CardHeader className="p-8 pb-0">
                     <CardTitle className="text-2xl font-bold">Lead Information</CardTitle>
                 </CardHeader>

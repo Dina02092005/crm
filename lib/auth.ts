@@ -70,21 +70,11 @@ export const authOptions: NextAuthOptions = {
                     });
 
                     if (existingUser) {
-                        return true;
+                        return existingUser.isActive;
                     }
 
-                    await prisma.user.create({
-                        data: {
-                            email: user.email,
-                            name: user.name || 'Unknown',
-                            // Default role, adjust as needed
-                            role: 'EMPLOYEE',
-                            isActive: true,
-                            emailVerified: new Date(),
-                            // No password hash for Google users
-                        },
-                    });
-                    return true;
+                    // Restriction: Only admin-assigned accounts can log in
+                    return false;
                 } catch (error) {
                     console.error('Error in Google signIn callback:', error);
                     return false;

@@ -218,3 +218,4 @@ enum DocumentType {
   ID_PROOF
   OTHER
 }
+
