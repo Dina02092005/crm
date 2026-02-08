@@ -12,6 +12,7 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -125,12 +126,10 @@ export function CreateLeadDialog({ onLeadCreated }: { onLeadCreated: () => void 
                             children={(field) => (
                                 <div className="space-y-2">
                                     <Label htmlFor="phone">Phone</Label>
-                                    <Input
-                                        id="phone"
-                                        placeholder="9876543210"
+                                    <PhoneInput
                                         value={field.state.value}
-                                        onBlur={field.handleBlur}
-                                        onChange={(e) => field.handleChange(e.target.value)}
+                                        onChange={(phone) => field.handleChange(phone)}
+                                        error={!!field.state.meta.errors}
                                     />
                                     {field.state.meta.errors ? (
                                         <p className="text-sm text-red-500">{field.state.meta.errors.join(", ")}</p>

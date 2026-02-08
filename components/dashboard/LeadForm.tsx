@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
@@ -136,12 +137,10 @@ export function LeadForm({ leadId, onSuccess }: LeadFormProps) {
                 children={(field) => (
                     <div className="space-y-2">
                         <Label htmlFor="phone">Phone Number</Label>
-                        <Input
-                            id="phone"
+                        <PhoneInput
                             value={field.state.value}
-                            onBlur={field.handleBlur}
-                            onChange={(e) => field.handleChange(e.target.value)}
-                            className="rounded-xl"
+                            onChange={(phone) => field.handleChange(phone)}
+                            error={!!field.state.meta.errors}
                         />
                         {field.state.meta.errors ? (
                             <p className="text-sm text-red-500">{field.state.meta.errors.join(", ")}</p>
