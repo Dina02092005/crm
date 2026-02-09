@@ -42,10 +42,10 @@ const columns: ColumnDef<RecentLead>[] = [
             return (
                 <Badge variant="outline" className={`
                     text-[10px] font-medium uppercase
-                    ${status === "NEW" ? "bg-blue-50 text-blue-600 border-blue-200" :
-                        status === "CONVERTED" ? "bg-emerald-50 text-emerald-600 border-emerald-200" :
-                            status === "LOST" ? "bg-red-50 text-red-600 border-red-200" :
-                                "bg-gray-50 text-gray-600 border-gray-200"}
+                    ${status === "NEW" ? "bg-blue-500/10 text-blue-600 border-blue-500/20" :
+                        status === "CONVERTED" ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" :
+                            status === "LOST" ? "bg-red-500/10 text-red-600 border-red-500/20" :
+                                "bg-gray-500/10 text-gray-600 border-gray-500/20"}
                 `}>
                     {status}
                 </Badge>

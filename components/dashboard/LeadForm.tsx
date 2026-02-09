@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { SheetFooter, SheetClose } from "@/components/ui/sheet";
 import { useForm } from "@tanstack/react-form";
+import { zodValidator } from "@tanstack/zod-form-adapter";
 import { z } from "zod";
 
 interface LeadFormProps {
@@ -29,10 +30,27 @@ const leadSchema = z.object({
 
 type LeadFormData = z.infer<typeof leadSchema>;
 
+function ErrorMessage({ field }: { field: any }) {
+    // Only show error if the field has been touched and has errors
+    if (!field.state.meta.isTouched || !field.state.meta.errors.length) return null
+
+    return (
+        <p className="text-sm text-red-500">
+            {field.state.meta.errors
+                .map((e: any) => (typeof e === 'object' && e?.message ? e.message : e))
+                .join(', ')}
+        </p>
+    )
+}
+
+
 export function LeadForm({ leadId, onSuccess }: LeadFormProps) {
     const [isLoading, setIsLoading] = useState(true);
 
     const form = useForm({
+        // @ts-ignore
+        validatorAdapter: zodValidator(),
+
         defaultValues: {
             name: "",
             email: "",
@@ -142,10 +160,9 @@ export function LeadForm({ leadId, onSuccess }: LeadFormProps) {
                             onBlur={field.handleBlur}
                             onChange={(value) => field.handleChange(value)}
                             className="rounded-xl"
+                            error={!!field.state.meta.errors.length && field.state.meta.isTouched}
                         />
-                        {field.state.meta.errors ? (
-                            <p className="text-sm text-red-500">{field.state.meta.errors.join(", ")}</p>
-                        ) : null}
+                        <ErrorMessage field={field} />
                     </div>
                 )}
             />
@@ -243,7 +260,7 @@ export function LeadForm({ leadId, onSuccess }: LeadFormProps) {
                 <form.Subscribe
                     selector={(state) => [state.canSubmit, state.isSubmitting]}
                     children={([canSubmit, isSubmitting]) => (
-                        <Button type="submit" className="rounded-xl" disabled={!canSubmit}>
+                        <Button type="submit" className="rounded-xl bg-primary hover:bg-primary/90 text-white font-bold shadow-sm px-8" disabled={!canSubmit}>
                             {isSubmitting ? "Saving..." : "Save Changes"}
                         </Button>
                     )}

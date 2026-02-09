@@ -176,7 +176,7 @@ export function LeadsTable({
                                 <DropdownMenuItem
                                     key={opt}
                                     onClick={() => handleUpdate(row.original.id, "status", opt)}
-                                    className={opt === status ? "bg-cyan-50 text-cyan-700 font-medium" : ""}
+                                    className={opt === status ? "bg-primary/10 text-primary font-medium" : ""}
                                 >
                                     {opt}
                                 </DropdownMenuItem>
@@ -210,7 +210,7 @@ export function LeadsTable({
                                 <DropdownMenuItem
                                     key={opt}
                                     onClick={() => handleUpdate(row.original.id, "temperature", opt)}
-                                    className={opt === temp ? "bg-cyan-50 text-cyan-700 font-medium" : ""}
+                                    className={opt === temp ? "bg-primary/10 text-primary font-medium" : ""}
                                 >
                                     {opt}
                                 </DropdownMenuItem>
@@ -229,7 +229,7 @@ export function LeadsTable({
                             variant="ghost"
                             size="sm"
                             onClick={() => handleAssignClick(row.original)}
-                            className="h-8 w-8 p-0 text-cyan-600 hover:text-cyan-700 hover:bg-cyan-50"
+                            className="h-8 w-8 p-0 text-primary hover:bg-primary/5"
                             title="Assign Lead"
                         >
                             <UserPlus className="h-4 w-4" />
@@ -245,7 +245,7 @@ export function LeadsTable({
                             {(session?.user?.role === "ADMIN" || session?.user?.role === "MANAGER") && (
                                 <DropdownMenuItem
                                     onClick={() => handleAssignClick(row.original)}
-                                    className="cursor-pointer text-cyan-600"
+                                    className="cursor-pointer text-primary"
                                 >
                                     <UserPlus className="mr-2 h-4 w-4" /> Assign Lead
                                 </DropdownMenuItem>
@@ -297,7 +297,7 @@ export function LeadsTable({
                                     <th
                                         key={header.id}
                                         className={`
-                                            py-3 px-4 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground
+                                            py-2 px-4 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground
                                             ${index === 0 ? "pl-6" : ""}
                                             ${index === headerGroup.headers.length - 1 ? "pr-6" : ""}
                                         `}
@@ -320,7 +320,7 @@ export function LeadsTable({
                                         <td
                                             key={cell.id}
                                             className={`
-                                            py-4 px-4 align-middle 
+                                            py-3 px-4 align-middle 
                                             ${index === 0 ? "pl-6" : ""}
                                             ${index === row.getVisibleCells().length - 1 ? "pr-6" : ""}
                                         `}
@@ -349,14 +349,14 @@ export function LeadsTable({
             </div>
 
             {/* Pagination Controls */}
-            {pagination && pagination.totalPages > 1 && (
-                <div className="flex items-center justify-end space-x-2 py-4 pr-6 border-t border-gray-100">
+            {pagination && (
+                <div className="flex items-center justify-end space-x-2 py-4 pr-6 border-t border-border">
                     <Button
                         variant="outline"
                         size="sm"
                         onClick={() => pagination.onPageChange(Math.max(1, pagination.page - 1))}
                         disabled={pagination.page <= 1}
-                        className="rounded-xl h-8"
+                        className="rounded-xl h-8 border-primary/20 text-primary hover:bg-primary/5 shadow-sm"
                     >
                         Previous
                     </Button>
@@ -368,7 +368,7 @@ export function LeadsTable({
                         size="sm"
                         onClick={() => pagination.onPageChange(Math.min(pagination.totalPages, pagination.page + 1))}
                         disabled={pagination.page >= pagination.totalPages}
-                        className="rounded-xl h-8"
+                        className="rounded-xl h-8 border-primary/20 text-primary hover:bg-primary/5 shadow-sm"
                     >
                         Next
                     </Button>

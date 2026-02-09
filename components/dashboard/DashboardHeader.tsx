@@ -46,7 +46,7 @@ export function DashboardHeader({ title, description, action }: DashboardHeaderP
     };
 
     return (
-        <header className="flex items-center justify-between px-2 py-4 mb-6 border-b border-border sticky top-0 z-50 bg-background dark:bg-sidebar">
+        <header className="flex items-center justify-between px-2 py-4 mb-4 border-b border-border sticky top-0 z-50 bg-background dark:bg-sidebar">
             {/* Greeting */}
             <div className="min-w-[180px]">
                 <h2 className="font-bold text-[18px] leading-none tracking-normal font-sans text-foreground">

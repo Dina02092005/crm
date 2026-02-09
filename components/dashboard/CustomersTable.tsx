@@ -160,7 +160,7 @@ export function CustomersTable({ data, onUpdate, onDelete, pagination }: Custome
                                     <th
                                         key={header.id}
                                         className={`
-                                            py-3 px-4 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground
+                                            py-2 px-4 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground
                                             ${index === 0 ? "pl-6" : ""}
                                             ${index === headerGroup.headers.length - 1 ? "pr-6" : ""}
                                         `}
@@ -182,7 +182,7 @@ export function CustomersTable({ data, onUpdate, onDelete, pagination }: Custome
                                     <td
                                         key={cell.id}
                                         className={`
-                                            py-4 px-4 align-middle 
+                                            py-3 px-4 align-middle 
                                             ${index === 0 ? "pl-6" : ""}
                                             ${index === row.getVisibleCells().length - 1 ? "pr-6" : ""}
                                         `}
@@ -202,8 +202,8 @@ export function CustomersTable({ data, onUpdate, onDelete, pagination }: Custome
             </div>
 
             {/* Pagination Controls */}
-            {pagination && pagination.totalPages > 1 && (
-                <div className="flex items-center justify-end space-x-2 py-4 pr-6 border-t border-gray-100">
+            {pagination && (
+                <div className="flex items-center justify-end space-x-2 py-4 pr-6 border-t border-border">
                     <Button
                         variant="outline"
                         size="sm"

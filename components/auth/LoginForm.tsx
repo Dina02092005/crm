@@ -86,9 +86,9 @@ function LoginFormContent() {
   };
 
   return (
-    <Card className="w-full max-w-sm sm:max-w-md rounded-3xl border-0 bg-white shadow-2xl">
+    <Card className="w-full max-w-sm sm:max-w-md rounded-3xl border-0 bg-white dark:bg-card shadow-2xl dark:shadow-none dark:border dark:border-border">
       <CardHeader className="pb-4 pt-6 px-6 sm:pt-8 sm:px-8">
-        <CardTitle className="text-center text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">
+        <CardTitle className="text-center text-2xl sm:text-3xl font-bold tracking-tight text-gray-900 dark:text-foreground">
           CRM Login
         </CardTitle>
       </CardHeader>
@@ -102,7 +102,7 @@ function LoginFormContent() {
           <div className="space-y-2">
             <Label
               htmlFor="login-email"
-              className="text-sm font-medium text-gray-700"
+              className="text-sm font-medium text-gray-700 dark:text-gray-300"
             >
               Email
             </Label>
@@ -114,14 +114,14 @@ function LoginFormContent() {
               required
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="h-11 rounded-lg border-gray-300 bg-gray-50 transition-colors placeholder:text-gray-400 hover:border-gray-400 focus-visible:border-cyan-500 focus-visible:ring-2 focus-visible:ring-cyan-500/20 focus-visible:bg-white"
+              className="h-11 rounded-lg border-gray-300 bg-gray-50 transition-colors placeholder:text-gray-400 hover:border-gray-400 focus-visible:border-cyan-500 focus-visible:ring-2 focus-visible:ring-cyan-500/20 focus-visible:bg-white dark:bg-secondary/50 dark:border-border dark:text-foreground dark:focus-visible:bg-secondary"
             />
           </div>
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Label
                 htmlFor="login-password"
-                className="text-sm font-medium text-gray-700"
+                className="text-sm font-medium text-gray-700 dark:text-gray-300"
               >
                 Password
               </Label>
@@ -139,7 +139,7 @@ function LoginFormContent() {
               required
               value={formData.password}
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="h-11 rounded-lg border-gray-300 bg-gray-50 transition-colors placeholder:text-gray-400 hover:border-gray-400 focus-visible:border-cyan-500 focus-visible:ring-2 focus-visible:ring-cyan-500/20 focus-visible:bg-white"
+              className="h-11 rounded-lg border-gray-300 bg-gray-50 transition-colors placeholder:text-gray-400 hover:border-gray-400 focus-visible:border-cyan-500 focus-visible:ring-2 focus-visible:ring-cyan-500/20 focus-visible:bg-white dark:bg-secondary/50 dark:border-border dark:text-foreground dark:focus-visible:bg-secondary"
             />
           </div>
           <Button
@@ -151,7 +151,7 @@ function LoginFormContent() {
           </Button>
         </form>
 
-        <div className="text-center text-sm text-gray-600">
+        <div className="text-center text-sm text-gray-600 dark:text-gray-400">
           Don't have an account?{" "}
           <Link href="/register" className="text-cyan-600 font-medium hover:underline">
             Register
@@ -160,10 +160,10 @@ function LoginFormContent() {
 
         <div className="relative py-3">
           <div className="absolute inset-0 flex items-center">
-            <span className="w-full border-t border-gray-300" />
+            <span className="w-full border-t border-gray-300 dark:border-gray-700" />
           </div>
           <div className="relative flex justify-center">
-            <span className="bg-white px-4 text-sm text-gray-500">Or</span>
+            <span className="bg-white px-4 text-sm text-gray-500 dark:bg-card dark:text-gray-400">Or</span>
           </div>
         </div>
 
@@ -171,7 +171,7 @@ function LoginFormContent() {
           <Button
             type="button"
             variant="outline"
-            className="h-12 w-full rounded-lg border-gray-300 bg-white text-gray-700 transition-all hover:bg-gray-50 hover:border-gray-400 hover:shadow-sm"
+            className="h-12 w-full rounded-lg border-gray-300 bg-white text-gray-700 transition-all hover:bg-gray-50 hover:border-gray-400 hover:shadow-sm dark:bg-card dark:text-foreground dark:border-border dark:hover:bg-secondary/50"
             onClick={() => signIn("google", { callbackUrl: "/dashboard" })}
           >
             <FaGoogle className="h-5 w-5 shrink-0 mr-2" />

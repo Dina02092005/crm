@@ -12,6 +12,26 @@ interface LeadsResponse {
     };
 }
 
+interface LeadStats {
+    ALL: number;
+    NEW: number;
+    ASSIGNED: number;
+    IN_PROGRESS: number;
+    FOLLOW_UP: number;
+    CONVERTED: number;
+    LOST: number;
+}
+
+export function useLeadStats() {
+    return useQuery({
+        queryKey: ["lead-stats"],
+        queryFn: async () => {
+            const { data } = await axios.get<LeadStats>("/api/leads/stats");
+            return data;
+        },
+    });
+}
+
 interface FetchLeadsParams {
     page?: number;
     limit?: number;
@@ -57,6 +77,7 @@ export function useCreateLead() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["leads"] });
+            queryClient.invalidateQueries({ queryKey: ["lead-stats"] });
         },
     });
 }
@@ -71,6 +92,7 @@ export function useUpdateLead() {
         },
         onSuccess: (data, variables) => {
             queryClient.invalidateQueries({ queryKey: ["leads"] });
+            queryClient.invalidateQueries({ queryKey: ["lead-stats"] });
             queryClient.invalidateQueries({ queryKey: ["lead", variables.id] });
         },
     });
@@ -85,6 +107,7 @@ export function useDeleteLead() {
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["leads"] });
+            queryClient.invalidateQueries({ queryKey: ["lead-stats"] });
         },
     });
 }

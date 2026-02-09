@@ -145,3 +145,53 @@ export async function DELETE(
         return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
     }
 }
+
+export async function GET(
+    req: Request,
+    { params }: { params: Promise<{ id: string }> }
+) {
+    try {
+        const session = await getServerSession(authOptions) as any;
+        if (!session) {
+            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+        }
+
+        const { id } = await params;
+        const { searchParams } = new URL(req.url);
+        const page = parseInt(searchParams.get('page') || '1');
+        const limit = parseInt(searchParams.get('limit') || '10');
+        const skip = (page - 1) * limit;
+
+        const [activities, total] = await Promise.all([
+            prisma.leadActivity.findMany({
+                where: { leadId: id },
+                include: {
+                    user: {
+                        select: {
+                            name: true,
+                        },
+                    },
+                },
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take: limit,
+            }),
+            prisma.leadActivity.count({
+                where: { leadId: id },
+            }),
+        ]);
+
+        return NextResponse.json({
+            activities,
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit),
+            },
+        });
+    } catch (error) {
+        console.error('Fetch activities error:', error);
+        return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+    }
+}

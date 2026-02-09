@@ -29,9 +29,14 @@ interface RolesTableProps {
     data: Role[];
     onUpdate?: () => void;
     onDelete?: (id: string) => void;
+    pagination?: {
+        page: number;
+        totalPages: number;
+        onPageChange: (page: number) => void;
+    }
 }
 
-export function RolesTable({ data, onUpdate, onDelete }: RolesTableProps) {
+export function RolesTable({ data, onUpdate, onDelete, pagination }: RolesTableProps) {
     // Placeholder for edit functionality
     const [editSheetOpen, setEditSheetOpen] = useState(false);
     const [editingRole, setEditingRole] = useState<Role | undefined>(undefined);
@@ -46,7 +51,7 @@ export function RolesTable({ data, onUpdate, onDelete }: RolesTableProps) {
                         {row.original.name.charAt(0).toUpperCase()}
                     </div>
                     <div>
-                        <p className="font-bold text-gray-900">{row.original.name}</p>
+                        <p className="font-bold text-foreground">{row.original.name}</p>
                     </div>
                 </div>
             ),
@@ -55,14 +60,14 @@ export function RolesTable({ data, onUpdate, onDelete }: RolesTableProps) {
             accessorKey: "description",
             header: "Description",
             cell: ({ row }) => (
-                <p className="text-sm text-gray-600">{row.original.description}</p>
+                <p className="text-sm text-muted-foreground">{row.original.description}</p>
             ),
         },
         {
             accessorKey: "users",
             header: "Users",
             cell: ({ row }) => (
-                <p className="text-sm text-gray-900 font-medium">{row.original.users}</p>
+                <p className="text-sm text-foreground font-medium">{row.original.users}</p>
             ),
         },
         {
@@ -123,13 +128,13 @@ export function RolesTable({ data, onUpdate, onDelete }: RolesTableProps) {
             <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                     <thead>
-                        <tr className="border-b border-gray-100">
+                        <tr className="border-b border-border">
                             {table.getHeaderGroups().map((headerGroup) =>
                                 headerGroup.headers.map((header, index) => (
                                     <th
                                         key={header.id}
                                         className={`
-                                            py-3 px-4 text-left text-xs font-medium uppercase tracking-wider text-gray-400
+                                            py-3 px-4 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground
                                             ${index === 0 ? "pl-6" : ""}
                                             ${index === headerGroup.headers.length - 1 ? "pr-6" : ""}
                                         `}
@@ -144,7 +149,7 @@ export function RolesTable({ data, onUpdate, onDelete }: RolesTableProps) {
                         {table.getRowModel().rows.map((row) => (
                             <tr
                                 key={row.id}
-                                className="group hover:bg-gray-50/50 transition-colors border-b border-gray-50 last:border-0"
+                                className="group hover:bg-muted/50 transition-colors border-b border-border last:border-0"
                             >
                                 {row.getVisibleCells().map((cell, index) => (
                                     <td
@@ -163,6 +168,33 @@ export function RolesTable({ data, onUpdate, onDelete }: RolesTableProps) {
                     </tbody>
                 </table>
             </div>
+
+            {/* Pagination Controls */}
+            {pagination && (
+                <div className="flex items-center justify-end space-x-2 py-4 pr-6 border-t border-border/50">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => pagination.onPageChange(Math.max(1, pagination.page - 1))}
+                        disabled={pagination.page <= 1}
+                        className="rounded-xl h-8 border-primary/20 text-primary hover:bg-primary/5 shadow-sm"
+                    >
+                        Previous
+                    </Button>
+                    <div className="text-sm font-medium text-muted-foreground">
+                        Page {pagination.page} of {pagination.totalPages}
+                    </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => pagination.onPageChange(Math.min(pagination.totalPages, pagination.page + 1))}
+                        disabled={pagination.page >= pagination.totalPages}
+                        className="rounded-xl h-8 border-primary/20 text-primary hover:bg-primary/5 shadow-sm"
+                    >
+                        Next
+                    </Button>
+                </div>
+            )}
 
             <Sheet open={editSheetOpen} onOpenChange={setEditSheetOpen}>
                 <SheetContent className="w-full sm:max-w-sm">
