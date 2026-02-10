@@ -65,6 +65,7 @@ model Lead {
   phone       String
   message     String?
   source      LeadSource
+  data        Json?
   status      LeadStatus       @default(NEW)
   temperature LeadTemperature  @default(COLD)
   createdAt   DateTime         @default(now())
@@ -178,6 +179,7 @@ enum LeadSource {
   WEBSITE_2
   WEBSITE_3
   WEBSITE_4
+  INTERFX
 }
 
 enum LeadStatus {

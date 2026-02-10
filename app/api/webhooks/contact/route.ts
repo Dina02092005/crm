@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { LeadSource } from "@prisma/client";
@@ -8,7 +7,7 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
-        const { name, phone, email, message, source } = body;
+        const { name, phone, email, message, source, data } = body;
 
         // Validation
         if (!name || !phone) {
@@ -35,6 +34,8 @@ export async function POST(req: NextRequest) {
             leadSource = LeadSource.WEBSITE_3;
         } else if (normalizedSource.includes('website4') || normalizedSource.includes('site4')) {
             leadSource = LeadSource.WEBSITE_4;
+        } else if (normalizedSource.includes('interfx')) {
+            leadSource = LeadSource.INTERFX;
         }
         // implicit else: WEBSITE_1
 
@@ -46,6 +47,7 @@ export async function POST(req: NextRequest) {
                 email: email || null,
                 message: message || null,
                 source: leadSource,
+                data: data || undefined,
                 status: "NEW", // Default status
                 temperature: "COLD", // Default temperature
             },

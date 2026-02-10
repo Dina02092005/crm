@@ -32,7 +32,8 @@ import {
     Pencil,
     UserPlus,
     Trash2,
-    Plus
+    Plus,
+    Database
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -610,6 +611,31 @@ export default function LeadDetailPage() {
                                     </div>
                                 </CardContent>
                             </Card>
+
+                            {/* Chat / Webhook Data */}
+                            {lead.data && Object.keys(lead.data as object).length > 0 && (
+                                <Card className="border border-border rounded-2xl bg-card shadow-none overflow-hidden">
+                                    <CardHeader className="pb-2 border-b border-border/50">
+                                        <CardTitle className="text-sm font-bold flex items-center gap-2">
+                                            <Database className="h-4 w-4 text-primary" /> Submission Data
+                                        </CardTitle>
+                                    </CardHeader>
+                                    <CardContent className="p-5">
+                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+                                            {Object.entries(lead.data as object).map(([key, value]) => (
+                                                <div key={key} className="space-y-1">
+                                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">
+                                                        {key.replace(/([A-Z])/g, ' $1').trim()}
+                                                    </p>
+                                                    <p className="text-sm font-medium break-words">
+                                                        {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                                                    </p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            )}
                         </div>
                     </div>
                 )}
