@@ -1,17 +1,13 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {
-  /* config options here */
+const nextConfig = {
   output: "standalone",
-  turbopack: {
-    root: process.cwd(),
-  },
   typescript: {
     ignoreBuildErrors: true,
   },
   eslint: {
     ignoreDuringBuilds: true,
   },
-};
+} as any;
 
 export default nextConfig;

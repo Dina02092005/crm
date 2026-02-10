@@ -1,5 +1,6 @@
 
 FROM node:20-alpine AS base
+RUN apk add --no-cache openssl openssl1.1-compat
 
 # Install dependencies only when needed
 FROM base AS deps
@@ -56,4 +57,4 @@ ENV PORT 3001
 # set hostname to localhost
 ENV HOSTNAME "0.0.0.0"
 # test
-CMD ["node", "server.js"]
+CMD ["npm", "run", "start"]
