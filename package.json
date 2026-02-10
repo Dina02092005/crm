@@ -3,11 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-<<<<<<< HEAD
     "dev": "next dev -p 3002",
-=======
-    "dev": "next dev",
->>>>>>> 39d51f4 (Upgrade AWS SDK to v3 and fix S3 upload)
     "build": "next build",
     "start": "next start",
     "lint": "eslint"
