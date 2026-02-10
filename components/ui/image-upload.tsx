@@ -119,6 +119,7 @@ export function ImageUpload({
             await axios.put(url, croppedImageBlob, {
                 headers: {
                     "Content-Type": fileType,
+                    "x-amz-acl": "public-read",
                 },
             });
 

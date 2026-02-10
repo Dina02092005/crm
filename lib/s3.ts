@@ -35,7 +35,7 @@ export class S3UploadService {
             region: process.env.NEW_REGION || 'blr1',
             accessKeyId: process.env.NEW_ACCESS_KEY || '',
             secretAccessKey: process.env.SECRET_ACCESS_KEY || '',
-            rootFolder: 'amaramba', // Default from user code
+            rootFolder: 'inter-platform-assets', // Default from user code
             subFolder: 'user_documents',
             maxFileSize: 10 * 1024 * 1024, // 10MB default
             allowedMimeTypes: [
@@ -206,16 +206,17 @@ export class S3UploadService {
             Bucket: this.config.bucketName,
             Key: key,
             ContentType: fileType,
-            // ACL removed to prevent CORS/Permission issues with Bucket Owner Enforced settings
+            ACL: 'public-read',
         });
 
         const url = await getSignedUrl(this.s3, command, { expiresIn: 300 }); // 5 minutes
 
-        // Construct the final public URL (DigitalOcean Spaces format)
-        // Note: The signed URL is for uploading, but the file will be accessible at a standard URL
-        const fileUrl = this.config.endpoint
-            ? `${this.config.endpoint}/${this.config.bucketName}/${key}`
-            : `https://${this.config.bucketName}.s3.${this.config.region}.amazonaws.com/${key}`;
+        // Construct the final public URL (DigitalOcean Spaces virtual-hosted format)
+        const fileUrl = this.config.endpoint?.includes('digitaloceanspaces.com')
+            ? `https://${this.config.bucketName}.${this.config.region}.digitaloceanspaces.com/${key}`
+            : this.config.endpoint
+                ? `${this.config.endpoint}/${this.config.bucketName}/${key}`
+                : `https://${this.config.bucketName}.s3.${this.config.region}.amazonaws.com/${key}`;
 
         return { url, key, fileUrl };
     }
