@@ -1,20 +1,21 @@
-
 FROM node:20-alpine AS base
 RUN apk add --no-cache openssl libc6-compat
 
 # Install dependencies only when needed
 FROM base AS deps
-# Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine to understand why libc6-compat might be needed.
-RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
 COPY package.json package-lock.json* ./
-RUN npm ci --legacy-peer-deps
+RUN npm ci --legacy-peer-deps --no-audit --prefer-offline
 
 # Rebuild the source code only when needed
 FROM base AS builder
 WORKDIR /app
+
+# Set Node options to prevent memory issues during build
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
@@ -26,13 +27,22 @@ RUN npx prisma generate
 # ARG NEXT_PUBLIC_...
 # ENV NEXT_PUBLIC_...
 
+# Build the application
 RUN npm run build
+
+# Verify standalone build was successful
+RUN if [ ! -f ".next/standalone/server.js" ]; then \
+    echo "ERROR: Standalone build failed - server.js not found!"; \
+    echo "Contents of .next directory:"; \
+    ls -la .next/ || echo ".next directory not found"; \
+    exit 1; \
+    fi
 
 # Production image, copy all the files and run next
 FROM base AS runner
 WORKDIR /app
 
-ENV NODE_ENV=production
+ENV NODE_ENV production
 # Uncomment the following line in case you want to disable telemetry during runtime.
 # ENV NEXT_TELEMETRY_DISABLED 1
 
@@ -50,11 +60,16 @@ RUN chown nextjs:nodejs .next
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
+# Copy Prisma schema and node_modules for Prisma Client
+COPY --from=builder --chown=nextjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder --chown=nextjs:nodejs /app/node_modules/@prisma ./node_modules/@prisma
+
 USER nextjs
 
 EXPOSE 3001
-ENV PORT=3001
+ENV PORT 3001
 # set hostname to localhost
-ENV HOSTNAME="0.0.0.0"
+ENV HOSTNAME "0.0.0.0"
 # test
-CMD ["npm", "run", "start"]
+CMD ["node", "server.js"]
