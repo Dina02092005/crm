@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { sendEmail } from '@/lib/email';
+import { createNotification } from '@/lib/notifications';
 import { LeadActivityType } from '@prisma/client';
 
 export const dynamic = 'force-dynamic'; // Ensure no caching for cron
@@ -104,31 +105,15 @@ export async function GET(req: Request) {
 
             if (assignee && assignee.email) {
                 try {
-                    await prisma.$transaction(async (tx) => {
-                        // 1. Send Email (mocked by calling lib but technically side effect outside tx)
-                        // effective practice: do valid checks, then update DB, then send email (or send then update if critical)
-                        // Here we'll update DB to prevent loop, then try send.
+                    // 1. Send In-App Notification
+                    await createNotification(
+                        assignee.id,
+                        `Task Due: ${reminder.task.title}`,
+                        `Task for ${reminder.task.lead.name} is due in ${type.toLowerCase()}.`,
+                        'TASK_REMINDER'
+                    );
 
-                        await tx.reminder.update({
-                            where: { id: reminder.id },
-                            data: updateField
-                        });
-
-                        // 2. Log Activity
-                        /*
-                         // Optional: Logging too many system notes might clutter
-                        await tx.leadActivity.create({
-                            data: {
-                                leadId: reminder.task.leadId,
-                                userId: assignee.id, // Or system/admin ID
-                                type: LeadActivityType.NOTE,
-                                content: `System: Sent ${type} reminder email to ${assignee.name}`
-                            }
-                        });
-                        */
-                    });
-
-                    // Send Email
+                    // 2. Send Email
                     await sendEmail({
                         to: assignee.email,
                         subject: `[${type} REMINDER] Task Due: ${reminder.task.title}`,
@@ -136,13 +121,19 @@ export async function GET(req: Request) {
                             <div style="font-family: Arial; padding: 20px;">
                                 <h2 style="color: #e11d48;">Task Reminder</h2>
                                 <p>Hello ${assignee.name},</p>
-                                <p>This is a reminder that the task <strong>${reminder.task.title}</strong> for lead <strong>${reminder.task.lead.name}</strong> is due.</p>
-                                <p><strong>Due Time:</strong> ${reminder.remindAt.toLocaleString()}</p>
+                                <p>This is a reminder that the task <strong>${reminder.task.title}</strong> for lead <strong><a href="${process.env.NEXTAUTH_URL}/leads/${reminder.task.leadId}">${reminder.task.lead.name}</a></strong> is due.</p>
+                                <p><strong>Due Time:</strong> ${remindAt.toLocaleString()}</p>
                                 <p><strong>Time Remaining:</strong> ~${Math.round(hoursDiff > 1 ? hoursDiff : minutesDiff)} ${hoursDiff > 1 ? 'hours' : 'minutes'}</p>
                                 <br/>
-                                <a href="${process.env.NEXTAUTH_URL}/leads/${reminder.task.leadId}" style="background: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Lead</a>
+                                <a href="${process.env.NEXTAUTH_URL}/leads/${reminder.task.leadId}?tab=tasks" style="background: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">View Task</a>
                             </div>
                         `
+                    });
+
+                    // 3. Update DB to mark as sent
+                    await prisma.reminder.update({
+                        where: { id: reminder.id },
+                        data: updateField
                     });
 
                 } catch (err) {

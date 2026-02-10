@@ -49,7 +49,7 @@ export function DashboardHeader({ title, description, action }: DashboardHeaderP
         <header className="flex items-center justify-between px-2 py-4 mb-4 border-b border-border sticky top-0 z-50 bg-background dark:bg-sidebar">
             {/* Greeting */}
             <div className="min-w-[180px]">
-                <h2 className="font-bold text-[18px] leading-none tracking-normal font-sans text-foreground">
+                <h2 suppressHydrationWarning className="font-bold text-[18px] leading-none tracking-normal font-sans text-foreground">
                     {getTitle()}
                 </h2>
                 {description && (
@@ -76,11 +76,19 @@ export function DashboardHeader({ title, description, action }: DashboardHeaderP
                 {/* User Avatar Dropdown */}
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <button className="w-10 h-10 rounded-full overflow-hidden hover:ring-2 hover:ring-ring transition-all outline-none">
+                        <button suppressHydrationWarning className="w-10 h-10 rounded-full overflow-hidden hover:ring-2 hover:ring-ring transition-all outline-none">
                             <div className="w-full h-full bg-primary/10 flex items-center justify-center text-primary">
-                                <span className="font-semibold text-sm">
-                                    {session?.user?.name?.charAt(0) || "U"}
-                                </span>
+                                {session?.user?.imageUrl ? (
+                                    <img
+                                        src={session.user.imageUrl}
+                                        alt={session.user.name || "User"}
+                                        className="w-full h-full object-cover"
+                                    />
+                                ) : (
+                                    <span className="font-semibold text-sm">
+                                        {session?.user?.name?.charAt(0) || "U"}
+                                    </span>
+                                )}
                             </div>
                         </button>
                     </DropdownMenuTrigger>

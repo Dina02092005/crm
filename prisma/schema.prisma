@@ -68,7 +68,7 @@ model Lead {
   email       String?
   phone       String
   message     String?
-  source      LeadSource
+  source      String
   data        Json?
   status      LeadStatus       @default(NEW)
   temperature LeadTemperature  @default(COLD)
@@ -175,6 +175,15 @@ model AuditLog {
   user      User     @relation(fields: [userId], references: [id])
 }
 
+model Website {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  url       String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 enum Role {
   ADMIN
   MANAGER
@@ -183,13 +192,7 @@ enum Role {
   SUPPORT_AGENT
 }
 
-enum LeadSource {
-  WEBSITE_1
-  WEBSITE_2
-  WEBSITE_3
-  WEBSITE_4
-  INTERFX
-}
+// LeadSource Enum removed in favor of dynamic Website model / String source
 
 enum LeadStatus {
   NEW

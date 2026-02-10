@@ -96,6 +96,7 @@ export const authOptions: NextAuthOptions = {
                     if (dbUser) {
                         token.userId = dbUser.id;
                         token.role = dbUser.role;
+                        token.imageUrl = dbUser.imageUrl;
                     }
                 } catch (error) {
                     console.error('NextAuth JWT Callback Error:', error);
@@ -111,6 +112,7 @@ export const authOptions: NextAuthOptions = {
                     ...session.user,
                     id: token.userId as string,
                     role: token.role as string,
+                    imageUrl: token.imageUrl as string | null,
                 },
             };
         },

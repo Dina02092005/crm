@@ -77,6 +77,8 @@ export function LeadForm({ leadId, onSuccess }: LeadFormProps) {
         },
     });
 
+    const [websites, setWebsites] = useState<{ id: string; name: string }[]>([]);
+
     useEffect(() => {
         const fetchLead = async () => {
             try {
@@ -99,7 +101,17 @@ export function LeadForm({ leadId, onSuccess }: LeadFormProps) {
             }
         };
 
+        const fetchWebsites = async () => {
+            try {
+                const res = await axios.get("/api/websites");
+                setWebsites(res.data);
+            } catch (error) {
+                console.error("Failed to load websites", error);
+            }
+        };
+
         if (leadId) fetchLead();
+        fetchWebsites();
     }, [leadId]);
 
     if (isLoading) {
@@ -197,10 +209,11 @@ export function LeadForm({ leadId, onSuccess }: LeadFormProps) {
                                 <SelectValue placeholder="Select source" />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="WEBSITE_1">Website 1</SelectItem>
-                                <SelectItem value="WEBSITE_2">Website 2</SelectItem>
-                                <SelectItem value="WEBSITE_3">Website 3</SelectItem>
-                                <SelectItem value="WEBSITE_4">Website 4</SelectItem>
+                                {websites.map((site) => (
+                                    <SelectItem key={site.id} value={site.name}>
+                                        {site.name}
+                                    </SelectItem>
+                                ))}
                             </SelectContent>
                         </Select>
                     </div>

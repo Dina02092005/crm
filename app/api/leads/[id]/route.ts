@@ -56,6 +56,12 @@ export async function PATCH(
                 return NextResponse.json({ message: 'Employee not found' }, { status: 404 });
             }
 
+            // Verify the assigner exists to prevent foreign key errors
+            const assigner = await prisma.user.findUnique({ where: { id: session.user.id } });
+            if (!assigner) {
+                return NextResponse.json({ message: 'Your account was not found. Please log in again.' }, { status: 401 });
+            }
+
             // Perform assignment in a transaction
             const lead = await prisma.$transaction(async (tx) => {
                 // 1. Create Assignment

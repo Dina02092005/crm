@@ -13,6 +13,21 @@ export async function GET() {
         const startOfDay = new Date();
         startOfDay.setHours(0, 0, 0, 0);
 
+        // RBAC Filters
+        const isEmployee = session.user.role === 'EMPLOYEE' || session.user.role === 'SALES_REP';
+
+        const leadWhere: any = {};
+        const customerWhere: any = {};
+
+        if (isEmployee) {
+            leadWhere.assignments = {
+                some: {
+                    assignedTo: session.user.id
+                }
+            };
+            customerWhere.onboardedBy = session.user.id;
+        }
+
         const [
             totalLeads,
             totalCustomers,
@@ -24,8 +39,8 @@ export async function GET() {
             upcomingTasks,
             leadStatusCounts
         ] = await Promise.all([
-            prisma.lead.count(),
-            prisma.customer.count(),
+            prisma.lead.count({ where: leadWhere }),
+            prisma.customer.count({ where: customerWhere }),
             prisma.user.count({
                 where: {
                     role: 'EMPLOYEE'
@@ -33,20 +48,23 @@ export async function GET() {
             }),
             prisma.lead.count({
                 where: {
+                    ...leadWhere,
                     createdAt: {
                         gte: startOfDay
                     }
                 }
             }),
             prisma.lead.findMany({
+                where: leadWhere,
                 take: 50,
                 orderBy: { updatedAt: 'desc' },
                 include: {
-                    customer: true // To get customer details if converted
+                    customer: true
                 }
             }),
             prisma.lead.findMany({
                 where: {
+                    ...leadWhere,
                     createdAt: {
                         gte: new Date(new Date().setDate(new Date().getDate() - 30))
                     }
@@ -57,6 +75,7 @@ export async function GET() {
             }),
             prisma.customer.findMany({
                 where: {
+                    ...customerWhere,
                     createdAt: {
                         gte: new Date(new Date().setDate(new Date().getDate() - 30))
                     }
@@ -84,6 +103,7 @@ export async function GET() {
             }),
             prisma.lead.groupBy({
                 by: ['status'],
+                where: leadWhere,
                 _count: {
                     status: true
                 }

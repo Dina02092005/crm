@@ -19,7 +19,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 
 interface AssignLeadSheetProps {
     isOpen: boolean;
@@ -74,9 +74,16 @@ export function AssignLeadSheet({
             onAssign();
             onClose();
             setSelectedEmployee("");
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to assign lead", error);
-            toast.error("Failed to assign lead");
+            if (axios.isAxiosError(error) && error.response?.status === 401) {
+                toast.error("Your session has expired or is invalid. Please log in again.");
+                signOut({ callbackUrl: "/login" });
+            } else if (axios.isAxiosError(error) && error.response?.data?.message) {
+                toast.error(error.response.data.message);
+            } else {
+                toast.error("Failed to assign lead");
+            }
         } finally {
             setIsSaving(false);
         }

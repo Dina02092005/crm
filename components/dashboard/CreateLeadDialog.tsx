@@ -29,7 +29,7 @@ const formSchema = z.object({
     email: z.string().email("Invalid email address").optional().or(z.literal("")),
     phone: z.string().min(10, "Phone must be at least 10 digits"),
     message: z.string().optional(),
-    source: z.enum(["WEBSITE_1", "WEBSITE_2", "WEBSITE_3", "WEBSITE_4"]),
+    source: z.string().optional(),
 });
 
 type CreateLeadFormData = z.infer<typeof formSchema>;
@@ -39,7 +39,28 @@ import { useCreateLead } from "@/hooks/use-leads";
 
 export function CreateLeadDialog({ onLeadCreated }: { onLeadCreated: () => void }) {
     const [open, setOpen] = useState(false);
+    const [websites, setWebsites] = useState<{ id: string; name: string }[]>([]);
     const createLeadMutation = useCreateLead();
+
+    const fetchWebsites = async () => {
+        try {
+            const res = await fetch("/api/websites");
+            if (res.ok) {
+                const data = await res.json();
+                setWebsites(data);
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
+    // Fetch websites when dialog opens
+    const handleOpenChange = (isOpen: boolean) => {
+        setOpen(isOpen);
+        if (isOpen) {
+            fetchWebsites();
+        }
+    };
 
     const form = useForm({
         defaultValues: {
@@ -47,7 +68,7 @@ export function CreateLeadDialog({ onLeadCreated }: { onLeadCreated: () => void 
             email: "",
             phone: "",
             message: "",
-            source: "WEBSITE_1" as const,
+            source: "",
         } as CreateLeadFormData,
         validators: {
             onChange: formSchema,
@@ -66,7 +87,7 @@ export function CreateLeadDialog({ onLeadCreated }: { onLeadCreated: () => void 
     });
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={handleOpenChange}>
             <DialogTrigger asChild>
                 <Button className="bg-cyan-600 hover:bg-cyan-700 text-white rounded-xl px-6">
                     <Plus className="mr-2 h-4 w-4" /> Add New Lead
@@ -151,10 +172,11 @@ export function CreateLeadDialog({ onLeadCreated }: { onLeadCreated: () => void 
                                         <SelectValue placeholder="Select source" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="WEBSITE_1">Website 1</SelectItem>
-                                        <SelectItem value="WEBSITE_2">Website 2</SelectItem>
-                                        <SelectItem value="WEBSITE_3">Website 3</SelectItem>
-                                        <SelectItem value="WEBSITE_4">Website 4</SelectItem>
+                                        {websites.map((site) => (
+                                            <SelectItem key={site.id} value={site.name}>
+                                                {site.name}
+                                            </SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                                 {field.state.meta.errors ? (

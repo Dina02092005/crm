@@ -38,68 +38,63 @@ export function DateTimePicker({
     const [minute, setMinute] = useState<string>("00");
     const [period, setPeriod] = useState<"AM" | "PM">("PM");
 
-    // Sync internal state with external date prop
+    // Initialize state from date prop, but don't use useEffect to update it
     useEffect(() => {
         if (date) {
-            try {
-                const dateVal = fromDate(date, getLocalTimeZone());
-                setSelectedDateValue([dateVal]);
+            const dateVal = fromDate(date, getLocalTimeZone());
+            setSelectedDateValue([dateVal]);
 
-                let h = date.getHours();
-                const m = date.getMinutes();
-                const p = h >= 12 ? "PM" : "AM";
+            let h = date.getHours();
+            const p = h >= 12 ? "PM" : "AM";
+            if (h > 12) h -= 12;
+            if (h === 0) h = 12;
 
-                if (h > 12) h -= 12;
-                if (h === 0) h = 12;
-
-                setHour(h.toString());
-                setMinute(m.toString().padStart(2, "0"));
-                setPeriod(p);
-            } catch (e) {
-                // Handle invalid dates if necessary
-                console.error("Invalid date passed to DateTimePicker", e);
-            }
+            setHour(h.toString());
+            setMinute(date.getMinutes().toString().padStart(2, "0"));
+            setPeriod(p);
         } else {
             setSelectedDateValue([]);
+            setHour("12");
+            setMinute("00");
+            setPeriod("AM");
         }
     }, [date]);
 
-    // Update parent when time selection changes
-    useEffect(() => {
+    const handleTimeChange = (type: "hour" | "minute" | "period", value: string) => {
+        let newHour = hour;
+        let newMinute = minute;
+        let newPeriod = period;
+
+        if (type === "hour") newHour = value;
+        if (type === "minute") newMinute = value;
+        if (type === "period") newPeriod = value as "AM" | "PM";
+
+        // Update local state immediately for UI responsiveness
+        if (type === "hour") setHour(value);
+        if (type === "minute") setMinute(value);
+        if (type === "period") setPeriod(value as "AM" | "PM");
+
+        // Calculate functionality
         if (selectedDateValue.length > 0) {
             const currentVal = selectedDateValue[0];
-            // Convert to native Date to start calculation
             const nativeDate = currentVal.toDate(getLocalTimeZone());
 
-            let h = parseInt(hour, 10);
-            const m = parseInt(minute, 10);
+            let h = parseInt(newHour, 10);
+            const m = parseInt(newMinute, 10);
 
-            if (period === "PM" && h !== 12) h += 12;
-            if (period === "AM" && h === 12) h = 0;
+            if (newPeriod === "PM" && h !== 12) h += 12;
+            if (newPeriod === "AM" && h === 12) h = 0;
 
             const newDate = setMinutes(setHours(nativeDate, h), m);
-
-            // Only update if differrent
-            if (!date || newDate.getTime() !== date.getTime()) {
-                setDate(newDate);
-            }
+            setDate(newDate);
         }
-    }, [hour, minute, period]);
-    // Note: We don't include selectedDateValue in dependency array for time update loop, 
-    // because handleDateChange handles the date change part. 
-    // If selectedDateValue changes (date changed), we update parent in handleDateChange.
-    // However, if Time changes, we must update using current date.
-    // But verify if selectedDateValue is stable/updated.
-    // Actually simpler: 
-
+    };
 
     const handleDateChange = (details: { value: DateValue[], valueAsString: string[], view: string }) => {
         const newDateVal = details.value[0];
         if (newDateVal) {
-            // Convert to native Date
             const nativeDate = newDateVal.toDate(getLocalTimeZone());
 
-            // Preserve time from current selection
             let h = parseInt(hour, 10);
             const m = parseInt(minute, 10);
 
@@ -132,11 +127,11 @@ export function DateTimePicker({
                     </div>
                     <div className="flex items-center gap-1 mt-2">
                         {/* Hour */}
-                        <Select value={hour} onValueChange={(v) => setHour(v)}>
+                        <Select value={hour} onValueChange={(v) => handleTimeChange("hour", v)}>
                             <SelectTrigger className="h-8 w-[60px] text-xs bg-background">
                                 <SelectValue placeholder="HH" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="z-[110]">
                                 {Array.from({ length: 12 }, (_, i) => i + 1).map((h) => (
                                     <SelectItem key={h} value={h.toString()} className="text-xs">
                                         {h}
@@ -146,11 +141,11 @@ export function DateTimePicker({
                         </Select>
                         <span className="text-muted-foreground text-xs">:</span>
                         {/* Minute */}
-                        <Select value={minute} onValueChange={(v) => setMinute(v)}>
+                        <Select value={minute} onValueChange={(v) => handleTimeChange("minute", v)}>
                             <SelectTrigger className="h-8 w-[60px] text-xs bg-background">
                                 <SelectValue placeholder="MM" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="z-[110]">
                                 {Array.from({ length: 12 }, (_, i) => i * 5).map((m) => (
                                     <SelectItem key={m} value={m.toString().padStart(2, "0")} className="text-xs">
                                         {m.toString().padStart(2, "0")}
@@ -159,11 +154,11 @@ export function DateTimePicker({
                             </SelectContent>
                         </Select>
                         {/* Period */}
-                        <Select value={period} onValueChange={(v) => setPeriod(v as "AM" | "PM")}>
+                        <Select value={period} onValueChange={(v) => handleTimeChange("period", v)}>
                             <SelectTrigger className="h-8 w-[65px] text-xs bg-background">
                                 <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="z-[110]">
                                 <SelectItem value="AM" className="text-xs">AM</SelectItem>
                                 <SelectItem value="PM" className="text-xs">PM</SelectItem>
                             </SelectContent>
