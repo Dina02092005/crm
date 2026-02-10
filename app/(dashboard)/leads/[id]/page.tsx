@@ -35,6 +35,7 @@ import {
     Plus,
     ChevronLeft,
     ChevronRight,
+    Database,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
