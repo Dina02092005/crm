@@ -14,7 +14,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Pencil, Trash2, Phone, Mail, Calendar } from "lucide-react";
+import { MoreHorizontal, Eye, Pencil, Trash2, Phone, Mail, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -29,7 +29,9 @@ interface CustomersTableProps {
     pagination?: {
         page: number;
         totalPages: number;
+        pageSize: number;
         onPageChange: (page: number) => void;
+        onPageSizeChange: (pageSize: number) => void;
     }
 }
 
@@ -203,28 +205,47 @@ export function CustomersTable({ data, onUpdate, onDelete, pagination }: Custome
 
             {/* Pagination Controls */}
             {pagination && (
-                <div className="flex items-center justify-end space-x-2 py-4 pr-6 border-t border-border">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => pagination.onPageChange(Math.max(1, pagination.page - 1))}
-                        disabled={pagination.page <= 1}
-                        className="rounded-xl h-8"
-                    >
-                        Previous
-                    </Button>
-                    <div className="text-sm font-medium text-gray-600">
-                        Page {pagination.page} of {pagination.totalPages}
+                <div className="flex items-center justify-between px-4 py-4 border-t border-border mt-auto">
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Rows per page</span>
+                        <select
+                            value={pagination.pageSize}
+                            onChange={(e) => pagination.onPageSizeChange(Number(e.target.value))}
+                            className="h-8 w-16 rounded-md border border-input bg-background px-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        >
+                            {[5, 10, 20, 50].map((size) => (
+                                <option key={size} value={size}>
+                                    {size}
+                                </option>
+                            ))}
+                        </select>
                     </div>
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => pagination.onPageChange(Math.min(pagination.totalPages, pagination.page + 1))}
-                        disabled={pagination.page >= pagination.totalPages}
-                        className="rounded-xl h-8"
-                    >
-                        Next
-                    </Button>
+
+                    <div className="flex items-center gap-2">
+                        <div className="text-xs font-medium text-muted-foreground">
+                            Page {pagination.page} of {pagination.totalPages}
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => pagination.onPageChange(Math.max(1, pagination.page - 1))}
+                                disabled={pagination.page <= 1}
+                                className="rounded-xl h-8 w-8"
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => pagination.onPageChange(Math.min(pagination.totalPages, pagination.page + 1))}
+                                disabled={pagination.page >= pagination.totalPages}
+                                className="rounded-xl h-8 w-8"
+                            >
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
                 </div>
             )}
 

@@ -31,11 +31,20 @@ function LoginFormContent() {
     const errorParam = searchParams.get("error");
     if (errorParam) {
       if (errorParam === "Callback") {
-        setError("Access denied. Please check your credentials.");
+        const errorMsg = "Login failed. You may not be authorized.";
+        setError(errorMsg);
+        toast.error(errorMsg);
       } else if (errorParam === "OAuthAccountNotLinked") {
-        setError("To confirm your identity, sign in with the same account you used originally.");
+        const errorMsg = "To confirm your identity, sign in with the same account you used originally.";
+        setError(errorMsg);
+        toast.error(errorMsg);
+      } else if (errorParam === "AccessDenied") {
+        const errorMsg = "You are not authorized to access this application. Please contact the administrator.";
+        setError(errorMsg);
+        toast.error(errorMsg);
       } else {
         setError(errorParam);
+        toast.error(errorParam);
       }
     }
 

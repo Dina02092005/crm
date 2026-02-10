@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { Plus } from "lucide-react";
 import { useCreateLead } from "@/hooks/use-leads";
+import { ImageUpload } from "@/components/ui/image-upload";
 
 const formSchema = z.object({
     name: z.string().min(2, "Name must be at least 2 characters"),
@@ -34,6 +35,7 @@ const formSchema = z.object({
     phone: z.string().min(10, "Phone must be at least 10 digits"),
     message: z.string().optional(),
     source: z.enum(["WEBSITE_1", "WEBSITE_2", "WEBSITE_3", "WEBSITE_4"]),
+    imageUrl: z.string().nullable().optional(),
 });
 
 type CreateLeadFormData = z.infer<typeof formSchema>;
@@ -109,6 +111,19 @@ export function CreateLeadSheet({ onLeadCreated }: { onLeadCreated: () => void }
                         }}
                         className="space-y-4"
                     >
+                        <div className="flex justify-center pb-2">
+                            <form.Field
+                                name="imageUrl"
+                                children={(field) => (
+                                    <ImageUpload
+                                        value={field.state.value}
+                                        onChange={(url) => field.handleChange(url)}
+                                        onRemove={() => field.handleChange(null)}
+                                    />
+                                )}
+                            />
+                        </div>
+
                         <form.Field
                             name="name"
                             children={(field) => (

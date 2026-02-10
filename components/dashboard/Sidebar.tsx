@@ -97,7 +97,7 @@ export function Sidebar() {
                                         <motion.button
                                             onClick={() => toggleSubmenu(item.label, item.submenu?.[0]?.href)}
                                             className={`w-full flex items-center justify-center group-hover:justify-between xl:justify-between px-2 xl:px-3 h-[41px] text-sm font-semibold rounded-[12px] xl:rounded-l-[12px] xl:rounded-r-none group-hover:rounded-l-[12px] group-hover:rounded-r-[12px] transition-all duration-300 ${isActive(undefined, item.submenu)
-                                                ? "bg-white text-primary font-bold curved-tab-connection"
+                                                ? "bg-[#164e63] text-white font-bold curved-tab-connection"
                                                 : "text-white hover:bg-white/5"
                                                 }`}
                                             whileHover={{ x: 2 }}
@@ -195,7 +195,7 @@ export function Sidebar() {
                                             href={item.href!}
                                             onClick={() => setExpandedMenu(null)}
                                             className={`flex items-center justify-center group-hover:justify-start xl:justify-start gap-2.5 px-2 xl:px-3 h-[41px] text-sm font-semibold rounded-[12px] xl:rounded-l-[12px] xl:rounded-r-none group-hover:rounded-l-[12px] group-hover:rounded-r-[12px] transition-all duration-300 ${pathname === item.href
-                                                ? "bg-white text-primary font-bold curved-tab-connection"
+                                                ? "bg-[#164e63] text-white font-bold curved-tab-connection"
                                                 : "text-white hover:bg-white/5 hover:text-white"
                                                 }`}
                                         >

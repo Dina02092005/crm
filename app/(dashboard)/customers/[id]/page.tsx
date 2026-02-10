@@ -8,22 +8,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from "@/components/ui/dialog";
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetDescription,
+} from "@/components/ui/sheet";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import CustomerForm from "@/components/forms/CustomerForm";
 import {
     ArrowLeft,
-    User,
-    Phone,
-    Mail,
-    Calendar,
-    Briefcase,
     History,
     Pencil,
     Trash2,
@@ -107,19 +108,21 @@ export default function CustomerDetailPage() {
         }
     };
 
-    const fetchActivities = async (page: number, leadId?: string) => {
+    const fetchActivities = async (page: number, leadId?: string, limitOverride?: number) => {
         const targetLeadId = leadId || customer?.lead?.id;
+        const currentLimit = limitOverride || activityPagination.limit;
         if (!targetLeadId) return;
 
         setIsActivitiesLoading(true);
         try {
-            const response = await axios.get(`/api/leads/${targetLeadId}/activities?page=${page}&limit=${activityPagination.limit}`);
+            const response = await axios.get(`/api/leads/${targetLeadId}/activities?page=${page}&limit=${currentLimit}`);
             setActivities(response.data.activities);
             setActivityPagination({
                 ...activityPagination,
                 page: response.data.pagination.page,
                 totalPages: response.data.pagination.totalPages,
-                total: response.data.pagination.total
+                total: response.data.pagination.total,
+                limit: currentLimit
             });
         } catch (error) {
             console.error("Failed to fetch activities:", error);
@@ -322,31 +325,60 @@ export default function CustomerDetailPage() {
 
                             {/* Activity Pagination Controls */}
                             <div className="p-4 border-t border-border/50 bg-muted/20 flex items-center justify-between">
-                                <p className="text-xs text-muted-foreground font-medium">
-                                    Showing {activities.length} of {activityPagination.total} activities
-                                </p>
                                 <div className="flex items-center gap-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-8 rounded-xl text-xs border-primary/20 text-primary hover:bg-primary/5 shadow-sm"
-                                        onClick={() => fetchActivities(activityPagination.page - 1)}
-                                        disabled={activityPagination.page <= 1 || isActivitiesLoading}
+                                    <p className="text-xs text-muted-foreground font-medium">Rows per page</p>
+                                    <Select
+                                        value={activityPagination.limit.toString()}
+                                        onValueChange={(value) => {
+                                            setActivityPagination(prev => ({ ...prev, limit: Number(value), page: 1 }));
+                                            // We need to fetch immediately or use an effect. 
+                                            // Since fetchActivities depends on state, passing the new limit directly is safer
+                                            // or we can use a useEffect. But here let's just call it.
+                                            // Actually, fetchActivities uses state, so state update might not be reflected yet.
+                                            // Better to modify fetchActivities to accept limit or use a useEffect.
+                                            // Let's rely on a useEffect for limit changes if possible, or pass it.
+                                            // The simplest way without big refactor:
+                                            setTimeout(() => fetchActivities(1, undefined, Number(value)), 0);
+                                        }}
                                     >
-                                        Previous
-                                    </Button>
-                                    <span className="text-xs font-bold text-muted-foreground px-2">
-                                        {activityPagination.page} / {activityPagination.totalPages}
-                                    </span>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-8 rounded-xl text-xs border-primary/20 text-primary hover:bg-primary/5 shadow-sm"
-                                        onClick={() => fetchActivities(activityPagination.page + 1)}
-                                        disabled={activityPagination.page >= activityPagination.totalPages || isActivitiesLoading}
-                                    >
-                                        Next
-                                    </Button>
+                                        <SelectTrigger className="h-8 w-[60px] text-xs bg-background border-border/50">
+                                            <SelectValue placeholder={activityPagination.limit} />
+                                        </SelectTrigger>
+                                        <SelectContent side="top">
+                                            {[5, 10, 20, 50].map((pageSize) => (
+                                                <SelectItem key={pageSize} value={pageSize.toString()} className="text-xs">
+                                                    {pageSize}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <p className="text-xs text-muted-foreground font-medium">
+                                        {activityPagination.total > 0
+                                            ? `${(activityPagination.page - 1) * activityPagination.limit + 1}-${Math.min(activityPagination.page * activityPagination.limit, activityPagination.total)} of ${activityPagination.total}`
+                                            : "No activities"}
+                                    </p>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-8 w-8 p-0 rounded-lg text-xs border-primary/20 text-primary hover:bg-primary/5 shadow-sm"
+                                            onClick={() => fetchActivities(activityPagination.page - 1)}
+                                            disabled={activityPagination.page <= 1 || isActivitiesLoading}
+                                        >
+                                            &lt;
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-8 w-8 p-0 rounded-lg text-xs border-primary/20 text-primary hover:bg-primary/5 shadow-sm"
+                                            onClick={() => fetchActivities(activityPagination.page + 1)}
+                                            disabled={activityPagination.page >= activityPagination.totalPages || isActivitiesLoading}
+                                        >
+                                            &gt;
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
                         </CardContent>
@@ -354,43 +386,40 @@ export default function CustomerDetailPage() {
                 </div>
             </div>
 
-            {/* Edit Customer Dialog */}
-            <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Edit Customer</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleUpdateCustomer}>
-                        <div className="space-y-4 py-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Name *</Label>
-                                <Input id="name" name="name" defaultValue={customer.name} required />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="email">Email</Label>
-                                <Input
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    defaultValue={customer.email || ""}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="phone">Phone *</Label>
-                                <Input id="phone" name="phone" defaultValue={customer.phone} required />
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)} className="rounded-xl">
+            {/* Edit Customer Sheet */}
+            <Sheet open={showEditDialog} onOpenChange={setShowEditDialog}>
+                <SheetContent className="overflow-y-auto w-full sm:max-w-md flex flex-col p-0">
+                    <div className="p-6 pb-2">
+                        <SheetHeader>
+                            <SheetTitle>Edit Customer</SheetTitle>
+                            <SheetDescription>
+                                Update customer details.
+                            </SheetDescription>
+                        </SheetHeader>
+                    </div>
+                    <div className="flex-1 px-6">
+                        <CustomerForm
+                            formId="edit-customer-form"
+                            customer={customer}
+                            onSuccess={() => {
+                                setShowEditDialog(false);
+                                fetchCustomer();
+                                toast.success("Customer updated successfully");
+                            }}
+                        />
+                    </div>
+                    <div className="p-6 pt-2 mt-auto border-t">
+                        <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
                                 Cancel
                             </Button>
-                            <Button type="submit" className="bg-primary hover:bg-primary/90 text-white rounded-xl font-bold shadow-sm">
+                            <Button type="submit" form="edit-customer-form" className="bg-primary hover:bg-primary/90 text-white">
                                 Save Changes
                             </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+                        </div>
+                    </div>
+                </SheetContent>
+            </Sheet>
 
             <ConfirmDialog
                 isOpen={confirmConfig.isOpen}

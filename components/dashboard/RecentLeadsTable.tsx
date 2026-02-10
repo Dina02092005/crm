@@ -10,6 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { Lead } from "@prisma/client";
 import { formatDistanceToNow } from "date-fns";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 interface RecentLead extends Lead {
     customer?: {
@@ -65,15 +68,21 @@ const columns: ColumnDef<RecentLead>[] = [
 
 export function RecentLeadsTable({ data }: { data: RecentLead[] }) {
     const router = useRouter();
+    const [page, setPage] = useState(1);
+    const [pageSize, setPageSize] = useState(5);
+
+    const totalPages = Math.ceil(data.length / pageSize);
+    const paginatedData = data.slice((page - 1) * pageSize, page * pageSize);
+
     const table = useReactTable({
-        data,
+        data: paginatedData,
         columns,
         getCoreRowModel: getCoreRowModel(),
     });
 
     return (
-        <div className="w-full overflow-hidden">
-            <div className="overflow-x-auto scrollbar-hide">
+        <div className="w-full overflow-hidden flex flex-col h-full">
+            <div className="overflow-x-auto scrollbar-hide flex-1">
                 <table className="w-full border-collapse">
                     <thead>
                         <tr className="bg-muted/50 border-b border-border">
@@ -133,6 +142,55 @@ export function RecentLeadsTable({ data }: { data: RecentLead[] }) {
                     </tbody>
                 </table>
             </div>
+
+            {/* Pagination Controls */}
+            {data.length > 0 && (
+                <div className="flex items-center justify-between px-4 py-4 border-t border-border mt-auto">
+                    <div className="flex items-center gap-2">
+                        <span className="text-xs text-muted-foreground">Rows per page</span>
+                        <select
+                            value={pageSize}
+                            onChange={(e) => {
+                                setPageSize(Number(e.target.value));
+                                setPage(1);
+                            }}
+                            className="h-8 w-16 rounded-md border border-input bg-background px-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                        >
+                            {[5, 10, 20, 50].map((size) => (
+                                <option key={size} value={size}>
+                                    {size}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="flex items-center gap-2">
+                        <div className="text-xs font-medium text-muted-foreground">
+                            Page {page} of {totalPages}
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => setPage(Math.max(1, page - 1))}
+                                disabled={page <= 1}
+                            >
+                                <ChevronLeft className="h-4 w-4" />
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="icon"
+                                className="h-8 w-8"
+                                onClick={() => setPage(Math.min(totalPages, page + 1))}
+                                disabled={page >= totalPages}
+                            >
+                                <ChevronRight className="h-4 w-4" />
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

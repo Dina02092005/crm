@@ -1,5 +1,6 @@
-
-import AWS from 'aws-sdk';
+import { S3Client, S3ClientConfig, DeleteObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
+import { Upload } from '@aws-sdk/lib-storage';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
 
 export interface S3UploadConfig {
@@ -25,7 +26,7 @@ export interface UploadResult {
 }
 
 export class S3UploadService {
-    private s3: AWS.S3;
+    private s3: S3Client;
     private config: S3UploadConfig;
 
     constructor(config?: Partial<S3UploadConfig>) {
@@ -56,20 +57,23 @@ export class S3UploadService {
         };
 
         // Configure S3 client
-        const s3Config: AWS.S3.ClientConfiguration = {
-            accessKeyId: this.config.accessKeyId,
-            secretAccessKey: this.config.secretAccessKey,
+        const s3Config: S3ClientConfig = {
             region: this.config.region,
+            credentials: {
+                accessKeyId: this.config.accessKeyId,
+                secretAccessKey: this.config.secretAccessKey,
+            },
+            requestChecksumCalculation: "WHEN_REQUIRED",
+            responseChecksumValidation: "WHEN_REQUIRED",
         };
 
         // Add custom endpoint for DigitalOcean Spaces
         if (this.config.endpoint) {
-            s3Config.endpoint = new AWS.Endpoint(this.config.endpoint);
-            s3Config.s3ForcePathStyle = false; // DigitalOcean Spaces requires this to be false for virtual-hosted style
-            s3Config.signatureVersion = 'v4';
+            s3Config.endpoint = this.config.endpoint;
+            s3Config.forcePathStyle = false; // DigitalOcean Spaces requires this to be false for virtual-hosted style
         }
 
-        this.s3 = new AWS.S3(s3Config);
+        this.s3 = new S3Client(s3Config);
     }
 
     /**
@@ -117,30 +121,30 @@ export class S3UploadService {
             const fileName = this.generateFileName(file.name);
             const key = `${this.config.rootFolder}/${this.config.subFolder}/${fileName}`;
 
-            // Convert File to Buffer for AWS sdk
+            // Convert File to Buffer/Stream for AWS sdk
+            // Note: v3 Upload supports web streams, blobs, etc.
+            // Using arrayBuffer -> Buffer for compatibility
             const bytes = await file.arrayBuffer();
             const buffer = Buffer.from(bytes);
 
-            // Prepare upload parameters
-            const params: AWS.S3.PutObjectRequest = {
-                Bucket: this.config.bucketName,
-                Key: key,
-                Body: buffer,
-                ContentType: file.type,
-                Metadata: {
-                    originalName: file.name,
-                    uploadedAt: new Date().toISOString(),
-                    fileSize: file.size.toString()
-                }
-            };
+            // Prepare upload
+            const upload = new Upload({
+                client: this.s3,
+                params: {
+                    Bucket: this.config.bucketName,
+                    Key: key,
+                    Body: buffer,
+                    ContentType: file.type,
+                    Metadata: {
+                        originalName: file.name,
+                        uploadedAt: new Date().toISOString(),
+                        fileSize: file.size.toString()
+                    },
+                    ACL: this.config.makePublic ? 'public-read' : undefined
+                },
+            });
 
-            // Add ACL if files should be public
-            if (this.config.makePublic) {
-                params.ACL = 'public-read';
-            }
-
-            // Upload to S3/DigitalOcean Spaces
-            const uploadResult = await this.s3.upload(params).promise();
+            const uploadResult = await upload.done();
 
             console.log('File uploaded successfully to Spaces:', uploadResult.Location);
 
@@ -156,9 +160,9 @@ export class S3UploadService {
 
             let errorMessage = 'Failed to upload file to storage';
 
-            if (error.code === 'NoSuchBucket') {
+            if (error.$metadata?.httpStatusCode === 404) {
                 errorMessage = 'Storage bucket not found. Please check configuration.';
-            } else if (error.code === 'AccessDenied') {
+            } else if (error.$metadata?.httpStatusCode === 403) {
                 errorMessage = 'Access denied to storage. Please check credentials.';
             }
 
@@ -178,15 +182,13 @@ export class S3UploadService {
             const url = new URL(fileUrl);
             const key = url.pathname.substring(1); // Remove leading slash
 
-            const params: AWS.S3.DeleteObjectRequest = {
+            await this.s3.send(new DeleteObjectCommand({
                 Bucket: this.config.bucketName,
                 Key: key
-            };
+            }));
 
-            await this.s3.deleteObject(params).promise();
             console.log('File deleted successfully from Spaces:', fileUrl);
             return true;
-
         } catch (error: any) {
             console.error('Error deleting file from Spaces:', error);
             return false;
@@ -200,15 +202,14 @@ export class S3UploadService {
         const uniqueFileName = this.generateFileName(fileName);
         const key = `${this.config.rootFolder}/${this.config.subFolder}/${uniqueFileName}`;
 
-        const params = {
+        const command = new PutObjectCommand({
             Bucket: this.config.bucketName,
             Key: key,
-            Expires: 300, // 5 minutes
             ContentType: fileType,
-            ACL: this.config.makePublic ? 'public-read' : 'private'
-        };
+            // ACL removed to prevent CORS/Permission issues with Bucket Owner Enforced settings
+        });
 
-        const url = await this.s3.getSignedUrlPromise('putObject', params);
+        const url = await getSignedUrl(this.s3, command, { expiresIn: 300 }); // 5 minutes
 
         // Construct the final public URL (DigitalOcean Spaces format)
         // Note: The signed URL is for uploading, but the file will be accessible at a standard URL

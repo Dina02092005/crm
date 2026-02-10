@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { ImageUpload } from "@/components/ui/image-upload";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -26,6 +27,7 @@ const leadSchema = z.object({
     status: z.string().optional(),
     temperature: z.string().optional(),
     message: z.string().optional(),
+    imageUrl: z.string().nullable(),
 });
 
 type LeadFormData = z.infer<typeof leadSchema>;
@@ -59,6 +61,7 @@ export function LeadForm({ leadId, onSuccess }: LeadFormProps) {
             status: "",
             temperature: "",
             message: "",
+            imageUrl: null,
         } as LeadFormData,
         validators: {
             onChange: leadSchema,
@@ -87,6 +90,7 @@ export function LeadForm({ leadId, onSuccess }: LeadFormProps) {
                     status: lead.status || "",
                     temperature: lead.temperature || "",
                     message: lead.message || "",
+                    imageUrl: lead.imageUrl || null,
                 });
             } catch (error) {
                 toast.error("Failed to load lead details");
@@ -111,6 +115,19 @@ export function LeadForm({ leadId, onSuccess }: LeadFormProps) {
             }}
             className="space-y-6 mt-6"
         >
+            <div className="flex justify-center">
+                <form.Field
+                    name="imageUrl"
+                    children={(field) => (
+                        <ImageUpload
+                            value={field.state.value}
+                            onChange={(url) => field.handleChange(url)}
+                            onRemove={() => field.handleChange(null)}
+                        />
+                    )}
+                />
+            </div>
+
             <form.Field
                 name="name"
                 children={(field) => (

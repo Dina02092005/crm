@@ -8,15 +8,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from "@/components/ui/dialog";
-import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetDescription,
+} from "@/components/ui/sheet";
 import {
     Select,
     SelectContent,
@@ -24,18 +21,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import EmployeeForm from "@/components/forms/EmployeeForm";
 import {
     ArrowLeft,
-    User,
-    Phone,
-    Mail,
-    Calendar,
-    Briefcase,
     UserCheck,
     Pencil,
     UserX,
     TrendingUp,
-    UserCog,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -46,6 +39,10 @@ export default function EmployeeDetailPage() {
     const [employee, setEmployee] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [showEditDialog, setShowEditDialog] = useState(false);
+
+    // Pagination state for assignments
+    const [currentPage, setCurrentPage] = useState(1);
+    const [itemsPerPage, setItemsPerPage] = useState(5);
 
     // Confirm Dialog State
     const [confirmConfig, setConfirmConfig] = useState({
@@ -311,55 +308,111 @@ export default function EmployeeDetailPage() {
                         </CardHeader>
                         <CardContent className="p-0">
                             {employee.assignedLeads && employee.assignedLeads.length > 0 ? (
-                                <div className="divide-y divide-border/50">
-                                    {employee.assignedLeads.map((assignment: any) => (
-                                        <div
-                                            key={assignment.id}
-                                            className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors cursor-pointer"
-                                            onClick={() => router.push(`/leads/${assignment.lead.id}`)}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className="w-9 h-9 rounded-lg bg-cyan-100 text-cyan-600 flex items-center justify-center font-bold text-xs">
-                                                    {assignment.lead.name.charAt(0).toUpperCase()}
+                                <>
+                                    <div className="divide-y divide-border/50">
+                                        {employee.assignedLeads
+                                            .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
+                                            .map((assignment: any) => (
+                                                <div
+                                                    key={assignment.id}
+                                                    className="flex items-center justify-between p-4 hover:bg-muted/30 transition-colors cursor-pointer"
+                                                    onClick={() => router.push(`/leads/${assignment.lead.id}`)}
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-9 h-9 rounded-lg bg-cyan-100 text-cyan-600 flex items-center justify-center font-bold text-xs">
+                                                            {assignment.lead.name.charAt(0).toUpperCase()}
+                                                        </div>
+                                                        <div>
+                                                            <p className="text-sm font-bold text-foreground">
+                                                                {assignment.lead.name}
+                                                            </p>
+                                                            <p className="text-[10px] text-muted-foreground">
+                                                                Since {new Date(assignment.assignedAt).toLocaleDateString()}
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                        <Badge
+                                                            variant="secondary"
+                                                            className={`text-[9px] font-bold py-0.5 px-1.5 border-0 ${assignment.lead.status === "NEW"
+                                                                ? "bg-blue-500/10 text-blue-600"
+                                                                : assignment.lead.status === "IN_PROGRESS"
+                                                                    ? "bg-yellow-500/10 text-yellow-600"
+                                                                    : assignment.lead.status === "CONVERTED"
+                                                                        ? "bg-green-500/10 text-green-600"
+                                                                        : "bg-muted text-muted-foreground"
+                                                                }`}
+                                                        >
+                                                            {assignment.lead.status}
+                                                        </Badge>
+                                                        <Badge
+                                                            variant="secondary"
+                                                            className={`text-[9px] font-bold py-0.5 px-1.5 border-0 ${assignment.lead.temperature === "HOT"
+                                                                ? "bg-red-500/10 text-red-600"
+                                                                : assignment.lead.temperature === "WARM"
+                                                                    ? "bg-orange-500/10 text-orange-600"
+                                                                    : "bg-blue-500/10 text-blue-600"
+                                                                }`}
+                                                        >
+                                                            {assignment.lead.temperature}
+                                                        </Badge>
+                                                    </div>
                                                 </div>
-                                                <div>
-                                                    <p className="text-sm font-bold text-foreground">
-                                                        {assignment.lead.name}
-                                                    </p>
-                                                    <p className="text-[10px] text-muted-foreground">
-                                                        Since {new Date(assignment.assignedAt).toLocaleDateString()}
-                                                    </p>
-                                                </div>
-                                            </div>
+                                            ))}
+                                    </div>
+                                    {/* Pagination Controls */}
+                                    {employee.assignedLeads.length > 0 && (
+                                        <div className="flex items-center justify-between p-4 border-t border-border/50">
                                             <div className="flex items-center gap-2">
-                                                <Badge
-                                                    variant="secondary"
-                                                    className={`text-[9px] font-bold py-0.5 px-1.5 border-0 ${assignment.lead.status === "NEW"
-                                                        ? "bg-blue-500/10 text-blue-600"
-                                                        : assignment.lead.status === "IN_PROGRESS"
-                                                            ? "bg-yellow-500/10 text-yellow-600"
-                                                            : assignment.lead.status === "CONVERTED"
-                                                                ? "bg-green-500/10 text-green-600"
-                                                                : "bg-muted text-muted-foreground"
-                                                        }`}
+                                                <p className="text-xs text-muted-foreground">Rows per page</p>
+                                                <Select
+                                                    value={itemsPerPage.toString()}
+                                                    onValueChange={(value) => {
+                                                        setItemsPerPage(Number(value));
+                                                        setCurrentPage(1);
+                                                    }}
                                                 >
-                                                    {assignment.lead.status}
-                                                </Badge>
-                                                <Badge
-                                                    variant="secondary"
-                                                    className={`text-[9px] font-bold py-0.5 px-1.5 border-0 ${assignment.lead.temperature === "HOT"
-                                                        ? "bg-red-500/10 text-red-600"
-                                                        : assignment.lead.temperature === "WARM"
-                                                            ? "bg-orange-500/10 text-orange-600"
-                                                            : "bg-blue-500/10 text-blue-600"
-                                                        }`}
-                                                >
-                                                    {assignment.lead.temperature}
-                                                </Badge>
+                                                    <SelectTrigger className="h-8 w-[70px]">
+                                                        <SelectValue placeholder={itemsPerPage} />
+                                                    </SelectTrigger>
+                                                    <SelectContent side="top">
+                                                        {[5, 10, 20, 50].map((pageSize) => (
+                                                            <SelectItem key={pageSize} value={pageSize.toString()}>
+                                                                {pageSize}
+                                                            </SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+
+                                            <div className="flex items-center gap-4">
+                                                <p className="text-xs text-muted-foreground">
+                                                    Page {currentPage} of {Math.ceil(employee.assignedLeads.length / itemsPerPage)}
+                                                </p>
+                                                <div className="flex bg-muted/20 rounded-md">
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-7 w-7 p-0 rounded-l-md"
+                                                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                                                        disabled={currentPage === 1}
+                                                    >
+                                                        &lt;
+                                                    </Button>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="h-7 w-7 p-0 rounded-r-md"
+                                                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, Math.ceil(employee.assignedLeads.length / itemsPerPage)))}
+                                                        disabled={currentPage === Math.ceil(employee.assignedLeads.length / itemsPerPage)}
+                                                    >
+                                                        &gt;
+                                                    </Button>
+                                                </div>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
+                                    )}
+                                </>
                             ) : (
                                 <div className="flex flex-col items-center justify-center py-20 text-muted-foreground/50">
                                     <UserCheck className="h-10 w-10 mb-3 opacity-10" />
@@ -371,72 +424,40 @@ export default function EmployeeDetailPage() {
                 </div>
             </div>
 
-            {/* Edit Employee Dialog */}
-            <Dialog open={showEditDialog} onOpenChange={setShowEditDialog}>
-                {/* ... existing dialog content ... */}
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Edit Employee</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleUpdateEmployee}>
-                        <div className="space-y-4 py-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Name *</Label>
-                                <Input id="name" name="name" defaultValue={employee.name} required />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="email">Email *</Label>
-                                <Input
-                                    id="email"
-                                    name="email"
-                                    type="email"
-                                    defaultValue={employee.email}
-                                    required
-                                />
-                            </div>
-                            {session?.user?.role === "ADMIN" && (
-                                <div className="space-y-2">
-                                    <Label htmlFor="role">Role *</Label>
-                                    <Select name="role" defaultValue={employee.role}>
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="EMPLOYEE">Employee</SelectItem>
-                                            <SelectItem value="MANAGER">Manager</SelectItem>
-                                            <SelectItem value="ADMIN">Admin</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            )}
-                            <div className="space-y-2">
-                                <Label htmlFor="phone">Phone</Label>
-                                <Input
-                                    id="phone"
-                                    name="phone"
-                                    defaultValue={employee.employeeProfile?.phone || ""}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="department">Department</Label>
-                                <Input
-                                    id="department"
-                                    name="department"
-                                    defaultValue={employee.employeeProfile?.department || ""}
-                                />
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setShowEditDialog(false)}>
+            {/* Edit Employee Sheet */}
+            <Sheet open={showEditDialog} onOpenChange={setShowEditDialog}>
+                <SheetContent className="overflow-y-auto w-full sm:max-w-md flex flex-col p-0">
+                    <div className="p-6 pb-2">
+                        <SheetHeader>
+                            <SheetTitle>Edit Employee</SheetTitle>
+                            <SheetDescription>
+                                Update employee details.
+                            </SheetDescription>
+                        </SheetHeader>
+                    </div>
+                    <div className="flex-1 px-6">
+                        <EmployeeForm
+                            formId="edit-employee-form"
+                            employee={employee}
+                            onSuccess={() => {
+                                setShowEditDialog(false);
+                                fetchEmployee();
+                                toast.success("Employee updated successfully");
+                            }}
+                        />
+                    </div>
+                    <div className="p-6 pt-2 mt-auto border-t">
+                        <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
                                 Cancel
                             </Button>
-                            <Button type="submit" className="bg-cyan-600 hover:bg-cyan-700">
+                            <Button type="submit" form="edit-employee-form" className="bg-cyan-600 hover:bg-cyan-700">
                                 Save Changes
                             </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+                        </div>
+                    </div>
+                </SheetContent>
+            </Sheet>
 
             <ConfirmDialog
                 isOpen={confirmConfig.isOpen}

@@ -29,6 +29,7 @@ model User {
   documents          LeadDocument[]
   tasks              LeadTask[]
   notifications      Notification[]
+  imageUrl           String?
 }
 
 model Notification {
@@ -51,11 +52,14 @@ enum NotificationType {
 }
 
 model EmployeeProfile {
-  id         String  @id @default(uuid())
-  userId     String  @unique
-  phone      String?
-  department String?
-  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  phone       String?
+  department  String?
+  designation String?
+  salary      Float?
+  joiningDate DateTime?
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model Lead {
@@ -74,6 +78,7 @@ model Lead {
   assignments LeadAssignment[]
   documents   LeadDocument[]
   tasks       LeadTask[]
+  imageUrl    String?
 
   @@index([phone])
   @@index([status])
@@ -146,14 +151,16 @@ model LeadDocument {
 
 model Customer {
   id          String   @id @default(uuid())
-  leadId      String   @unique
+  leadId      String?  @unique
   name        String
   email       String?
   phone       String
   onboardedBy String
   createdAt   DateTime @default(now())
-  lead        Lead     @relation(fields: [leadId], references: [id])
+  lead        Lead?    @relation(fields: [leadId], references: [id])
   user        User     @relation(fields: [onboardedBy], references: [id])
+  imageUrl    String?
+  savedAddresses Json?
 }
 
 model AuditLog {
@@ -171,6 +178,8 @@ enum Role {
   ADMIN
   MANAGER
   EMPLOYEE
+  SALES_REP
+  SUPPORT_AGENT
 }
 
 enum LeadSource {

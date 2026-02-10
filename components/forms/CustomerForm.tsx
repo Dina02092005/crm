@@ -3,6 +3,7 @@
 import { useForm } from '@tanstack/react-form'
 import { zodValidator } from '@tanstack/zod-form-adapter'
 import { z } from 'zod'
+import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -11,6 +12,7 @@ import { Customer } from '@/types/api'
 import { useEffect } from 'react'
 import { PhoneInput } from '@/components/ui/phone-input'
 import { AddressSelector } from '@/components/ui/address-selector'
+import { ImageUpload } from "@/components/ui/image-upload";
 
 const customerSchema = z.object({
     phone: z.string().min(10, 'Phone must be at least 10 characters'),
@@ -25,6 +27,7 @@ const customerSchema = z.object({
         country: z.string(),
         isDefault: z.boolean().optional(),
     })),
+    imageUrl: z.string().nullable(),
 })
 
 interface CustomerFormProps {
@@ -33,17 +36,30 @@ interface CustomerFormProps {
     formId?: string
 }
 
+// Helper to split full name
+const splitName = (fullName: string = '') => {
+    const parts = fullName.trim().split(/\s+/);
+    const firstName = parts[0] || '';
+    const lastName = parts.slice(1).join(' ') || '';
+    return { firstName, lastName };
+};
+
 export default function CustomerForm({ customer, onSuccess, formId }: CustomerFormProps) {
     const createMutation = useCreateCustomer()
     const updateMutation = useUpdateCustomer()
 
+    // Derive initial values
+    const initialName = customer?.name || customer?.user?.name || '';
+    const { firstName: initialFirst, lastName: initialLast } = splitName(initialName);
+
     const form = useForm({
         defaultValues: {
-            phone: customer?.user?.phone || customer?.phone || '',
-            email: customer?.user?.email || customer?.email || '',
-            firstName: customer?.user?.firstName || customer?.firstName || '',
-            lastName: customer?.user?.lastName || customer?.lastName || '',
+            phone: customer?.phone || customer?.user?.phone || '',
+            email: customer?.email || customer?.user?.email || '',
+            firstName: initialFirst,
+            lastName: initialLast,
             savedAddresses: customer?.savedAddresses || [],
+            imageUrl: customer?.imageUrl || null,
         },
         // @ts-ignore
         validatorAdapter: zodValidator(),
@@ -52,25 +68,36 @@ export default function CustomerForm({ customer, onSuccess, formId }: CustomerFo
         },
         onSubmit: async ({ value }) => {
             try {
+                // Construct payload for API
+                const payload = {
+                    ...value,
+                    name: `${value.firstName} ${value.lastName}`.trim(),
+                };
+
                 if (customer?.id) {
-                    await updateMutation.mutateAsync({ id: customer.id, data: value })
+                    await updateMutation.mutateAsync({ id: customer.id, data: payload })
                 } else {
-                    await createMutation.mutateAsync(value)
+                    await createMutation.mutateAsync(payload)
                 }
                 onSuccess?.()
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Form submission error:', error)
+                toast.error(error.message || "Failed to submit form. Please check details.")
             }
         },
     })
 
     useEffect(() => {
         if (customer) {
-            form.setFieldValue('phone', customer?.user?.phone || customer?.phone || '')
-            form.setFieldValue('email', customer?.user?.email || customer?.email || '')
-            form.setFieldValue('firstName', customer?.user?.firstName || customer?.firstName || '')
-            form.setFieldValue('lastName', customer?.user?.lastName || customer?.lastName || '')
-            form.setFieldValue('savedAddresses', customer?.savedAddresses || [])
+            const nameToSplit = customer.name || customer.user?.name || '';
+            const { firstName, lastName } = splitName(nameToSplit);
+
+            form.setFieldValue('phone', customer.phone || customer.user?.phone || '')
+            form.setFieldValue('email', customer.email || customer.user?.email || '')
+            form.setFieldValue('firstName', firstName)
+            form.setFieldValue('lastName', lastName)
+            form.setFieldValue('savedAddresses', customer.savedAddresses || [])
+            form.setFieldValue('imageUrl', customer.imageUrl || null)
         }
     }, [customer])
 
@@ -85,6 +112,19 @@ export default function CustomerForm({ customer, onSuccess, formId }: CustomerFo
                 }}
                 className="space-y-8"
             >
+                <div className="flex justify-center">
+                    <form.Field
+                        name="imageUrl"
+                        children={(field) => (
+                            <ImageUpload
+                                value={field.state.value}
+                                onChange={(url) => field.handleChange(url)}
+                                onRemove={() => field.handleChange(null)}
+                            />
+                        )}
+                    />
+                </div>
+
                 {/* Personal Information */}
                 <div className="space-y-5">
                     <div className="flex items-center gap-2 pb-3 border-b">

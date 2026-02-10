@@ -32,7 +32,9 @@ import {
     Pencil,
     UserPlus,
     Trash2,
-    Plus
+    Plus,
+    ChevronLeft,
+    ChevronRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -91,6 +93,10 @@ export default function LeadDetailPage() {
     const [editingReminder, setEditingReminder] = useState<any>(null);
     const [editingItem, setEditingItem] = useState<any>(null); // For notes/activities
     const [editSheetOpen, setEditSheetOpen] = useState(false);
+
+    // Pagination state for Activity Log
+    const [activityPage, setActivityPage] = useState(1);
+    const [activityLimit, setActivityLimit] = useState(10);
 
     // Confirm Dialog State
     const [confirmConfig, setConfirmConfig] = useState({
@@ -1029,55 +1035,106 @@ export default function LeadDetailPage() {
 
                         <div className="space-y-4">
                             {lead.activities && lead.activities.length > 0 ? (
-                                lead.activities.map((act: any, idx: number) => (
-                                    <div key={idx} className="flex items-start gap-4 p-4 rounded-3xl border border-border bg-card hover:bg-muted/50 transition-colors group">
-                                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${act.type === 'CALL' ? 'bg-emerald-500/10 text-emerald-500' :
-                                            act.type === 'WHATSAPP' ? 'bg-green-500/10 text-green-500' :
-                                                act.type === 'EMAIL' ? 'bg-blue-500/10 text-blue-500' :
-                                                    act.type === 'NOTE' ? 'bg-purple-500/10 text-purple-500' :
-                                                        'bg-muted text-muted-foreground'
-                                            }`}>
-                                            {act.type === 'CALL' && <Phone className="h-5 w-5" />}
-                                            {act.type === 'WHATSAPP' && <MessageSquare className="h-5 w-5" />}
-                                            {act.type === 'EMAIL' && <Mail className="h-5 w-5" />}
-                                            {act.type === 'NOTE' && <MessageSquare className="h-5 w-5" />}
-                                            {!['CALL', 'WHATSAPP', 'EMAIL', 'NOTE'].includes(act.type) && <History className="h-5 w-5" />}
-                                        </div>
-                                        <div className="flex-1">
-                                            <div className="flex items-center gap-2 mb-1">
-                                                <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-tighter rounded-full border-border">
-                                                    {act.type.replace('_', ' ')}
-                                                </Badge>
-                                                <span className="text-xs text-muted-foreground">{formatRelativeTime(act.createdAt)}</span>
+                                <>
+                                    {lead.activities
+                                        .slice((activityPage - 1) * activityLimit, activityPage * activityLimit)
+                                        .map((act: any, idx: number) => (
+                                            <div key={idx} className="flex items-start gap-4 p-4 rounded-3xl border border-border bg-card hover:bg-muted/50 transition-colors group">
+                                                <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${act.type === 'CALL' ? 'bg-emerald-500/10 text-emerald-500' :
+                                                    act.type === 'WHATSAPP' ? 'bg-green-500/10 text-green-500' :
+                                                        act.type === 'EMAIL' ? 'bg-blue-500/10 text-blue-500' :
+                                                            act.type === 'NOTE' ? 'bg-purple-500/10 text-purple-500' :
+                                                                'bg-muted text-muted-foreground'
+                                                    }`}>
+                                                    {act.type === 'CALL' && <Phone className="h-5 w-5" />}
+                                                    {act.type === 'WHATSAPP' && <MessageSquare className="h-5 w-5" />}
+                                                    {act.type === 'EMAIL' && <Mail className="h-5 w-5" />}
+                                                    {act.type === 'NOTE' && <MessageSquare className="h-5 w-5" />}
+                                                    {!['CALL', 'WHATSAPP', 'EMAIL', 'NOTE'].includes(act.type) && <History className="h-5 w-5" />}
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2 mb-1">
+                                                        <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-tighter rounded-full border-border">
+                                                            {act.type.replace('_', ' ')}
+                                                        </Badge>
+                                                        <span className="text-xs text-muted-foreground">{formatRelativeTime(act.createdAt)}</span>
+                                                    </div>
+                                                    <p className="text-sm text-foreground/80">{act.content}</p>
+                                                    <p className="text-xs text-muted-foreground mt-1">by {act.user?.name || 'System'}</p>
+                                                </div>
+                                                {/* Edit/Delete buttons for activities */}
+                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    {act.type === 'NOTE' && session?.user?.id === act.userId && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="rounded-xl h-8 w-8 text-primary hover:bg-primary/10"
+                                                            onClick={() => setEditingItem(act)}
+                                                        >
+                                                            <Pencil className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                    )}
+                                                    {session?.user?.role === 'ADMIN' && (
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="rounded-xl h-8 w-8 text-red-500 hover:bg-red-500/10"
+                                                            onClick={() => handleDeleteActivity(act.id)}
+                                                        >
+                                                            <Pencil className="h-3.5 w-3.5" />
+                                                        </Button>
+                                                    )}
+                                                </div>
                                             </div>
-                                            <p className="text-sm text-foreground/80">{act.content}</p>
-                                            <p className="text-xs text-muted-foreground mt-1">by {act.user?.name || 'System'}</p>
+                                        ))}
+
+                                    {/* Pagination Controls */}
+                                    <div className="flex items-center justify-between px-4 py-4 border-t border-border mt-auto">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-xs text-muted-foreground">Rows per page</span>
+                                            <select
+                                                value={activityLimit}
+                                                onChange={(e) => {
+                                                    setActivityLimit(Number(e.target.value));
+                                                    setActivityPage(1);
+                                                }}
+                                                className="h-8 w-16 rounded-md border border-input bg-background px-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                            >
+                                                {[5, 10, 20, 50].map((size) => (
+                                                    <option key={size} value={size}>
+                                                        {size}
+                                                    </option>
+                                                ))}
+                                            </select>
                                         </div>
-                                        {/* Edit/Delete buttons for activities */}
-                                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            {act.type === 'NOTE' && session?.user?.id === act.userId && (
+
+                                        <div className="flex items-center gap-2">
+                                            <div className="text-xs font-medium text-muted-foreground">
+                                                Page {activityPage} of {Math.ceil(lead.activities.length / activityLimit)}
+                                            </div>
+                                            <div className="flex items-center gap-1">
                                                 <Button
-                                                    variant="ghost"
+                                                    variant="outline"
                                                     size="icon"
-                                                    className="rounded-xl h-8 w-8 text-primary hover:bg-primary/10"
-                                                    onClick={() => setEditingItem(act)}
+                                                    onClick={() => setActivityPage(Math.max(1, activityPage - 1))}
+                                                    disabled={activityPage <= 1}
+                                                    className="rounded-xl h-8 w-8"
                                                 >
-                                                    <Pencil className="h-3.5 w-3.5" />
+                                                    <ChevronLeft className="h-4 w-4" />
                                                 </Button>
-                                            )}
-                                            {session?.user?.role === 'ADMIN' && (
                                                 <Button
-                                                    variant="ghost"
+                                                    variant="outline"
                                                     size="icon"
-                                                    className="rounded-xl h-8 w-8 text-red-500 hover:bg-red-500/10"
-                                                    onClick={() => handleDeleteActivity(act.id)}
+                                                    onClick={() => setActivityPage(Math.min(Math.ceil(lead.activities.length / activityLimit), activityPage + 1))}
+                                                    disabled={activityPage >= Math.ceil(lead.activities.length / activityLimit)}
+                                                    className="rounded-xl h-8 w-8"
                                                 >
-                                                    <Pencil className="h-3.5 w-3.5" />
+                                                    <ChevronRight className="h-4 w-4" />
                                                 </Button>
-                                            )}
+                                            </div>
                                         </div>
                                     </div>
-                                ))
+                                </>
                             ) : (
                                 <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
                                     <History className="h-12 w-12 mb-2 opacity-20" />

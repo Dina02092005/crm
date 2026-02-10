@@ -8,16 +8,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
+    SheetDescription,
+} from "@/components/ui/sheet";
 import { Search, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { CustomersTable } from "@/components/dashboard/CustomersTable";
+import CustomerForm from "@/components/forms/CustomerForm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useCustomers } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -28,7 +28,7 @@ export default function CustomersPage() {
     const [search, setSearch] = useState("");
     const [showCreateDialog, setShowCreateDialog] = useState(false);
     const [page, setPage] = useState(1);
-    const limit = 10;
+    const [limit, setLimit] = useState(10);
 
     const debouncedSearch = useDebounce(search, 500);
 
@@ -41,26 +41,6 @@ export default function CustomersPage() {
 
     const customers = data?.customers || [];
     const pagination = data?.pagination || { page: 1, limit: 10, totalPages: 1, total: 0 };
-
-    const handleCreateCustomer = async (e: any) => {
-        e.preventDefault();
-        const formData = new FormData(e.target);
-        const customerData = {
-            name: formData.get("name"),
-            email: formData.get("email"),
-            phone: formData.get("phone"),
-        };
-
-        try {
-            await axios.post("/api/customers", customerData);
-            toast.success("Customer created successfully");
-            setShowCreateDialog(false);
-            refetch();
-            e.target.reset();
-        } catch (error: any) {
-            toast.error(error.response?.data?.error || "Failed to create customer");
-        }
-    };
 
     const [deleteId, setDeleteId] = useState<string | null>(null);
 
@@ -123,43 +103,49 @@ export default function CustomersPage() {
                         pagination={{
                             page: pagination.page,
                             totalPages: pagination.totalPages,
-                            onPageChange: setPage
+                            pageSize: limit,
+                            onPageChange: setPage,
+                            onPageSizeChange: (newLimit) => {
+                                setLimit(newLimit);
+                                setPage(1);
+                            }
                         }}
                     />
                 </CardContent>
             </Card>
 
-            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Add New Customer</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={handleCreateCustomer}>
-                        <div className="space-y-4 py-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="name">Name *</Label>
-                                <Input id="name" name="name" required />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="email">Email</Label>
-                                <Input id="email" name="email" type="email" />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="phone">Phone *</Label>
-                                <Input id="phone" name="phone" required />
-                            </div>
-                        </div>
-                        <DialogFooter>
-                            <Button type="button" variant="outline" onClick={() => setShowCreateDialog(false)}>
+            <Sheet open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+                <SheetContent className="overflow-y-auto w-full sm:max-w-md flex flex-col p-0">
+                    <div className="p-6 pb-2">
+                        <SheetHeader>
+                            <SheetTitle>Add New Customer</SheetTitle>
+                            <SheetDescription>
+                                Enter customer details to create a new record.
+                            </SheetDescription>
+                        </SheetHeader>
+                    </div>
+                    <div className="flex-1 px-6">
+                        <CustomerForm
+                            formId="create-customer-form"
+                            onSuccess={() => {
+                                setShowCreateDialog(false);
+                                refetch();
+                                toast.success("Customer created successfully");
+                            }}
+                        />
+                    </div>
+                    <div className="p-6 pt-2 mt-auto border-t">
+                        <div className="flex justify-end gap-2">
+                            <Button variant="outline" onClick={() => setShowCreateDialog(false)}>
                                 Cancel
                             </Button>
-                            <Button type="submit" className="bg-cyan-600 hover:bg-cyan-700">
+                            <Button type="submit" form="create-customer-form" className="bg-primary hover:bg-primary/90 text-white">
                                 Create Customer
                             </Button>
-                        </DialogFooter>
-                    </form>
-                </DialogContent>
-            </Dialog>
+                        </div>
+                    </div>
+                </SheetContent>
+            </Sheet>
 
             <ConfirmDialog
                 isOpen={!!deleteId}

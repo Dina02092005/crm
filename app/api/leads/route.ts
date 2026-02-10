@@ -83,7 +83,7 @@ export async function POST(req: Request) {
         }
 
         const data = await req.json();
-        const { name, email, phone, message, source } = data;
+        const { name, email, phone, message, source, imageUrl } = data;
 
         if (!name || !phone || !source) {
             return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
@@ -112,6 +112,7 @@ export async function POST(req: Request) {
                 phone,
                 message,
                 source,
+                imageUrl,
                 // If Creator is Employee, automatically assign to them
                 ...(session.user.role === 'EMPLOYEE' ? {
                     assignments: {

@@ -3,13 +3,20 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+<<<<<<< HEAD
     "dev": "next dev -p 3002",
+=======
+    "dev": "next dev",
+>>>>>>> 39d51f4 (Upgrade AWS SDK to v3 and fix S3 upload)
     "build": "next build",
-    "start": "next start -p 3001",
+    "start": "next start",
     "lint": "eslint"
   },
   "dependencies": {
     "@ark-ui/react": "^5.31.0",
+    "@aws-sdk/client-s3": "^3.986.0",
+    "@aws-sdk/lib-storage": "^3.986.0",
+    "@aws-sdk/s3-request-presigner": "^3.986.0",
     "@hookform/resolvers": "^5.2.2",
     "@prisma/client": "5.22.0",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -29,7 +36,6 @@
     "@types/bcryptjs": "^2.4.6",
     "@types/nodemailer": "^7.0.9",
     "@types/uuid": "^10.0.0",
-    "aws-sdk": "^2.1693.0",
     "axios": "^1.13.4",
     "bcryptjs": "^3.0.3",
     "class-variance-authority": "^0.7.1",
@@ -51,6 +57,7 @@
     "react": "19.2.3",
     "react-day-picker": "^9.13.1",
     "react-dom": "19.2.3",
+    "react-easy-crop": "^5.5.6",
     "react-hook-form": "^7.71.1",
     "react-icons": "^5.5.0",
     "react-international-phone": "^4.7.0",

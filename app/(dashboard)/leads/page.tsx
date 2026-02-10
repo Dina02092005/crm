@@ -14,7 +14,7 @@ export default function LeadsPage() {
     const [search, setSearch] = useState("");
     const [status, setStatus] = useState("ALL");
     const [page, setPage] = useState(1);
-    const limit = 10;
+    const [limit, setLimit] = useState(10);
 
     const debouncedSearch = useDebounce(search, 500);
 
@@ -109,7 +109,12 @@ export default function LeadsPage() {
                             pagination={{
                                 page,
                                 totalPages,
-                                onPageChange: setPage
+                                pageSize: limit,
+                                onPageChange: setPage,
+                                onPageSizeChange: (newLimit) => {
+                                    setLimit(newLimit);
+                                    setPage(1);
+                                }
                             }}
                         />
                     )}

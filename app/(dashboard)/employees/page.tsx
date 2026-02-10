@@ -19,7 +19,7 @@ export default function EmployeesPage() {
     const [search, setSearch] = useState("");
     const [statusFilter, setStatusFilter] = useState("all");
     const [page, setPage] = useState(1);
-    const limit = 10;
+    const [limit, setLimit] = useState(10);
 
     // Query Hook
     const { data, isLoading } = useEmployees(statusFilter, page, limit);
@@ -165,7 +165,12 @@ export default function EmployeesPage() {
                             pagination={{
                                 page: pagination.page,
                                 totalPages: pagination.totalPages,
-                                onPageChange: setPage
+                                pageSize: limit,
+                                onPageChange: setPage,
+                                onPageSizeChange: (newLimit) => {
+                                    setLimit(newLimit);
+                                    setPage(1);
+                                }
                             }}
                         />
                     )}
