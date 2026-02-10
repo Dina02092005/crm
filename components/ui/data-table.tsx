@@ -18,6 +18,7 @@ import {
     TableRow,
 } from "@/components/ui/table"
 import { Button } from "@/components/ui/button"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 
 interface DataTableProps<TData, TValue> {
     columns: ColumnDef<TData, TValue>[]
@@ -84,19 +85,19 @@ export function DataTable<TData, TValue>({
             <div className="flex items-center justify-end space-x-2 py-4">
                 <Button
                     variant="outline"
-                    size="sm"
+                    size="icon"
                     onClick={() => table.previousPage()}
                     disabled={!table.getCanPreviousPage()}
                 >
-                    Previous
+                    <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <Button
                     variant="outline"
-                    size="sm"
+                    size="icon"
                     onClick={() => table.nextPage()}
                     disabled={!table.getCanNextPage()}
                 >
-                    Next
+                    <ChevronRight className="h-4 w-4" />
                 </Button>
             </div>
         </div>

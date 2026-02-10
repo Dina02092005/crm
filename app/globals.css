@@ -114,7 +114,7 @@
 .dark {
   /* Dark Mode Colors - Unified to Sidebar Theme (Near Black) */
   --background: hsl(195 95% 0.5%);
-  --foreground: hsl(210 40% 98%);
+  --foreground: hsl(195 30% 90%);
 
   /* Primary - Teal Blue */
   --primary: hsl(195 80% 45%);
@@ -122,19 +122,19 @@
 
   /* Secondary */
   --secondary: hsl(195 50% 10%);
-  --secondary-foreground: hsl(0 0% 100%);
+  --secondary-foreground: hsl(195 30% 90%);
 
   /* Muted */
   --muted: hsl(195 50% 10%);
-  --muted-foreground: hsl(215 20.2% 65.1%);
+  --muted-foreground: hsl(195 20% 70%);
 
   /* Accent */
   --accent: hsl(195 50% 10%);
-  --accent-foreground: hsl(0 0% 100%);
+  --accent-foreground: hsl(195 30% 90%);
 
   /* Destructive */
   --destructive: hsl(0 62.8% 30.6%);
-  --destructive-foreground: hsl(210 40% 98%);
+  --destructive-foreground: hsl(195 30% 90%);
 
   /* Border & Input */
   --border: hsl(195 30% 15%);
@@ -143,11 +143,11 @@
 
   /* Card */
   --card: hsl(195 95% 0.5%);
-  --card-foreground: hsl(210 40% 98%);
+  --card-foreground: hsl(195 30% 90%);
 
   /* Popover */
   --popover: hsl(195 95% 0.5%);
-  --popover-foreground: hsl(210 40% 98%);
+  --popover-foreground: hsl(195 30% 90%);
 
   /* Chart Colors - Adjusted for dark mode */
   --chart-1: hsl(195 80% 45%);
@@ -158,11 +158,11 @@
 
   /* Sidebar - Same dark theme */
   --sidebar: hsl(195 95% 0.5%);
-  --sidebar-foreground: hsl(0 0% 100%);
+  --sidebar-foreground: hsl(195 30% 90%);
   --sidebar-primary: hsl(195 80% 45%);
   --sidebar-primary-foreground: hsl(0 0% 100%);
   --sidebar-accent: hsl(195 50% 10%);
-  --sidebar-accent-foreground: hsl(0 0% 100%);
+  --sidebar-accent-foreground: hsl(195 30% 90%);
   --sidebar-border: hsl(195 30% 15%);
   --sidebar-ring: hsl(195 80% 45%);
 }
@@ -223,13 +223,13 @@
   .curved-tab-connection::before {
     top: -20px;
     border-bottom-right-radius: 12px;
-    box-shadow: 5px 5px 0 5px white;
+    box-shadow: 5px 5px 0 5px #164e63;
   }
 
   /* Bottom inverse curve (cutout) */
   .curved-tab-connection::after {
     bottom: -20px;
     border-top-right-radius: 12px;
-    box-shadow: 5px -5px 0 5px white;
+    box-shadow: 5px -5px 0 5px #164e63;
   }
 }

@@ -68,12 +68,12 @@ export function LeadAnalyticsGraph({ data, isLoading }: LeadAnalyticsGraphProps)
                         >
                             <defs>
                                 <linearGradient id="colorLeads" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                                    <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
                                     <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
                                 </linearGradient>
                                 <linearGradient id="colorCustomers" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="hsl(142.1 76.2% 36.3%)" stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor="hsl(142.1 76.2% 36.3%)" stopOpacity={0} />
+                                    <stop offset="5%" stopColor="hsl(173 80% 40%)" stopOpacity={0.05} />
+                                    <stop offset="95%" stopColor="hsl(173 80% 40%)" stopOpacity={0} />
                                 </linearGradient>
                             </defs>
                             <CartesianGrid strokeDasharray="3 3" vertical={false} className="stroke-muted" />
@@ -90,7 +90,7 @@ export function LeadAnalyticsGraph({ data, isLoading }: LeadAnalyticsGraphProps)
                                 className="text-xs text-muted-foreground"
                             />
                             <Tooltip
-                                contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)', fontSize: '12px' }}
+                                contentStyle={{ borderRadius: '12px', border: '1px solid hsl(var(--border))', boxShadow: 'none', fontSize: '12px' }}
                             />
                             <Area
                                 type="monotone"
@@ -104,7 +104,7 @@ export function LeadAnalyticsGraph({ data, isLoading }: LeadAnalyticsGraphProps)
                             <Area
                                 type="monotone"
                                 dataKey="customers"
-                                stroke="hsl(142.1 76.2% 36.3%)"
+                                stroke="hsl(173 80% 40%)"
                                 fillOpacity={1}
                                 fill="url(#colorCustomers)"
                                 name="Customers"

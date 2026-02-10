@@ -100,6 +100,8 @@ export async function POST(req: NextRequest) {
                 phone,
                 leadId: leadId || null,
                 onboardedBy: session.user.id,
+                imageUrl: body.imageUrl || null,
+                savedAddresses: body.savedAddresses || [],
             },
             include: {
                 user: {

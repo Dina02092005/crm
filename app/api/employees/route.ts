@@ -100,6 +100,8 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions) as any;
+        const { name, email, password, role, imageUrl, phone, department, designation, salary, joiningDate } = await req.json();
+
         if (!session?.user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
@@ -108,9 +110,6 @@ export async function POST(req: NextRequest) {
         if (session.user.role !== "ADMIN") {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
-
-        const body = await req.json();
-        const { name, email, password, role, phone, department } = body;
 
         if (!name || !email || !password) {
             return NextResponse.json({ error: "Name, email, and password are required" }, { status: 400 });
@@ -135,11 +134,15 @@ export async function POST(req: NextRequest) {
                 email,
                 passwordHash,
                 role: role || "EMPLOYEE",
+                imageUrl, // Save profile picture
                 emailVerified: new Date(), // Auto-verify employees created by admin
                 employeeProfile: {
                     create: {
                         phone: phone || null,
                         department: department || null,
+                        designation: designation || null,
+                        salary: salary ? parseFloat(salary) : null,
+                        joiningDate: joiningDate ? new Date(joiningDate) : null,
                     },
                 },
             },
@@ -154,10 +157,10 @@ export async function POST(req: NextRequest) {
         try {
             await sendEmail({
                 to: email,
-                subject: 'Welcome to TaxiBy - Your Account Credentials',
+                subject: 'Welcome to Inter CRM - Your Account Credentials',
                 html: `
                     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                        <h2 style="color: #6d28d9;">Welcome to TaxiBy!</h2>
+                        <h2 style="color: #6d28d9;">Welcome to Inter CRM!</h2>
                         <p>Hello ${name},</p>
                         <p>Your employee account has been successfully created. You can now login to the dashboard using the following credentials:</p>
                         <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
@@ -165,7 +168,7 @@ export async function POST(req: NextRequest) {
                             <p style="margin: 5px 0;"><strong>Password:</strong> ${password}</p>
                         </div>
                         <p>Please login and change your password immediately for security.</p>
-                        <p>Best regards,<br>The TaxiBy Team</p>
+                        <p>Best regards,<br>The Inter CRM Team</p>
                     </div>
                 `,
             });
@@ -175,8 +178,8 @@ export async function POST(req: NextRequest) {
         }
 
         return NextResponse.json(employeeData, { status: 201 });
-    } catch (error) {
+    } catch (error: any) {
         console.error("Error creating employee:", error);
-        return NextResponse.json({ error: "Failed to create employee" }, { status: 500 });
+        return NextResponse.json({ error: "Failed to create employee", details: error.message }, { status: 500 });
     }
 }

@@ -2,11 +2,13 @@ export interface User {
     id: string;
     firstName: string;
     lastName: string;
+    name?: string; // Derived or direct name
     email?: string;
     phone: string;
     role: string;
     isActive: boolean;
     profilePicture?: string | null;
+    imageUrl?: string | null;
 }
 
 export interface SavedAddress {
@@ -22,6 +24,7 @@ export interface SavedAddress {
 export interface Customer {
     id: string;
     userId: string;
+    name?: string; // Full name from DB
     address?: string;
     dob?: string;
     gender?: string;
@@ -35,6 +38,7 @@ export interface Customer {
     firstName?: string;
     lastName?: string;
     savedAddresses?: SavedAddress[];
+    imageUrl?: string | null;
 }
 
 export interface Employee {
@@ -49,8 +53,32 @@ export interface Employee {
     salary?: number;
     createdAt?: string;
     updatedAt?: string;
+    imageUrl?: string | null;
 }
 
+export interface Lead {
+    id?: string;
+    name: string;
+    email?: string;
+    phone: string;
+    source?: string; // e.g., Website, Referral, Cold Call
+    status?: string; // e.g., New, Contacted, Qualified, Unqualified
+    message?: string;
+    campaignId?: string;
+    temperature?: string; // HOT, WARM, COLD
+    imageUrl?: string | null;
+}
+
+export interface CreateLeadDTO {
+    name: string;
+    email?: string;
+    phone: string;
+    source?: string;
+    status?: string;
+    temperature?: string;
+    message?: string;
+    imageUrl?: string | null;
+}
 
 export interface ApiResponse<T = any> {
     status: 'success' | 'error';

@@ -16,13 +16,21 @@ export async function GET() {
         const [
             totalLeads,
             totalCustomers,
+            totalEmployees,
             newLeadsToday,
             recentLeads,
             leadsLast30Days,
-            customersLast30Days
+            customersLast30Days,
+            upcomingTasks,
+            leadStatusCounts
         ] = await Promise.all([
             prisma.lead.count(),
             prisma.customer.count(),
+            prisma.user.count({
+                where: {
+                    role: 'EMPLOYEE'
+                }
+            }),
             prisma.lead.count({
                 where: {
                     createdAt: {
@@ -31,7 +39,7 @@ export async function GET() {
                 }
             }),
             prisma.lead.findMany({
-                take: 5,
+                take: 50,
                 orderBy: { updatedAt: 'desc' },
                 include: {
                     customer: true // To get customer details if converted
@@ -55,6 +63,29 @@ export async function GET() {
                 },
                 select: {
                     createdAt: true
+                }
+            }),
+            prisma.leadTask.findMany({
+                where: {
+                    status: 'PENDING',
+                    assignedTo: session.user.id
+                },
+                take: 5,
+                orderBy: {
+                    dueAt: 'asc'
+                },
+                include: {
+                    lead: {
+                        select: {
+                            name: true
+                        }
+                    }
+                }
+            }),
+            prisma.lead.groupBy({
+                by: ['status'],
+                _count: {
+                    status: true
                 }
             })
         ]);
@@ -95,9 +126,12 @@ export async function GET() {
             stats: {
                 totalLeads,
                 totalCustomers,
+                totalEmployees,
                 newLeadsToday
             },
             recentLeads,
+            upcomingTasks,
+            leadStatusCounts,
             analytics
         });
 
