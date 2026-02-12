@@ -32,7 +32,11 @@ export async function GET() {
             totalLeads,
             totalCustomers,
             totalEmployees,
+            activeWebsites,
+            totalWebsites,
             newLeadsToday,
+            newCustomersToday,
+            pendingTasksCount,
             recentLeads,
             leadsLast30Days,
             customersLast30Days,
@@ -46,12 +50,30 @@ export async function GET() {
                     role: 'EMPLOYEE'
                 }
             }),
+            prisma.website.count({
+                where: { isActive: true }
+            }),
+            prisma.website.count(),
             prisma.lead.count({
                 where: {
                     ...leadWhere,
                     createdAt: {
                         gte: startOfDay
                     }
+                }
+            }),
+            prisma.customer.count({
+                where: {
+                    ...customerWhere,
+                    createdAt: {
+                        gte: startOfDay
+                    }
+                }
+            }),
+            prisma.leadTask.count({
+                where: {
+                    status: 'PENDING',
+                    assignedTo: session.user.id
                 }
             }),
             prisma.lead.findMany({
@@ -122,7 +144,7 @@ export async function GET() {
         }
 
         // Fill leads data
-        leadsLast30Days.forEach(lead => {
+        leadsLast30Days.forEach((lead: any) => {
             const dateStr = lead.createdAt.toISOString().split('T')[0];
             if (analyticsMap.has(dateStr)) {
                 analyticsMap.get(dateStr)!.leads++;
@@ -130,7 +152,7 @@ export async function GET() {
         });
 
         // Fill customers data
-        customersLast30Days.forEach(customer => {
+        customersLast30Days.forEach((customer: any) => {
             const dateStr = customer.createdAt.toISOString().split('T')[0];
             if (analyticsMap.has(dateStr)) {
                 analyticsMap.get(dateStr)!.customers++;
@@ -147,7 +169,11 @@ export async function GET() {
                 totalLeads,
                 totalCustomers,
                 totalEmployees,
-                newLeadsToday
+                totalWebsites,
+                activeWebsites,
+                newLeadsToday,
+                newCustomersToday,
+                pendingTasksCount
             },
             recentLeads,
             upcomingTasks,

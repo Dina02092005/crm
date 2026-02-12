@@ -1,13 +1,23 @@
 import { withAuth } from "next-auth/middleware";
+import { NextResponse } from "next/server";
 
-export default withAuth({
-    callbacks: {
-        authorized: ({ token }) => !!token,
+export default withAuth(
+    function middleware(req) {
+        const path = req.nextUrl.pathname;
+        if (path === "/") {
+            return NextResponse.redirect(new URL("/dashboard", req.url));
+        }
+        return NextResponse.next();
     },
-    pages: {
-        signIn: "/login",
-    },
-});
+    {
+        callbacks: {
+            authorized: ({ token }) => !!token,
+        },
+        pages: {
+            signIn: "/login",
+        },
+    }
+);
 
 export const config = {
     matcher: [

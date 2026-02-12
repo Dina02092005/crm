@@ -2,7 +2,7 @@
 
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { RecentLeadsTable } from "@/components/dashboard/RecentLeadsTable";
-import { MapPin, Users, TrendingUp, Briefcase } from "lucide-react";
+import { MapPin, Users, TrendingUp, Briefcase, UserCheck } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -17,7 +17,11 @@ interface DashboardData {
         totalLeads: number;
         totalCustomers: number;
         totalEmployees: number;
+        totalWebsites: number;
+        activeWebsites: number;
         newLeadsToday: number;
+        newCustomersToday: number;
+        pendingTasksCount: number;
     };
     recentLeads: any[];
     upcomingTasks: any[];
@@ -38,34 +42,60 @@ export default function DashboardPage() {
         totalLeads: 0,
         totalCustomers: 0,
         totalEmployees: 0,
-        newLeadsToday: 0
+        totalWebsites: 0,
+        activeWebsites: 0,
+        newLeadsToday: 0,
+        newCustomersToday: 0,
+        pendingTasksCount: 0,
     };
 
     const recentLeads = data?.recentLeads || [];
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 px-2">
             {/* ROW 1: Stats */}
             <div>
-                <h2 className="text-[18px] font-medium leading-none tracking-normal font-sans text-foreground mb-4">Dashboard Overview</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="flex items-center justify-between mb-3 px-1">
+                    <h2 className="text-[16px] font-semibold text-foreground/80">Dashboard Overview</h2>
+                    <span className="text-[10px] text-muted-foreground font-medium badge bg-muted/30 px-2 py-0.5 rounded-full border border-border/30">Last updated: Just now</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
                     <StatsCard
                         title="Total Leads"
                         value={isLoading ? "..." : (stats.totalLeads ?? 0).toString()}
-                        icon={<MapPin className="w-5 h-5" />}
-                        iconBgColor="bg-blue-50 text-blue-600"
+                        icon={<MapPin className="w-4 h-4" />}
+                        iconBgColor="bg-blue-500/10 text-blue-600"
+                        detail={stats.newLeadsToday > 0 ? `+${stats.newLeadsToday}` : undefined}
+                        subValue="Qualified growth targets"
                     />
                     <StatsCard
                         title="Total Customers"
                         value={isLoading ? "..." : (stats.totalCustomers ?? 0).toString()}
-                        icon={<Users className="w-5 h-5" />}
-                        iconBgColor="bg-purple-50 text-purple-600"
+                        icon={<Users className="w-4 h-4" />}
+                        iconBgColor="bg-teal-500/10 text-teal-600"
+                        detail={stats.newCustomersToday > 0 ? `+${stats.newCustomersToday}` : undefined}
+                        subValue="Active conversions"
+                    />
+                    <StatsCard
+                        title="Pending Tasks"
+                        value={isLoading ? "..." : (stats.pendingTasksCount ?? 0).toString()}
+                        icon={<Briefcase className="w-4 h-4" />}
+                        iconBgColor="bg-amber-500/10 text-amber-600"
+                        subValue="Needs attention"
                     />
                     <StatsCard
                         title="Total Employees"
                         value={isLoading ? "..." : (stats.totalEmployees ?? 0).toString()}
-                        icon={<Briefcase className="w-5 h-5" />}
-                        iconBgColor="bg-green-50 text-green-600"
+                        icon={<UserCheck className="w-4 h-4" />}
+                        iconBgColor="bg-indigo-500/10 text-indigo-600"
+                        subValue="Admin & Sales staff"
+                    />
+                    <StatsCard
+                        title="Total Websites"
+                        value={isLoading ? "..." : (stats.totalWebsites ?? 0).toString()}
+                        icon={<TrendingUp className="w-4 h-4" />}
+                        iconBgColor="bg-rose-500/10 text-rose-600"
+                        subValue={`${stats.activeWebsites} Active / ${stats.totalWebsites - stats.activeWebsites} Inactive`}
                     />
                     <div className="h-full">
                         <LeadCustomerRatio
@@ -78,7 +108,7 @@ export default function DashboardPage() {
             </div>
 
             {/* ROW 2: Charts (Graph + Pipeline) */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 h-[400px]">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-[350px]">
                 <div className="lg:col-span-2 h-full">
                     <LeadAnalyticsGraph
                         data={data?.analytics || []}
@@ -94,22 +124,22 @@ export default function DashboardPage() {
             </div>
 
             {/* ROW 3: Activities (Tasks + Recent Leads) */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pb-6">
-                <div className="h-full min-h-[400px]">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 pb-6">
+                <div className="h-full min-h-[350px]">
                     <UpcomingTasks
                         tasks={data?.upcomingTasks || []}
                         isLoading={isLoading}
                     />
                 </div>
-                <div className="space-y-4">
+                <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                        <h2 className="text-[18px] font-medium leading-none tracking-normal font-sans text-foreground">Latest Leads Activity</h2>
-                        <Link href="/leads" className="text-sm font-semibold text-primary hover:opacity-80 transition-opacity flex items-center gap-1">
-                            View All <span className="text-lg leading-none">›</span>
+                        <h2 className="text-base font-semibold text-foreground/80">Latest Leads Activity</h2>
+                        <Link href="/leads" className="text-xs font-semibold text-primary hover:opacity-80 transition-opacity flex items-center gap-1">
+                            View All <span className="text-sm leading-none">›</span>
                         </Link>
                     </div>
                     {isLoading ? (
-                        <Skeleton className="h-[350px] w-full rounded-xl" />
+                        <Skeleton className="h-[300px] w-full rounded-xl" />
                     ) : (
                         <div className="border border-border/50 rounded-xl overflow-hidden bg-card">
                             <RecentLeadsTable data={recentLeads} />

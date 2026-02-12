@@ -1083,7 +1083,9 @@ export default function LeadDetailPage() {
                                                         <Badge variant="outline" className="text-[9px] font-bold uppercase tracking-tighter rounded-full border-border">
                                                             {act.type.replace('_', ' ')}
                                                         </Badge>
-                                                        <span className="text-xs text-muted-foreground">{formatRelativeTime(act.createdAt)}</span>
+                                                        <span className="text-xs text-muted-foreground">
+                                                            {format(new Date(act.createdAt), "MMM d, yyyy h:mm a")}
+                                                        </span>
                                                     </div>
                                                     <p className="text-sm text-foreground/80">{act.content}</p>
                                                     <p className="text-xs text-muted-foreground mt-1">by {act.user?.name || 'System'}</p>

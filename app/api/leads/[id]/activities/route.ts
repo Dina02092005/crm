@@ -11,6 +11,7 @@ export async function POST(
     try {
         const session = await getServerSession(authOptions) as any;
         if (!session) {
+            console.log('Unauthorized access attempt to create activity');
             return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
         }
 
@@ -18,8 +19,19 @@ export async function POST(
         const body = await req.json();
         const { type, content, updateLead } = body;
 
+        console.log('Creating activity for lead:', id);
+        console.log('User:', session.user.id);
+        console.log('Payload:', { type, content, updateLead });
+
         if (!type) {
             return NextResponse.json({ message: 'Activity type is required' }, { status: 400 });
+        }
+
+        // Verify lead exists first
+        const leadExists = await prisma.lead.findUnique({ where: { id } });
+        if (!leadExists) {
+            console.error(`Lead not found: ${id}`);
+            return NextResponse.json({ message: 'Lead not found' }, { status: 404 });
         }
 
         const activity = await prisma.$transaction(async (tx) => {
@@ -64,9 +76,17 @@ export async function POST(
         });
 
         return NextResponse.json(activity, { status: 201 });
-    } catch (error) {
-        console.error('Create activity error:', error);
-        return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+    } catch (error: any) {
+        console.error('Create activity error details:', {
+            message: error.message,
+            code: error.code,
+            meta: error.meta,
+            stack: error.stack
+        });
+        return NextResponse.json({
+            message: 'Internal server error',
+            details: error.message
+        }, { status: 500 });
     }
 }
 
