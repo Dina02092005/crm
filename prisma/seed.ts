@@ -1,4 +1,4 @@
-import { PrismaClient, Role, LeadSource, LeadStatus, LeadTemperature, LeadActivityType, TaskStatus, DocumentType, NotificationType } from '@prisma/client';
+import { PrismaClient, Role, LeadStatus, LeadTemperature, LeadActivityType, TaskStatus, DocumentType, NotificationType } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -72,7 +72,7 @@ async function main() {
             name: 'John Doe',
             email: 'john@example.com',
             phone: '9876543210',
-            source: 'WEBSITE_1',
+            source: 'Website 1',
             status: 'IN_PROGRESS',
             temperature: 'HOT',
             message: 'Looking for a custom software solution.',
@@ -84,7 +84,7 @@ async function main() {
             name: 'Jane Smith',
             email: 'jane@example.com',
             phone: '9888888888',
-            source: 'INTERFX',
+            source: 'InterfxPayments',
             status: 'NEW',
             temperature: 'WARM',
             message: 'Heard about your CRM through a friend.',
@@ -166,7 +166,7 @@ async function main() {
         data: {
             name: 'Ali Khan',
             phone: '9555555555',
-            source: 'WEBSITE_3',
+            source: 'Website 3',
             status: 'CONVERTED',
         }
     });
