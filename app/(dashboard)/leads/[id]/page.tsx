@@ -36,6 +36,7 @@ import {
     ChevronLeft,
     ChevronRight,
     Database,
+    Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -235,6 +236,8 @@ export default function LeadDetailPage() {
         );
     };
 
+    const [isSavingReminder, setIsSavingReminder] = useState(false);
+
     const handleSaveReminder = async (e: any) => {
         e.preventDefault();
         const formData = new FormData(e.target);
@@ -245,6 +248,7 @@ export default function LeadDetailPage() {
             return;
         }
 
+        setIsSavingReminder(true);
         try {
             if (editingReminder) {
                 await axios.patch(`/api/leads/${params.id}/reminders`, {
@@ -252,6 +256,7 @@ export default function LeadDetailPage() {
                     remindAt
                 });
                 toast.success('Reminder updated');
+            } else if (activeTaskForReminder) {
                 await axios.post(`/api/leads/${params.id}/reminders`, {
                     taskId: activeTaskForReminder.id,
                     remindAt
@@ -259,14 +264,18 @@ export default function LeadDetailPage() {
                 toast.success('Reminder set');
             } else {
                 toast.error("No task selected for reminder");
-                console.error("Missing state:", { editingReminder, activeTaskForReminder });
+                setIsSavingReminder(false);
+                return;
             }
             setShowReminderDialog(false);
             setEditingReminder(null);
             setActiveTaskForReminder(null);
-            fetchLead();
+            setDialogRemindAt(undefined);
+            await fetchLead();
         } catch (error) {
             toast.error('Failed to save reminder');
+        } finally {
+            setIsSavingReminder(false);
         }
     };
 
@@ -1242,8 +1251,19 @@ export default function LeadDetailPage() {
                             <Button type="button" variant="outline" onClick={() => { setShowReminderDialog(false); setDialogRemindAt(undefined); }}>
                                 Cancel
                             </Button>
-                            <Button type="submit" className="bg-primary hover:bg-primary/90 text-white rounded-xl font-bold shadow-sm px-6">
-                                Save Reminder
+                            <Button
+                                type="submit"
+                                className="bg-primary hover:bg-primary/90 text-white rounded-xl font-bold shadow-sm px-6"
+                                disabled={isSavingReminder}
+                            >
+                                {isSavingReminder ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    "Save Reminder"
+                                )}
                             </Button>
                         </DialogFooter>
                     </form>
