@@ -17,7 +17,7 @@ export async function GET() {
         const isEmployee = session.user.role === 'EMPLOYEE' || session.user.role === 'SALES_REP';
 
         const leadWhere: any = {};
-        const customerWhere: any = {};
+        const studentWhere: any = {};
 
         if (isEmployee) {
             leadWhere.assignments = {
@@ -25,29 +25,32 @@ export async function GET() {
                     assignedTo: session.user.id
                 }
             };
-            customerWhere.onboardedBy = session.user.id;
+            studentWhere.onboardedBy = session.user.id;
         }
 
         const [
             totalLeads,
-            totalCustomers,
+            totalStudents,
             totalEmployees,
             activeWebsites,
             totalWebsites,
             newLeadsToday,
-            newCustomersToday,
+            newStudentsToday,
             pendingTasksCount,
             recentLeads,
             leadsLast30Days,
-            customersLast30Days,
+            studentsLast30Days,
             upcomingTasks,
-            leadStatusCounts
+            leadStatusCounts,
+            totalAgents,
+            totalCounselors
         ] = await Promise.all([
             prisma.lead.count({ where: leadWhere }),
-            prisma.customer.count({ where: customerWhere }),
+            prisma.student.count({ where: studentWhere }),
             prisma.user.count({
                 where: {
-                    role: 'EMPLOYEE'
+                    role: 'EMPLOYEE',
+                    ...(session.user.role !== 'ADMIN' ? { id: 'none' } : {}) // Effectively hide if not admin
                 }
             }),
             prisma.website.count({
@@ -62,9 +65,9 @@ export async function GET() {
                     }
                 }
             }),
-            prisma.customer.count({
+            prisma.student.count({
                 where: {
-                    ...customerWhere,
+                    ...studentWhere,
                     createdAt: {
                         gte: startOfDay
                     }
@@ -81,7 +84,7 @@ export async function GET() {
                 take: 50,
                 orderBy: { updatedAt: 'desc' },
                 include: {
-                    customer: true
+                    student: true
                 }
             }),
             prisma.lead.findMany({
@@ -95,9 +98,9 @@ export async function GET() {
                     createdAt: true
                 }
             }),
-            prisma.customer.findMany({
+            prisma.student.findMany({
                 where: {
-                    ...customerWhere,
+                    ...studentWhere,
                     createdAt: {
                         gte: new Date(new Date().setDate(new Date().getDate() - 30))
                     }
@@ -129,18 +132,20 @@ export async function GET() {
                 _count: {
                     status: true
                 }
-            })
+            }),
+            prisma.user.count({ where: { role: 'AGENT' } }),
+            prisma.user.count({ where: { role: 'COUNSELOR' } })
         ]);
 
         // Process data for analytics graph
-        const analyticsMap = new Map<string, { leads: number, customers: number }>();
+        const analyticsMap = new Map<string, { leads: number, students: number }>();
 
         // Initialize last 30 days with 0
         for (let i = 29; i >= 0; i--) {
             const date = new Date();
             date.setDate(date.getDate() - i);
             const dateStr = date.toISOString().split('T')[0];
-            analyticsMap.set(dateStr, { leads: 0, customers: 0 });
+            analyticsMap.set(dateStr, { leads: 0, students: 0 });
         }
 
         // Fill leads data
@@ -151,11 +156,11 @@ export async function GET() {
             }
         });
 
-        // Fill customers data
-        customersLast30Days.forEach((customer: any) => {
-            const dateStr = customer.createdAt.toISOString().split('T')[0];
+        // Fill students data
+        studentsLast30Days.forEach((student: any) => {
+            const dateStr = student.createdAt.toISOString().split('T')[0];
             if (analyticsMap.has(dateStr)) {
-                analyticsMap.get(dateStr)!.customers++;
+                analyticsMap.get(dateStr)!.students++;
             }
         });
 
@@ -167,13 +172,16 @@ export async function GET() {
         return NextResponse.json({
             stats: {
                 totalLeads,
-                totalCustomers,
+                totalStudents,
                 totalEmployees,
                 totalWebsites,
                 activeWebsites,
                 newLeadsToday,
-                newCustomersToday,
-                pendingTasksCount
+                newStudentsToday,
+                pendingTasksCount,
+                totalAgents,
+                totalCounselors,
+                isAdmin: session.user.role === 'ADMIN'
             },
             recentLeads,
             upcomingTasks,

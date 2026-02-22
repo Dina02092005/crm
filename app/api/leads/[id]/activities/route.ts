@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { prisma, LeadActivityType, LeadStatus, LeadTemperature } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { LeadActivityType, LeadStatus, LeadTemperature } from '@prisma/client';
 
 export async function POST(
     req: Request,
@@ -30,7 +29,7 @@ export async function POST(
         // Verify lead exists first
         const leadExists = await prisma.lead.findUnique({ where: { id } });
         if (!leadExists) {
-            console.error(`Lead not found: ${id}`);
+            console.error(`Lead not found: ${id} `);
             return NextResponse.json({ message: 'Lead not found' }, { status: 404 });
         }
 
@@ -40,7 +39,7 @@ export async function POST(
                     leadId: id,
                     userId: session.user.id,
                     type: type as LeadActivityType,
-                    content: content || `Action: ${type}`,
+                    content: content || `Action: ${type} `,
                 }
             });
 
@@ -48,7 +47,7 @@ export async function POST(
                 await tx.lead.update({
                     where: { id },
                     data: {
-                        status: LeadStatus.IN_PROGRESS,
+                        status: LeadStatus.UNDER_REVIEW,
                         temperature: LeadTemperature.WARM
                     }
                 });
@@ -58,7 +57,7 @@ export async function POST(
                         leadId: id,
                         userId: session.user.id,
                         type: LeadActivityType.STATUS_CHANGE,
-                        content: `Status changed to IN_PROGRESS`
+                        content: `Status changed to UNDER_REVIEW`
                     }
                 });
 

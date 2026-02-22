@@ -1,50 +1,50 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
-    getCustomers, createCustomer, updateCustomer, deleteCustomer,
+    getStudents, createStudent, updateStudent, deleteStudent,
     getEmployees, createEmployee, updateEmployee, deleteEmployee
 } from '../services/api';
 
 import { toast } from 'sonner';
 
-// Customers
-export const useCustomers = (page = 1, limit = 10) => {
+// Students
+export const useStudents = (page = 1, limit = 10) => {
     return useQuery({
-        queryKey: ['customers', page, limit],
+        queryKey: ['students', page, limit],
         queryFn: async () => {
-            return await getCustomers(page, limit);
+            return await getStudents(page, limit);
         },
     });
 };
 
-export const useCreateCustomer = () => {
+export const useCreateStudent = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: createCustomer,
+        mutationFn: createStudent,
         onSuccess: (response: any) => {
-            toast.success(response.message || 'Customer created successfully');
-            queryClient.invalidateQueries({ queryKey: ['customers'] });
+            toast.success(response.message || 'Student created successfully');
+            queryClient.invalidateQueries({ queryKey: ['students'] });
         },
     });
 };
 
-export const useUpdateCustomer = () => {
+export const useUpdateStudent = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, data }: { id: string; data: any }) => updateCustomer(id, data),
+        mutationFn: ({ id, data }: { id: string; data: any }) => updateStudent(id, data),
         onSuccess: (response: any) => {
-            toast.success(response.message || 'Customer updated successfully');
-            queryClient.invalidateQueries({ queryKey: ['customers'] });
+            toast.success(response.message || 'Student updated successfully');
+            queryClient.invalidateQueries({ queryKey: ['students'] });
         },
     });
 };
 
-export const useDeleteCustomer = () => {
+export const useDeleteStudent = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: deleteCustomer,
+        mutationFn: deleteStudent,
         onSuccess: (response: any) => {
-            toast.success(response?.message || 'Customer deleted successfully');
-            queryClient.invalidateQueries({ queryKey: ['customers'] });
+            toast.success(response?.message || 'Student deleted successfully');
+            queryClient.invalidateQueries({ queryKey: ['students'] });
         },
     });
 };

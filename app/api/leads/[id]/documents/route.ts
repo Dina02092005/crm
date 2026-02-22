@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { prisma, LeadActivityType, DocumentType } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { LeadActivityType, DocumentType } from '@prisma/client';
 import { writeFile, unlink } from 'fs/promises';
 import { join } from 'path';
 

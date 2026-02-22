@@ -1,20 +1,20 @@
 import api from '../lib/axios';
-import { Customer, Employee, ApiResponse } from '../types/api';
+import { Student, Employee, ApiResponse } from '../types/api';
 
-export const getCustomers = async (page = 1, limit = 10): Promise<{ customers: Customer[], pagination: any }> => {
-    return api.get(`/customers?page=${page}&limit=${limit}`);
+export const getStudents = async (page = 1, limit = 10): Promise<{ students: Student[], pagination: any }> => {
+    return api.get(`/students?page=${page}&limit=${limit}`);
 };
 
-export const createCustomer = async (data: Partial<Customer>): Promise<Customer> => {
-    return api.post('/customers', data);
+export const createStudent = async (data: Partial<Student>): Promise<Student> => {
+    return api.post('/students', data);
 };
 
-export const updateCustomer = async (id: string, data: Partial<Customer>): Promise<Customer> => {
-    return api.patch(`/customers/${id}`, data);
+export const updateStudent = async (id: string, data: Partial<Student>): Promise<Student> => {
+    return api.patch(`/students/${id}`, data);
 };
 
-export const deleteCustomer = async (id: string): Promise<void> => {
-    return api.delete(`/customers/${id}`);
+export const deleteStudent = async (id: string): Promise<void> => {
+    return api.delete(`/students/${id}`);
 };
 
 export const getEmployees = async (page = 1, limit = 10): Promise<{ employees: Employee[], pagination: any }> => {

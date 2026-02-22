@@ -21,11 +21,12 @@ export interface SavedAddress {
     isDefault?: boolean;
 }
 
-export interface Customer {
+export interface Student {
     id: string;
     userId: string;
     name?: string; // Full name from DB
     address?: string;
+    status?: string; // NEW, UNDER_REVIEW, etc.
     dob?: string;
     gender?: string;
     items?: any[]; // For array of items if needed
@@ -54,6 +55,9 @@ export interface Employee {
     createdAt?: string;
     updatedAt?: string;
     imageUrl?: string | null;
+    role?: string;
+    managerId?: string;
+    manager?: { name: string };
 }
 
 export interface Lead {

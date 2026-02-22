@@ -45,8 +45,9 @@ export async function PATCH(
 
         // Check if this is an assignment request
         if (body.assignedTo) {
-            if (session.user.role !== 'ADMIN' && session.user.role !== 'MANAGER') {
-                return NextResponse.json({ message: 'Only admins or managers can assign leads' }, { status: 403 });
+            const allowedRoles = ['ADMIN', 'MANAGER', 'AGENT', 'SALES_REP'];
+            if (!allowedRoles.includes(session.user.role)) {
+                return NextResponse.json({ message: 'You do not have permission to assign leads' }, { status: 403 });
             }
 
             const employeeId = body.assignedTo;
@@ -54,6 +55,29 @@ export async function PATCH(
 
             if (!employee) {
                 return NextResponse.json({ message: 'Employee not found' }, { status: 404 });
+            }
+
+            // Verify Hierarchy
+            // Admin/Manager can assign to anyone
+            // Agent/Sales Rep can only assign to Counselor
+            if (session.user.role === 'AGENT' || session.user.role === 'SALES_REP') {
+                if (employee.role !== 'COUNSELOR') {
+                    return NextResponse.json({ message: 'You can only assign leads to Counselors' }, { status: 403 });
+                }
+
+                // Agent can only assign to their own subordinates
+                if (session.user.role === 'AGENT') {
+                    const agent = await prisma.agentProfile.findUnique({
+                        where: { userId: session.user.id }
+                    });
+                    const targetCounselorProfile = await prisma.counselorProfile.findUnique({
+                        where: { userId: employeeId }
+                    });
+
+                    if (targetCounselorProfile?.agentId !== agent?.id) {
+                        return NextResponse.json({ message: 'You can only assign leads to your direct subordinates' }, { status: 403 });
+                    }
+                }
             }
 
             // Verify the assigner exists to prevent foreign key errors
@@ -114,6 +138,18 @@ export async function PATCH(
                 }
             }
         });
+
+        if (body.dateOfBirth) {
+            body.dateOfBirth = new Date(body.dateOfBirth);
+        }
+
+        // Derive name if firstName/lastName changed
+        if (body.firstName !== undefined || body.lastName !== undefined) {
+            const currentLead = await prisma.lead.findUnique({ where: { id }, select: { firstName: true, lastName: true, phone: true } });
+            const fName = body.firstName !== undefined ? body.firstName : (currentLead?.firstName || "");
+            const lName = body.lastName !== undefined ? body.lastName : (currentLead?.lastName || "");
+            body.name = `${fName} ${lName}`.trim() || currentLead?.phone;
+        }
 
         const lead = await prisma.lead.update({
             where: { id },
@@ -191,9 +227,9 @@ export async function GET(
                     include: {
                         user: { select: { name: true } }
                     }
-                }
-
-
+                },
+                academicDetails: true,
+                workExperience: true,
             }
         });
 

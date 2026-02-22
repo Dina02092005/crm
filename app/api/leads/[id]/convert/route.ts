@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { prisma, Role, LeadActivityType, LeadStatus } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { LeadActivityType, LeadStatus } from '@prisma/client';
 
 export async function POST(
     req: Request,
@@ -24,9 +23,9 @@ export async function POST(
         }
 
         if (action === 'CONVERT') {
-            const customer = await prisma.$transaction(async (tx) => {
-                // 1. Create Customer
-                const newCustomer = await tx.customer.create({
+            const student = await prisma.$transaction(async (tx) => {
+                // 1. Create Student
+                const newStudent = await tx.student.create({
                     data: {
                         leadId: id,
                         name: lead.name,
@@ -39,7 +38,7 @@ export async function POST(
                 // 2. Update Lead Status
                 await tx.lead.update({
                     where: { id },
-                    data: { status: LeadStatus.CONVERTED }
+                    data: { status: LeadStatus.CLOSED }
                 });
 
                 // 3. Log Activity
@@ -48,11 +47,11 @@ export async function POST(
                         leadId: id,
                         userId: session.user.id,
                         type: LeadActivityType.STATUS_CHANGE,
-                        content: `Lead converted to customer successfully.`
+                        content: `Lead converted to student successfully.`
                     }
                 });
 
-                return newCustomer;
+                return newStudent;
             });
 
 
@@ -60,12 +59,12 @@ export async function POST(
             // Notify Admins & Employee
             try {
                 const { notifyAdmins, notifyUser } = await import('@/lib/notifications');
-                console.log(`[Notification] Lead converted (Convert Endpoint): ${lead.name}`);
+                console.log(`[Notification] Lead converted(Convert Endpoint): ${lead.name} `);
 
                 // Notify Admins
                 await notifyAdmins(
                     'Lead Converted',
-                    `Lead ${lead.name} has been converted to a customer.`,
+                    `Lead ${lead.name} has been converted to a student.`,
                     'LEAD_CONVERTED'
                 );
 
@@ -81,7 +80,7 @@ export async function POST(
                     await notifyUser(
                         assignedEmployeeId,
                         'Lead Converted',
-                        `Your lead ${lead.name} has been successfully converted to a customer.`,
+                        `Your lead ${lead.name} has been successfully converted to a student.`,
                         'LEAD_CONVERTED'
                     );
                 }
@@ -89,13 +88,13 @@ export async function POST(
                 console.error('Notification error in convert route:', notifyError);
             }
 
-            return NextResponse.json(customer, { status: 201 });
+            return NextResponse.json(student, { status: 201 });
         } else if (action === 'LOST') {
             await prisma.$transaction(async (tx) => {
                 // 1. Update Lead Status
                 await tx.lead.update({
                     where: { id },
-                    data: { status: LeadStatus.LOST }
+                    data: { status: LeadStatus.NOT_INTERESTED }
                 });
 
                 // 2. Log Activity
@@ -104,7 +103,7 @@ export async function POST(
                         leadId: id,
                         userId: session.user.id,
                         type: LeadActivityType.STATUS_CHANGE,
-                        content: `Lead marked as LOST. Reason: ${reason || 'N/A'}`
+                        content: `Lead marked as LOST.Reason: ${reason || 'N/A'} `
                     }
                 });
 
