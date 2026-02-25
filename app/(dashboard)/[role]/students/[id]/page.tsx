@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useRolePath } from "@/hooks/use-role-path";
@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Loader2, Plus } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
     Sheet,
@@ -18,7 +19,7 @@ import {
     SheetDescription,
 } from "@/components/ui/sheet";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import StudentForm from "@/components/forms/StudentForm";
+
 import {
     ArrowLeft,
     History,
@@ -34,6 +35,7 @@ import {
     FileText,
     BookOpen,
     FolderOpen,
+    Database,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -44,6 +46,8 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import StudentDocumentsSection from "@/components/student/StudentDocumentsSection";
+import VisaApplicationsSection from "@/components/student/VisaApplicationsSection";
+import { AddVisaApplicationModal } from "@/components/student/AddVisaApplicationModal";
 
 function InfoField({ label, value }: { label: string; value?: string | null }) {
     if (!value) return null;
@@ -62,7 +66,8 @@ export default function StudentDetailPage() {
     const { prefixPath } = useRolePath();
     const [student, setStudent] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [showEditDialog, setShowEditDialog] = useState(false);
+    const [addVisaModalOpen, setAddVisaModalOpen] = useState(false);
+    const [prefilledVisaData, setPrefilledVisaData] = useState<any>(null); // For future use if modal supports it
 
     // Activity Pagination State
     const [activities, setActivities] = useState<any[]>([]);
@@ -206,14 +211,14 @@ export default function StudentDetailPage() {
                 </div>
             </div>
 
-            <Tabs defaultValue="details" className="w-full">
+            <Tabs defaultValue="overview" className="w-full">
                 <TabsList className="w-full bg-muted/60 border border-border/50 rounded-xl h-10 p-1">
                     <TabsTrigger
-                        value="details"
+                        value="overview"
                         className="flex-1 text-xs font-semibold rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
                     >
                         <User className="h-3.5 w-3.5 mr-1.5" />
-                        Details
+                        Overview
                     </TabsTrigger>
                     <TabsTrigger
                         value="documents"
@@ -222,10 +227,24 @@ export default function StudentDetailPage() {
                         <FolderOpen className="h-3.5 w-3.5 mr-1.5" />
                         Documents
                     </TabsTrigger>
+                    <TabsTrigger
+                        value="visa"
+                        className="flex-1 text-xs font-semibold rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+                    >
+                        <Globe className="h-3.5 w-3.5 mr-1.5" />
+                        Visa
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="activity"
+                        className="flex-1 text-xs font-semibold rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
+                    >
+                        <History className="h-3.5 w-3.5 mr-1.5" />
+                        Activity
+                    </TabsTrigger>
                 </TabsList>
 
-                {/* === DETAILS TAB === */}
-                <TabsContent value="details" className="mt-5">
+                {/* === OVERVIEW TAB === */}
+                <TabsContent value="overview" className="mt-5">
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                         {/* Left: Profile Card */}
                         <div className="lg:col-span-1 space-y-5">
@@ -295,7 +314,15 @@ export default function StudentDetailPage() {
                                     <div className="pt-3 border-t border-border/50 flex flex-col gap-2">
                                         <Button
                                             className="w-full bg-primary hover:bg-primary/90 rounded-xl h-9 text-sm font-bold shadow-sm"
-                                            onClick={() => setShowEditDialog(true)}
+                                            onClick={() => router.push(prefixPath(`/students/${params.id}/applications/add`))}
+                                        >
+                                            <Briefcase className="h-3.5 w-3.5 mr-2" />
+                                            Move to Application
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            className="w-full border-primary/20 hover:bg-primary/5 rounded-xl h-9 text-sm font-semibold"
+                                            onClick={() => router.push(prefixPath(`/students/${params.id}/edit`))}
                                         >
                                             <Pencil className="h-3.5 w-3.5 mr-2" />
                                             Edit Student
@@ -331,7 +358,9 @@ export default function StudentDetailPage() {
                                             <InfoField label="Gender" value={lead.gender} />
                                             <InfoField label="Nationality" value={lead.nationality} />
                                             <InfoField label="Marital Status" value={lead.maritalStatus} />
+                                            <InfoField label="Alternate Phone" value={lead.alternateNo} />
                                             <InfoField label="Address" value={lead.address} />
+                                            <InfoField label="Message" value={lead.message} />
                                             <InfoField label="Remark" value={lead.remark} />
                                         </div>
                                     </CardContent>
@@ -423,110 +452,12 @@ export default function StudentDetailPage() {
                                     </CardContent>
                                 </Card>
                             )}
-
-                            {/* Activity History */}
-                            <Card className="border border-border rounded-2xl bg-card shadow-none overflow-hidden">
-                                <CardHeader className="pb-2 border-b border-border/50">
-                                    <CardTitle className="text-sm font-bold flex items-center gap-2">
-                                        <History className="h-4 w-4 text-primary" />
-                                        Activity History
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="p-0">
-                                    {isActivitiesLoading ? (
-                                        <div className="flex items-center justify-center py-16">
-                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                                        </div>
-                                    ) : activities && activities.length > 0 ? (
-                                        <div className="divide-y divide-border/50">
-                                            {activities.map((activity: any) => (
-                                                <div
-                                                    key={activity.id}
-                                                    className="p-4 hover:bg-muted/30 transition-colors"
-                                                >
-                                                    <div className="flex items-center justify-between mb-1">
-                                                        <div className="flex items-center gap-2">
-                                                            <Badge variant="secondary" className="text-[9px] font-bold uppercase py-0 px-2 rounded-md bg-primary/10 text-primary border-0">
-                                                                {activity.type.replace("_", " ")}
-                                                            </Badge>
-                                                            <span className="text-[10px] text-muted-foreground font-medium">
-                                                                {new Date(activity.createdAt).toLocaleString()}
-                                                            </span>
-                                                        </div>
-                                                        <p className="text-[10px] text-muted-foreground font-medium italic">
-                                                            {activity.user?.name || "System"}
-                                                        </p>
-                                                    </div>
-                                                    <p className="text-sm text-foreground/90 leading-relaxed">{activity.content}</p>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="flex flex-col items-center justify-center py-14 text-muted-foreground/50">
-                                            <History className="h-10 w-10 mb-3 opacity-10" />
-                                            <p className="text-xs font-medium italic tracking-tight">No activity recorded yet</p>
-                                        </div>
-                                    )}
-
-                                    {/* Pagination */}
-                                    <div className="p-4 border-t border-border/50 bg-muted/20 flex items-center justify-between">
-                                        <div className="flex items-center gap-2">
-                                            <p className="text-xs text-muted-foreground font-medium">Rows per page</p>
-                                            <Select
-                                                value={activityPagination.limit.toString()}
-                                                onValueChange={(value) => {
-                                                    setActivityPagination(prev => ({ ...prev, limit: Number(value), page: 1 }));
-                                                    setTimeout(() => fetchActivities(1, undefined, Number(value)), 0);
-                                                }}
-                                            >
-                                                <SelectTrigger className="h-8 w-[60px] text-xs bg-background border-border/50">
-                                                    <SelectValue placeholder={activityPagination.limit} />
-                                                </SelectTrigger>
-                                                <SelectContent side="top">
-                                                    {[5, 10, 20, 50].map((pageSize) => (
-                                                        <SelectItem key={pageSize} value={pageSize.toString()} className="text-xs">
-                                                            {pageSize}
-                                                        </SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </div>
-                                        <div className="flex items-center gap-4">
-                                            <p className="text-xs text-muted-foreground font-medium">
-                                                {activityPagination.total > 0
-                                                    ? `${(activityPagination.page - 1) * activityPagination.limit + 1}-${Math.min(activityPagination.page * activityPagination.limit, activityPagination.total)} of ${activityPagination.total}`
-                                                    : "No activities"}
-                                            </p>
-                                            <div className="flex items-center gap-2">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="h-8 w-8 p-0 rounded-lg text-xs border-primary/20 text-primary hover:bg-primary/5"
-                                                    onClick={() => fetchActivities(activityPagination.page - 1)}
-                                                    disabled={activityPagination.page <= 1 || isActivitiesLoading}
-                                                >
-                                                    &lt;
-                                                </Button>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    className="h-8 w-8 p-0 rounded-lg text-xs border-primary/20 text-primary hover:bg-primary/5"
-                                                    onClick={() => fetchActivities(activityPagination.page + 1)}
-                                                    disabled={activityPagination.page >= activityPagination.totalPages || isActivitiesLoading}
-                                                >
-                                                    &gt;
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-
                         </div>
                     </div>
                 </TabsContent>
 
-                {/* === DOCUMENTS TAB — full width, no profile card === */}
+
+                {/* === DOCUMENTS TAB === */}
                 <TabsContent value="documents" className="mt-5">
                     <Card className="border border-border rounded-2xl bg-card shadow-none overflow-hidden">
                         <CardContent className="p-5">
@@ -538,42 +469,117 @@ export default function StudentDetailPage() {
                     </Card>
                 </TabsContent>
 
+                {/* === VISA TAB === */}
+                <TabsContent value="visa" className="mt-5">
+                    <VisaApplicationsSection
+                        studentId={student.id}
+                        studentName={student.name}
+                    />
+                </TabsContent>
+
+                {/* === ACTIVITY TAB === */}
+                <TabsContent value="activity" className="mt-5">
+                    <Card className="border border-border rounded-2xl bg-card shadow-none overflow-hidden">
+                        <CardHeader className="pb-2 border-b border-border/50">
+                            <CardTitle className="text-sm font-bold flex items-center gap-2">
+                                <History className="h-4 w-4 text-primary" />
+                                Activity History
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                            {isActivitiesLoading ? (
+                                <div className="flex items-center justify-center py-16">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                </div>
+                            ) : activities && activities.length > 0 ? (
+                                <div className="divide-y divide-border/50">
+                                    {activities.map((activity: any) => (
+                                        <div
+                                            key={activity.id}
+                                            className="p-4 hover:bg-muted/30 transition-colors"
+                                        >
+                                            <div className="flex items-center justify-between mb-1">
+                                                <div className="flex items-center gap-2">
+                                                    <Badge variant="secondary" className="text-[9px] font-bold uppercase py-0 px-2 rounded-md bg-primary/10 text-primary border-0">
+                                                        {activity.type.replace("_", " ")}
+                                                    </Badge>
+                                                    <span className="text-[10px] text-muted-foreground font-medium">
+                                                        {new Date(activity.createdAt).toLocaleString()}
+                                                    </span>
+                                                </div>
+                                                <p className="text-[10px] text-muted-foreground font-medium italic">
+                                                    {activity.user?.name || "System"}
+                                                </p>
+                                            </div>
+                                            <p className="text-sm text-foreground/90 leading-relaxed">{activity.content}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center py-14 text-muted-foreground/50">
+                                    <History className="h-10 w-10 mb-3 opacity-10" />
+                                    <p className="text-xs font-medium italic tracking-tight">No activity recorded yet</p>
+                                </div>
+                            )}
+
+                            {/* Pagination */}
+                            <div className="p-4 border-t border-border/50 bg-muted/20 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                    <p className="text-xs text-muted-foreground font-medium">Rows per page</p>
+                                    <Select
+                                        value={activityPagination.limit.toString()}
+                                        onValueChange={(value) => {
+                                            setActivityPagination(prev => ({ ...prev, limit: Number(value), page: 1 }));
+                                            setTimeout(() => fetchActivities(1, undefined, Number(value)), 0);
+                                        }}
+                                    >
+                                        <SelectTrigger className="h-8 w-[60px] text-xs bg-background border-border/50">
+                                            <SelectValue placeholder={activityPagination.limit} />
+                                        </SelectTrigger>
+                                        <SelectContent side="top">
+                                            {[5, 10, 20, 50].map((pageSize) => (
+                                                <SelectItem key={pageSize} value={pageSize.toString()} className="text-xs">
+                                                    {pageSize}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <p className="text-xs text-muted-foreground font-medium">
+                                        {activityPagination.total > 0
+                                            ? `${(activityPagination.page - 1) * activityPagination.limit + 1}-${Math.min(activityPagination.page * activityPagination.limit, activityPagination.total)} of ${activityPagination.total}`
+                                            : "No activities"}
+                                    </p>
+                                    <div className="flex items-center gap-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-8 w-8 p-0 rounded-lg text-xs border-primary/20 text-primary hover:bg-primary/5"
+                                            onClick={() => fetchActivities(activityPagination.page - 1)}
+                                            disabled={activityPagination.page <= 1 || isActivitiesLoading}
+                                        >
+                                            &lt;
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="h-8 w-8 p-0 rounded-lg text-xs border-primary/20 text-primary hover:bg-primary/5"
+                                            onClick={() => fetchActivities(activityPagination.page + 1)}
+                                            disabled={activityPagination.page >= activityPagination.totalPages || isActivitiesLoading}
+                                        >
+                                            &gt;
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
+
             </Tabs>
 
-            {/* Edit Student Sheet */}
-            <Sheet open={showEditDialog} onOpenChange={setShowEditDialog}>
-                <SheetContent className="overflow-y-auto w-full sm:max-w-md flex flex-col p-0">
-                    <div className="p-6 pb-2">
-                        <SheetHeader>
-                            <SheetTitle>Edit Student</SheetTitle>
-                            <SheetDescription>
-                                Update student details.
-                            </SheetDescription>
-                        </SheetHeader>
-                    </div>
-                    <div className="flex-1 px-6">
-                        <StudentForm
-                            formId="edit-student-form"
-                            student={student}
-                            onSuccess={() => {
-                                setShowEditDialog(false);
-                                fetchStudent();
-                                toast.success("Student updated successfully");
-                            }}
-                        />
-                    </div>
-                    <div className="p-6 pt-2 mt-auto border-t">
-                        <div className="flex justify-end gap-2">
-                            <Button variant="outline" onClick={() => setShowEditDialog(false)}>
-                                Cancel
-                            </Button>
-                            <Button type="submit" form="edit-student-form" className="bg-primary hover:bg-primary/90 text-white">
-                                Save Changes
-                            </Button>
-                        </div>
-                    </div>
-                </SheetContent>
-            </Sheet>
+
 
             <ConfirmDialog
                 isOpen={confirmConfig.isOpen}
@@ -584,6 +590,24 @@ export default function StudentDetailPage() {
                 confirmText={confirmConfig.confirmText}
                 variant={confirmConfig.variant}
                 isLoading={confirmConfig.isLoading}
+            />
+
+            {/* Modal removed as we now use separate page */}
+
+            <AddVisaApplicationModal
+                isOpen={addVisaModalOpen}
+                onClose={() => {
+                    setAddVisaModalOpen(false);
+                    setPrefilledVisaData(null);
+                }}
+                studentId={student.id}
+                studentName={student.name}
+                initialApplicationId={prefilledVisaData?.id}
+                onSuccess={() => {
+                    // Refetching visa applications is handled inside VisaApplicationsSection 
+                    // but we can also trigger a global refetch if needed.
+                    toast.success("Visa application initiated");
+                }}
             />
         </div>
     );

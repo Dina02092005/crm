@@ -17,7 +17,6 @@ import {
 import { Search, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { StudentsTable } from "@/components/dashboard/StudentsTable";
-import StudentForm from "@/components/forms/StudentForm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useStudents } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks/use-debounce";
@@ -34,7 +33,7 @@ export default function StudentsPage() {
 
     const debouncedSearch = useDebounce(search, 500);
 
-    const { data, isLoading, refetch } = useStudents(page, limit);
+    const { data, isLoading, refetch } = useStudents(page, limit, debouncedSearch);
 
     // Reset page on search changes
     useEffect(() => {
@@ -115,7 +114,6 @@ export default function StudentsPage() {
                     />
                 </CardContent>
             </Card>
-
 
             <ConfirmDialog
                 isOpen={!!deleteId}

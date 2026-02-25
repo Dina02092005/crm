@@ -134,7 +134,7 @@ export async function PATCH(
             where: { id },
             data: {
                 ...updateData,
-                agentProfile: role === "AGENT" ? {
+                agentProfile: ["AGENT", "SALES_REP", "MANAGER"].includes(role) ? {
                     upsert: {
                         create: { phone: phone || null },
                         update: { phone: phone || null },

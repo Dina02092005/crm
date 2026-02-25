@@ -20,7 +20,12 @@ export async function GET(req: Request) {
         const skip = (page - 1) * limit;
 
         const where: any = {};
-        if (status && status !== 'ALL') where.status = status;
+        if (status && status !== 'ALL') {
+            where.status = status;
+        } else {
+            // By default, exclude CONVERTED leads from the "All" view to keep active list clean
+            where.status = { not: 'CONVERTED' };
+        }
         if (source) where.source = source;
         if (temperature) where.temperature = temperature;
 
@@ -193,7 +198,7 @@ export async function POST(req: Request) {
                     passportNo,
                     passportIssueDate: passportIssueDate ? new Date(passportIssueDate) : null,
                     passportExpiryDate: passportExpiryDate ? new Date(passportExpiryDate) : null,
-                    userId: user?.id, // Link to User if created
+                    userId: user?.id || null, // Link to User if created
                     // Nested creation for FollowUp and Appointment
                     followUps: (followUp && followUp.nextFollowUpAt) ? {
                         create: {
@@ -242,7 +247,7 @@ export async function POST(req: Request) {
                                 assignedBy: session.user.id, // Self-assigned
                             }
                         },
-                        status: 'ASSIGNED' // Auto-update status
+                        status: 'ASSIGNED' as any // Auto-update status
                     } : {})
                 },
             });

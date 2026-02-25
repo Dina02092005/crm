@@ -176,7 +176,7 @@ export async function POST(req: NextRequest) {
                 role: role || "EMPLOYEE",
                 imageUrl, // Save profile picture
                 emailVerified: new Date(), // Auto-verify employees created by admin
-                agentProfile: role === "AGENT" ? {
+                agentProfile: ["AGENT", "SALES_REP", "MANAGER"].includes(role) ? {
                     create: {
                         phone: phone || null,
                         companyName: body.companyName || null,

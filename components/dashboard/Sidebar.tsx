@@ -7,14 +7,12 @@ import { useSession } from "next-auth/react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { menuItems } from "./menuItems";
-import FileManagerPanel from "./FileManagerPanel";
 
 export function Sidebar() {
     const pathname = usePathname();
     const router = useRouter();
     const { data: session, status } = useSession() as any;
     const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
-    const [fileManagerOpen, setFileManagerOpen] = useState(false);
 
     // Compute the URL namespace prefix based on user role
     const rolePrefix = (() => {
@@ -205,22 +203,6 @@ export function Sidebar() {
                                             </div>
                                         </div>
                                     </>
-                                ) : item.isFileManager ? (
-                                    <motion.div
-                                        whileHover={{ x: 2 }}
-                                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                                    >
-                                        <button
-                                            onClick={() => setFileManagerOpen(true)}
-                                            className={`w-full flex items-center justify-center group-hover:justify-start xl:justify-start gap-2.5 px-3 h-[41px] text-sm font-semibold rounded-lg transition-all duration-300 ${fileManagerOpen
-                                                ? "bg-primary/10 text-primary font-bold"
-                                                : "text-white hover:bg-white/5 hover:text-white"
-                                                }`}
-                                        >
-                                            <span className="w-[18px] h-[18px] flex items-center justify-center shrink-0 [&>svg]:w-full [&>svg]:h-full">{item.icon}</span>
-                                            <span className="hidden group-hover:block xl:block whitespace-nowrap transition-all duration-300">{item.label}</span>
-                                        </button>
-                                    </motion.div>
                                 ) : (
                                     <motion.div
                                         whileHover={{ x: 2 }}
@@ -244,12 +226,6 @@ export function Sidebar() {
                     </ul>
                 </nav>
             </aside>
-
-            {/* File Manager Panel — slides in from left over the sidebar */}
-            <FileManagerPanel
-                isOpen={fileManagerOpen}
-                onClose={() => setFileManagerOpen(false)}
-            />
         </>
     );
 }

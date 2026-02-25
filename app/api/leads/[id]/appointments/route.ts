@@ -5,16 +5,17 @@ import prisma from "@/lib/prisma";
 
 export async function GET(
     req: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const session = await getServerSession(authOptions);
         if (!session) {
             return new NextResponse("Unauthorized", { status: 401 });
         }
 
         const appointments = await prisma.appointment.findMany({
-            where: { leadId: params.id },
+            where: { leadId: id },
             include: { user: { select: { name: true } } },
             orderBy: { startTime: "asc" },
         });
@@ -28,9 +29,10 @@ export async function GET(
 
 export async function POST(
     req: Request,
-    { params }: { params: { id: string } }
+    { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { id } = await params;
         const session = (await getServerSession(authOptions)) as any;
         if (!session) {
             return new NextResponse("Unauthorized", { status: 401 });
@@ -40,7 +42,7 @@ export async function POST(
 
         const appointment = await prisma.appointment.create({
             data: {
-                leadId: params.id,
+                leadId: id,
                 userId: session.user.id,
                 title,
                 description,
@@ -54,7 +56,7 @@ export async function POST(
         // Also log this as an activity
         await prisma.leadActivity.create({
             data: {
-                leadId: params.id,
+                leadId: id,
                 userId: session.user.id,
                 type: "APPOINTMENT",
                 content: `Appointment scheduled: ${title} at ${new Date(startTime).toLocaleString()}`,

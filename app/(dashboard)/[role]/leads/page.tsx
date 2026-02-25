@@ -22,7 +22,7 @@ export default function LeadsPage() {
 
     const debouncedSearch = useDebounce(search, 500);
 
-    const { data, isLoading } = useLeads({
+    const { data, isLoading, refetch } = useLeads({
         page,
         limit,
         search: debouncedSearch,
@@ -113,7 +113,7 @@ export default function LeadsPage() {
                     ) : (
                         <LeadsTable
                             data={leads}
-                            onUpdate={() => { }}
+                            onUpdate={refetch}
                             pagination={{
                                 page,
                                 totalPages,

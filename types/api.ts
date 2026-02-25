@@ -40,6 +40,12 @@ export interface Student {
     lastName?: string;
     savedAddresses?: SavedAddress[];
     imageUrl?: string | null;
+    leadId?: string | null;
+    lead?: Lead;
+    applications?: Application[];
+    _count?: {
+        applications: number;
+    };
 }
 
 export interface Employee {
@@ -71,6 +77,7 @@ export interface Lead {
     campaignId?: string;
     temperature?: string; // HOT, WARM, COLD
     imageUrl?: string | null;
+    interestedCountry?: string;
 }
 
 export interface CreateLeadDTO {
@@ -82,6 +89,47 @@ export interface CreateLeadDTO {
     temperature?: string;
     message?: string;
     imageUrl?: string | null;
+}
+
+export type ApplicationStatus =
+    | 'PENDING'
+    | 'SUBMITTED'
+    | 'FINALIZED'
+    | 'UNDER_REVIEW'
+    | 'OFFER_RECEIVED'
+    | 'READY_FOR_VISA'
+    | 'ENROLLED'
+    | 'REJECTED'
+    | 'WITHDRAWN';
+
+export interface Application {
+    id: string;
+    studentId: string;
+    student?: Student;
+    status: ApplicationStatus;
+    universityId: string;
+    university?: { name: string; id: string } | null;
+    courseId?: string | null;
+    courseName?: string | null;
+    course?: { name: string; id: string } | null;
+    intake?: string | null;
+    intendedCourse?: string | null;
+    applyLevel?: string | null;
+    countryId: string;
+    country?: { name: string; id: string } | null;
+    notes?: string | null;
+    associateId?: string | null;
+    associate?: { name: string; id: string; role?: string } | null;
+    deadlineDate?: string | null;
+    assignedById?: string | null;
+    assignedBy?: { id: string; name: string; role: string } | null;
+    assignedToId?: string | null;
+    assignedTo?: { id: string; name: string; role: string } | null;
+    createdAt: string;
+    updatedAt: string;
+    _count?: {
+        notes: number;
+    };
 }
 
 export interface ApiResponse<T = any> {

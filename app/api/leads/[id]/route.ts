@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { LeadStatus } from '@prisma/client';
 
 export async function DELETE(
     req: Request,
@@ -100,7 +101,7 @@ export async function PATCH(
                 // 2. Update Lead Status
                 const updatedLead = await tx.lead.update({
                     where: { id },
-                    data: { status: 'ASSIGNED' }
+                    data: { status: LeadStatus.UNDER_REVIEW }
                 });
 
                 // 3. Log Activity
@@ -151,13 +152,45 @@ export async function PATCH(
             body.name = `${fName} ${lName}`.trim() || currentLead?.phone;
         }
 
+        // Handle nested updates for AcademicDetails and WorkExperience
+        if (body.academicDetails && Array.isArray(body.academicDetails)) {
+            const academicDetails = body.academicDetails;
+            delete body.academicDetails;
+            body.academicDetails = {
+                deleteMany: {},
+                create: academicDetails.map((detail: any) => ({
+                    qualification: detail.qualification,
+                    stream: detail.stream,
+                    institution: detail.institution,
+                    percentage: detail.percentage,
+                    backlogs: detail.backlogs,
+                    passingYear: detail.passingYear
+                }))
+            };
+        }
+
+        if (body.workExperience && Array.isArray(body.workExperience)) {
+            const workExperience = body.workExperience;
+            delete body.workExperience;
+            body.workExperience = {
+                deleteMany: {},
+                create: workExperience.map((exp: any) => ({
+                    companyName: exp.companyName,
+                    position: exp.position,
+                    startDate: exp.startDate,
+                    endDate: exp.endDate,
+                    totalExperience: exp.totalExperience
+                }))
+            };
+        }
+
         const lead = await prisma.lead.update({
             where: { id },
             data: body,
         });
 
         // Check for conversion
-        if (previousLead?.status !== 'CONVERTED' && body.status === 'CONVERTED') {
+        if (previousLead?.status !== LeadStatus.CLOSED && body.status === LeadStatus.CLOSED) {
             const { notifyAdmins, notifyUser } = await import('@/lib/notifications');
 
             // Notify Admins

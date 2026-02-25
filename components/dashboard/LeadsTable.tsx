@@ -9,7 +9,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal, Eye, Pencil, Trash2, UserPlus, ChevronLeft, ChevronRight } from "lucide-react";
+import { MoreHorizontal, Eye, Pencil, Trash2, UserPlus, ChevronLeft, ChevronRight, Zap } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -20,6 +20,7 @@ import { Button } from "@/components/ui/button";
 import { AssignLeadSheet } from "./AssignLeadSheet";
 import { useSession } from "next-auth/react";
 import { useRolePath } from "@/hooks/use-role-path";
+import { ConvertToStudentModal } from "./ConvertToStudentModal";
 
 import { toast } from "sonner";
 import { useState } from "react";
@@ -52,7 +53,8 @@ const statusOptions = [
     "INTERESTED",
     "NOT_INTERESTED",
     "ON_HOLD",
-    "CLOSED"
+    "CLOSED",
+    "CONVERTED"
 ];
 const tempOptions = ["COLD", "WARM", "HOT"];
 
@@ -77,6 +79,8 @@ export function LeadsTable({
     const [selectedLead, setSelectedLead] = useState<{ id: string; name: string } | null>(null);
     const [editSheetOpen, setEditSheetOpen] = useState(false);
     const [editingLeadId, setEditingLeadId] = useState<string | null>(null);
+    const [convertModalOpen, setConvertModalOpen] = useState(false);
+    const [convertingLead, setConvertingLead] = useState<any>(null);
 
     // Mutations
     const updateLeadMutation = useUpdateLead();
@@ -183,7 +187,8 @@ export function LeadsTable({
                                                         status === "INTERESTED" ? "text-emerald-600" :
                                                             status === "NOT_INTERESTED" ? "text-slate-500" :
                                                                 status === "ON_HOLD" ? "text-orange-500" :
-                                                                    status === "CLOSED" ? "text-gray-900" : "text-gray-600"}
+                                                                    status === "CLOSED" ? "text-gray-900" :
+                                                                        status === "CONVERTED" ? "text-emerald-600" : "text-gray-600"}
                             `}>
                                 <div className={`w-1.5 h-1.5 rounded-full 
                                     ${status === "NEW" ? "bg-blue-600" :
@@ -195,7 +200,8 @@ export function LeadsTable({
                                                             status === "INTERESTED" ? "bg-emerald-600" :
                                                                 status === "NOT_INTERESTED" ? "bg-slate-500" :
                                                                     status === "ON_HOLD" ? "bg-orange-500" :
-                                                                        status === "CLOSED" ? "bg-black" : "bg-gray-400"}
+                                                                        status === "CLOSED" ? "bg-black" :
+                                                                            status === "CONVERTED" ? "bg-emerald-600" : "bg-gray-400"}
                                 `} />
                                 {status.replace(/_/g, ' ')}
                             </div>
@@ -254,15 +260,32 @@ export function LeadsTable({
             cell: ({ row }) => (
                 <div className="flex items-center justify-end gap-2">
                     {(session?.user?.role === "ADMIN" || session?.user?.role === "MANAGER" || session?.user?.role === "AGENT") && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleAssignClick(row.original)}
-                            className="h-8 w-8 p-0 text-primary hover:bg-primary/5"
-                            title="Assign Lead"
-                        >
-                            <UserPlus className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleAssignClick(row.original)}
+                                className="h-8 w-8 p-0 text-primary hover:bg-primary/5"
+                                title="Assign Lead"
+                            >
+                                <UserPlus className="h-4 w-4" />
+                            </Button>
+                            {row.original.status !== 'CONVERTED' && (
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setConvertingLead(row.original);
+                                        setConvertModalOpen(true);
+                                    }}
+                                    className="h-8 w-8 p-0 text-emerald-600 hover:bg-emerald-50"
+                                    title="Convert to Student"
+                                >
+                                    <Zap className="h-4 w-4" />
+                                </Button>
+                            )}
+                        </div>
                     )}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -277,6 +300,18 @@ export function LeadsTable({
                                     className="cursor-pointer text-primary"
                                 >
                                     <UserPlus className="mr-2 h-4 w-4" /> Assign Lead
+                                </DropdownMenuItem>
+                            )}
+                            {row.original.status !== 'CONVERTED' && (
+                                <DropdownMenuItem
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setConvertingLead(row.original);
+                                        setConvertModalOpen(true);
+                                    }}
+                                    className="cursor-pointer text-emerald-600 font-bold bg-emerald-50 hover:bg-emerald-100"
+                                >
+                                    <UserPlus className="mr-2 h-4 w-4" /> Convert to Student
                                 </DropdownMenuItem>
                             )}
                             <DropdownMenuItem asChild>
@@ -462,6 +497,18 @@ export function LeadsTable({
                 description="Are you sure you want to delete this lead? This action cannot be undone."
                 confirmText="Delete"
                 variant="destructive"
+            />
+
+            <ConvertToStudentModal
+                isOpen={convertModalOpen}
+                onClose={() => setConvertModalOpen(false)}
+                lead={convertingLead}
+                onSuccess={(studentId) => {
+                    setConvertModalOpen(false);
+                    onUpdate();
+                    toast.success("Lead converted successfully");
+                    router.push(prefixPath(`/students/${studentId}`));
+                }}
             />
         </div>
     );

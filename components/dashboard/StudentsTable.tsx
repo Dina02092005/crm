@@ -14,16 +14,17 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Pencil, Trash2, Phone, Mail, Calendar, ChevronLeft, ChevronRight } from "lucide-react";
+import { MoreHorizontal, Eye, Pencil, Trash2, Phone, Mail, Calendar, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useRolePath } from "@/hooks/use-role-path";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import StudentForm from "@/components/forms/StudentForm";
+
 import { Student } from "@/types/api";
 import { useUpdateStudent } from "@/hooks/useApi";
 import { toast } from "sonner";
+// import { AddUniversityApplicationModal } from "../student/AddUniversityApplicationModal";
 
 interface StudentsTableProps {
     data: Student[];
@@ -39,9 +40,11 @@ interface StudentsTableProps {
 }
 
 export function StudentsTable({ data, onUpdate, onDelete, pagination }: StudentsTableProps) {
-    const [editSheetOpen, setEditSheetOpen] = useState(false);
-    const [editingStudent, setEditingStudent] = useState<Student | undefined>(undefined);
+    // const [editSheetOpen, setEditSheetOpen] = useState(false);
+    // const [editingStudent, setEditingStudent] = useState<Student | undefined>(undefined);
     const updateMutation = useUpdateStudent();
+    // const [addAppModalOpen, setAddAppModalOpen] = useState(false);
+    // const [selectedStudent, setSelectedStudent] = useState<any>(null);
 
     const columns: ColumnDef<any>[] = [
         {
@@ -79,6 +82,13 @@ export function StudentsTable({ data, onUpdate, onDelete, pagination }: Students
                         </div>
                     )}
                 </div>
+            ),
+        },
+        {
+            accessorKey: "country",
+            header: "Country",
+            cell: ({ row }) => (
+                <p className="text-sm font-medium">{row.original.lead?.interestedCountry || "N/A"}</p>
             ),
         },
         {
@@ -178,6 +188,18 @@ export function StudentsTable({ data, onUpdate, onDelete, pagination }: Students
             id: "actions",
             cell: ({ row }) => (
                 <div className="flex items-center justify-end gap-2">
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            router.push(prefixPath(`/students/${row.original.id}/applications/add`));
+                        }}
+                        className="h-8 px-3 text-[10px] font-bold bg-cyan-50 text-cyan-700 hover:bg-cyan-100 rounded-lg flex items-center gap-1.5 transition-all"
+                    >
+                        <Plus className="h-3 w-3" />
+                        Move to Application
+                    </Button>
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <Button variant="ghost" className="h-8 w-8 p-0">
@@ -191,25 +213,22 @@ export function StudentsTable({ data, onUpdate, onDelete, pagination }: Students
                                 </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem
-                                onClick={() => {
-                                    // Map the row data to the Student type format expected by the form
-                                    const studentData: Student = {
-                                        id: row.original.id,
-                                        userId: row.original.userId,
-                                        phone: row.original.phone,
-                                        email: row.original.email,
-                                        firstName: row.original.name.split(' ')[0], // Approximate
-                                        lastName: row.original.name.split(' ').slice(1).join(' '), // Approximate
-                                        status: row.original.status || "NEW",
-                                        savedAddresses: row.original.savedAddresses || [],
-                                        // Add other fields as necessary or leave optional
-                                    };
-                                    setEditingStudent(studentData);
-                                    setEditSheetOpen(true);
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    router.push(prefixPath(`/students/${row.original.id}/edit`));
                                 }}
                                 className="cursor-pointer"
                             >
                                 <Pencil className="mr-2 h-4 w-4" /> Edit
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    router.push(prefixPath(`/students/${row.original.id}/applications/add`));
+                                }}
+                                className="cursor-pointer text-cyan-600 font-bold bg-cyan-50 hover:bg-cyan-100"
+                            >
+                                <Plus className="mr-2 h-4 w-4" /> Move to Application
                             </DropdownMenuItem>
                             <DropdownMenuItem
                                 className="text-red-600 cursor-pointer"
@@ -331,27 +350,7 @@ export function StudentsTable({ data, onUpdate, onDelete, pagination }: Students
                 </div>
             )}
 
-            <Sheet open={editSheetOpen} onOpenChange={setEditSheetOpen}>
-                <SheetContent className="overflow-y-auto w-full sm:max-w-sm">
-                    <SheetHeader>
-                        <SheetTitle>Edit Student</SheetTitle>
-                        <SheetDescription>
-                            Update student details.
-                        </SheetDescription>
-                    </SheetHeader>
-                    {editingStudent && (
-                        <div className="mt-6">
-                            <StudentForm
-                                student={editingStudent}
-                                onSuccess={() => {
-                                    setEditSheetOpen(false);
-                                    onUpdate();
-                                }}
-                            />
-                        </div>
-                    )}
-                </SheetContent>
-            </Sheet>
+            {/* Modal removed as we now use separate page */}
         </div>
     );
 }

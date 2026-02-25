@@ -18,7 +18,11 @@ export async function GET(req: NextRequest) {
         const limit = parseInt(searchParams.get("limit") || "10");
         const skip = (page - 1) * limit;
 
-        const where: any = {};
+        const where: any = {
+            applications: {
+                none: {}
+            }
+        };
         const userRole = (session as any).user.role;
 
         // RBAC: Agent visibility
@@ -41,6 +45,8 @@ export async function GET(req: NextRequest) {
 
             where.onboardedBy = { in: onboardedByIds };
         }
+
+        const includeConverted = searchParams.get("includeConverted") === "true";
 
         // Search by name, email, or phone
         if (search) {
@@ -65,8 +71,14 @@ export async function GET(req: NextRequest) {
                         select: {
                             source: true,
                             temperature: true,
+                            interestedCountry: true,
                         },
                     },
+                    _count: {
+                        select: {
+                            applications: true
+                        }
+                    }
                 },
                 orderBy: { createdAt: "desc" },
                 skip,
@@ -93,29 +105,43 @@ export async function GET(req: NextRequest) {
 // POST /api/students - Create new student (manual entry)
 export async function POST(req: NextRequest) {
     try {
-        const session = await getServerSession(authOptions);
+        const session = await getServerSession(authOptions) as any;
         if (!session?.user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
+        // Verify session user exists in DB (to prevent FK errors if session is from before DB reset)
+        const currentUser = await prisma.user.findUnique({
+            where: { id: session.user.id }
+        });
+
+        if (!currentUser) {
+            return NextResponse.json({
+                error: "Your session is invalid (likely due to a database reset). Please log out and log back in."
+            }, { status: 403 });
+        }
+
         const body = await req.json();
-        const { name, email, phone, leadId, status } = body;
+        const {
+            firstName, lastName, email, phone, alternateNo,
+            dateOfBirth, gender, nationality, maritalStatus,
+            address, highestQualification, interestedCourse,
+            testName, testScore, interestedCountry, intake,
+            applyLevel, source, remark, message, imageUrl,
+            followUp, appointment,
+            passportNo, passportIssueDate, passportExpiryDate,
+            academicDetails, workExperience, proficiencyExams,
+            status: leadStatus
+        } = body;
+
+        // name is still required in the schema for now, let's derive it
+        const name = body.name || `${firstName || ""} ${lastName || ""}`.trim() || phone;
 
         if (!name || !phone) {
             return NextResponse.json({ error: "Name and phone are required" }, { status: 400 });
         }
 
-        // If leadId is provided, check it's not already converted
-        if (leadId) {
-            const existingStudent = await prisma.student.findUnique({
-                where: { leadId },
-            });
-            if (existingStudent) {
-                return NextResponse.json({ error: "Lead already converted to student" }, { status: 400 });
-            }
-        }
-
-        // Generate a dummy password: Student@<last 4 digits of phone>
+        // Generate a dummy password: Student@${last4}
         const last4 = phone.replace(/\D/g, "").slice(-4) || "0000";
         const tempPassword = `Student@${last4}`;
         const passwordHash = await bcrypt.hash(tempPassword, 10);
@@ -136,8 +162,9 @@ export async function POST(req: NextRequest) {
             );
         }
 
-        // Create the student user account + student record atomically
-        const [studentUser, student] = await prisma.$transaction(async (tx) => {
+        // Create user, lead, and student records atomically
+        const result = await prisma.$transaction(async (tx) => {
+            // 1. Create User
             const newUser = await tx.user.create({
                 data: {
                     name,
@@ -145,29 +172,87 @@ export async function POST(req: NextRequest) {
                     passwordHash,
                     role: "STUDENT",
                     isActive: true,
-                    emailVerified: new Date(), // pre-verified since admin is creating
+                    emailVerified: new Date(),
                 },
             });
 
-            const newStudent = await tx.student.create({
+            // 2. Create Lead
+            const lead = await tx.lead.create({
+                data: {
+                    name,
+                    firstName,
+                    lastName,
+                    email: loginEmail,
+                    phone,
+                    alternateNo,
+                    dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
+                    gender,
+                    nationality,
+                    maritalStatus,
+                    address,
+                    highestQualification,
+                    interestedCourse,
+                    testName,
+                    testScore,
+                    interestedCountry,
+                    intake,
+                    applyLevel,
+                    message,
+                    source,
+                    remark,
+                    imageUrl,
+                    userId: newUser.id,
+                    passportNo,
+                    passportIssueDate: passportIssueDate ? new Date(passportIssueDate) : null,
+                    passportExpiryDate: passportExpiryDate ? new Date(passportExpiryDate) : null,
+                    academicDetails: (academicDetails && Array.isArray(academicDetails)) ? {
+                        create: academicDetails.filter((d: any) => d.qualification).map((detail: any) => ({
+                            qualification: detail.qualification,
+                            stream: detail.stream,
+                            institution: detail.institution,
+                            percentage: detail.percentage,
+                            backlogs: detail.backlogs,
+                            passingYear: detail.passingYear
+                        }))
+                    } : undefined,
+                    workExperience: (workExperience && Array.isArray(workExperience)) ? {
+                        create: workExperience.filter((e: any) => e.companyName).map((exp: any) => ({
+                            companyName: exp.companyName,
+                            position: exp.position,
+                            startDate: exp.startDate,
+                            endDate: exp.endDate,
+                            totalExperience: exp.totalExperience
+                        }))
+                    } : undefined,
+                    proficiencyExams: proficiencyExams || undefined,
+                    status: (leadStatus as any) || 'NEW'
+                },
+            });
+
+            // 3. Create Student
+            const student = await tx.student.create({
                 data: {
                     name,
                     email: loginEmail,
                     phone,
-                    status: status || "NEW",
-                    leadId: leadId || null,
+                    status: "NEW",
+                    leadId: lead.id,
                     onboardedBy: session.user.id,
-                    imageUrl: body.imageUrl || null,
-                    savedAddresses: body.savedAddresses || [],
+                    imageUrl,
                     studentUserId: newUser.id,
+                    passportNo,
+                    passportIssueDate: passportIssueDate ? new Date(passportIssueDate) : null,
+                    passportExpiryDate: passportExpiryDate ? new Date(passportExpiryDate) : null,
                 },
                 include: {
                     user: { select: { name: true, email: true } },
                 },
             });
 
-            return [newUser, newStudent];
+            return { newUser, lead, student };
         });
+
+        const { newUser, lead, student } = result;
 
         // Send welcome email with credentials (non-blocking — don't fail if email fails)
         try {
@@ -179,7 +264,7 @@ export async function POST(req: NextRequest) {
         }
 
         return NextResponse.json(
-            { ...student, studentLoginEmail: loginEmail, studentUserId: studentUser.id },
+            { ...student, studentLoginEmail: loginEmail, studentUserId: newUser.id },
             { status: 201 }
         );
     } catch (error) {

@@ -58,7 +58,12 @@ export default function EmployeeForm({ employee, onSuccess, formId, defaultRole 
     const createMutation = useCreateEmployee()
     const updateMutation = useUpdateEmployee()
     const { data: session } = useSession() as any;
-    const { data: agentsData } = useEmployees("active", 1, 100, "AGENT");
+
+    // Fetch staff members who can have counselors reporting to them
+    const { data: managersData } = useEmployees("active", 1, 100, ""); // Will filter manually below to be safe or use query params if API supports multiple roles
+    const availableManagers = managersData?.employees?.filter((emp: any) =>
+        ["AGENT", "SALES_REP", "MANAGER", "ADMIN"].includes(emp.role)
+    ) || [];
 
 
     const form = useForm({
@@ -251,12 +256,12 @@ export default function EmployeeForm({ employee, onSuccess, formId, defaultRole 
                                         onChange={(e) => field.handleChange(e.target.value as any)}
                                         className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                                     >
-                                        <option value="EMPLOYEE">Counselor</option>
+                                        <option value="EMPLOYEE">Staff / Employee</option>
+                                        <option value="COUNSELOR">Counselor</option>
+                                        <option value="AGENT">Agent / Partner</option>
                                         <option value="SALES_REP">Sales Rep</option>
                                         <option value="SUPPORT_AGENT">Support Agent</option>
                                         <option value="MANAGER">Manager</option>
-                                        <option value="AGENT">Agent</option>
-                                        <option value="COUNSELOR">Counselor</option>
                                         <option value="ADMIN">Admin</option>
                                     </select>
                                     <ErrorMessage field={field} />
@@ -331,7 +336,7 @@ export default function EmployeeForm({ employee, onSuccess, formId, defaultRole 
                             name="agentId"
                             children={(field) => (
                                 <div className="space-y-2">
-                                    <Label htmlFor={field.name}>Reports To (Agent)</Label>
+                                    <Label htmlFor={field.name}>Reports To (Manager/Agent)</Label>
                                     <select
                                         id={field.name}
                                         name={field.name}
@@ -340,10 +345,10 @@ export default function EmployeeForm({ employee, onSuccess, formId, defaultRole 
                                         onChange={(e) => field.handleChange(e.target.value)}
                                         className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                                     >
-                                        <option value="">Select Manager</option>
-                                        {agentsData?.agents?.map((agent: any) => (
-                                            <option key={agent.id} value={agent.id}>
-                                                {agent.name}
+                                        <option value="">Select Manager / Agent</option>
+                                        {availableManagers.map((manager: any) => (
+                                            <option key={manager.id} value={manager.agentProfile?.id || manager.id}>
+                                                {manager.name} ({manager.role})
                                             </option>
                                         ))}
                                     </select>

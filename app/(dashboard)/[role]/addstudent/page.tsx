@@ -125,7 +125,12 @@ function ErrorMessage({ field }: { field: any }) {
 export default function AddStudentPage() {
     const router = useRouter();
     const { prefixPath } = useRolePath();
+    const [isMounted, setIsMounted] = useState(false);
     const [websites, setWebsites] = useState<{ id: string; name: string }[]>([]);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     useEffect(() => {
         const fetchWebsites = async () => {
@@ -166,9 +171,9 @@ export default function AddStudentPage() {
             passportExpiryDate: "",
             followUp: { date: "", time: "", remark: "" },
             appointment: { date: "", time: "", remark: "" },
-            academicDetails: [{ qualification: "", stream: "", institution: "", percentage: "", backlogs: "", passingYear: "" }],
+            academicDetails: [],
             proficiencyExams: [],
-            workExperience: [{ companyName: "", position: "", startDate: "", endDate: "", totalExperience: "" }],
+            workExperience: [],
         } as FormData,
         // @ts-ignore
         validatorAdapter: zodValidator(),
@@ -191,8 +196,8 @@ export default function AddStudentPage() {
                     } : undefined
                 };
 
-                await axios.post("/api/leads", payload);
-                toast.success("Student added successfully");
+                await axios.post("/api/students", payload);
+                toast.success("Student created successfully");
                 router.push(prefixPath("/students"));
             } catch (error: any) {
                 toast.error(error.response?.data?.message || "Failed to add student");
@@ -201,6 +206,8 @@ export default function AddStudentPage() {
     });
 
     const proficiencyOptions = ["IELTS", "TOEFL", "PTE", "GRE", "GMAT", "SAT", "Duolingo", "CELPIP", "Others"];
+
+    if (!isMounted) return null;
 
     return (
         <div className="min-h-screen bg-background pb-20">

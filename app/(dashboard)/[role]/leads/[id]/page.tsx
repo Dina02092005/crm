@@ -72,6 +72,7 @@ import { LeadForm } from "@/components/dashboard/LeadForm";
 import { DateTimePicker } from "@/components/ui/date-time-picker";
 import { Label } from "@/components/ui/label";
 import { format } from "date-fns";
+import { ConvertToStudentModal } from "@/components/dashboard/ConvertToStudentModal";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
@@ -102,6 +103,7 @@ export default function LeadDetailPage() {
     const [editingReminder, setEditingReminder] = useState<any>(null);
     const [editingItem, setEditingItem] = useState<any>(null); // For notes/activities
     const [editSheetOpen, setEditSheetOpen] = useState(false);
+    const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
 
     // FollowUp & Appointment state
     const [followUps, setFollowUps] = useState<any[]>([]);
@@ -541,30 +543,29 @@ export default function LeadDetailPage() {
                                     </div>
 
                                     <div className="pt-4 border-t border-border/50 flex flex-col gap-2">
-                                        <Button
-                                            className="w-full bg-primary hover:bg-primary/90 text-white rounded-xl h-9 text-sm font-bold shadow-sm"
-                                            disabled={lead.status === 'CONVERTED' || lead.status === 'LOST'}
-                                            onClick={() => {
-                                                openConfirm(
-                                                    "Convert to Student",
-                                                    "Are you sure you want to convert this lead to a student?",
-                                                    async () => {
-                                                        try {
-                                                            await axios.post(`/api/leads/${params.id}/convert`, { action: 'CONVERT' });
-                                                            toast.success("Lead converted to student!");
-                                                            fetchLead();
-                                                        } catch (error) {
-                                                            toast.error("Conversion failed");
-                                                        }
-                                                    },
-                                                    "default",
-                                                    "Convert"
-                                                );
-                                            }}
-                                        >
-                                            <Zap className="h-4 w-4 mr-2" />
-                                            Convert to Student
-                                        </Button>
+                                        {lead.status === 'CONVERTED' ? (
+                                            <Button
+                                                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-xl h-9 text-sm font-bold shadow-sm"
+                                                onClick={() => {
+                                                    // This assumes we have the studentId. 
+                                                    // In our new conversion, we link the lead to a user/student.
+                                                    // Let's check if lead has a studentId or just redirect to students list for now
+                                                    router.push(`/admin/students`);
+                                                }}
+                                            >
+                                                <Database className="h-4 w-4 mr-2" />
+                                                View Student →
+                                            </Button>
+                                        ) : (
+                                            <Button
+                                                className="w-full bg-primary hover:bg-primary/90 text-white rounded-xl h-9 text-sm font-bold shadow-sm"
+                                                disabled={lead.status === 'LOST'}
+                                                onClick={() => setIsConvertModalOpen(true)}
+                                            >
+                                                <Zap className="h-4 w-4 mr-2" />
+                                                Convert to Student
+                                            </Button>
+                                        )}
                                         <div className="grid grid-cols-2 gap-2">
                                             <Button
                                                 variant="outline"
@@ -657,6 +658,7 @@ export default function LeadDetailPage() {
                                             { label: "Marital Status", value: lead.maritalStatus },
                                             { label: "Alternate Phone", value: lead.alternateNo },
                                             { label: "Address", value: lead.address },
+                                            { label: "Message", value: lead.message },
                                             { label: "Remark", value: lead.remark },
                                         ].map(({ label, value }) => value ? (
                                             <div key={label} className="space-y-0.5">
@@ -796,7 +798,7 @@ export default function LeadDetailPage() {
                                                         {key.replace(/([A-Z])/g, ' $1').trim()}
                                                     </p>
                                                     <p className="text-sm font-medium break-words">
-                                                        {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                                                        {typeof value === 'object' ? JSON.stringify(value, null, 2) : String(value)}
                                                     </p>
                                                 </div>
                                             ))}
@@ -1659,7 +1661,7 @@ export default function LeadDetailPage() {
             </Dialog>
 
             {/* Edit Note Dialog */}
-            <Dialog open={!!editingItem} onOpenChange={() => setEditingItem(null)}>
+            <Dialog open={!!editingItem && editingItem.type !== 'image'} onOpenChange={() => setEditingItem(null)}>
                 <DialogContent className="sm:max-w-md">
                     <DialogHeader>
                         <DialogTitle>Edit {editingItem?.type === 'NOTE' ? 'Note' : 'Activity'}</DialogTitle>
@@ -1773,6 +1775,18 @@ export default function LeadDetailPage() {
                     )}
                 </SheetContent>
             </Sheet>
+
+            <ConvertToStudentModal
+                isOpen={isConvertModalOpen}
+                onClose={() => setIsConvertModalOpen(false)}
+                lead={lead}
+                onSuccess={(studentId) => {
+                    setIsConvertModalOpen(false);
+                    fetchLead();
+                    toast.success("Lead converted successfully");
+                    router.push(`/admin/students/${studentId}`);
+                }}
+            />
         </div>
     );
 }

@@ -354,6 +354,19 @@ exports.Prisma.CountryScalarFieldEnum = {
   updatedAt: 'updatedAt'
 };
 
+exports.Prisma.ApplicationScalarFieldEnum = {
+  id: 'id',
+  studentId: 'studentId',
+  status: 'status',
+  universityName: 'universityName',
+  courseName: 'courseName',
+  intake: 'intake',
+  countryId: 'countryId',
+  notes: 'notes',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.ApplicationChecklistScalarFieldEnum = {
   id: 'id',
   name: 'name',
@@ -497,6 +510,18 @@ exports.StudentStatus = exports.$Enums.StudentStatus = {
   ON_HOLD: 'ON_HOLD'
 };
 
+exports.ApplicationStatus = exports.$Enums.ApplicationStatus = {
+  SUBMITTED: 'SUBMITTED',
+  UNDER_REVIEW: 'UNDER_REVIEW',
+  OFFER_UNCONDITIONAL: 'OFFER_UNCONDITIONAL',
+  OFFER_CONDITIONAL: 'OFFER_CONDITIONAL',
+  REJECTED: 'REJECTED',
+  VISA_APPLIED: 'VISA_APPLIED',
+  VISA_GRANTED: 'VISA_GRANTED',
+  VISA_REJECTED: 'VISA_REJECTED',
+  ENROLLED: 'ENROLLED'
+};
+
 exports.ChecklistType = exports.$Enums.ChecklistType = {
   MANDATORY: 'MANDATORY',
   OPTIONAL: 'OPTIONAL'
@@ -522,6 +547,7 @@ exports.Prisma.ModelName = {
   Website: 'Website',
   Qualification: 'Qualification',
   Country: 'Country',
+  Application: 'Application',
   ApplicationChecklist: 'ApplicationChecklist',
   AcademicDetail: 'AcademicDetail',
   WorkExperience: 'WorkExperience'

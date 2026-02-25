@@ -28,6 +28,8 @@ export async function GET() {
             studentWhere.onboardedBy = session.user.id;
         }
 
+        const activeLeadWhere = { ...leadWhere, status: { not: 'CONVERTED' } };
+
         const [
             totalLeads,
             totalStudents,
@@ -45,7 +47,7 @@ export async function GET() {
             totalAgents,
             totalCounselors
         ] = await Promise.all([
-            prisma.lead.count({ where: leadWhere }),
+            prisma.lead.count({ where: activeLeadWhere }),
             prisma.student.count({ where: studentWhere }),
             prisma.user.count({
                 where: {
@@ -59,7 +61,7 @@ export async function GET() {
             prisma.website.count(),
             prisma.lead.count({
                 where: {
-                    ...leadWhere,
+                    ...activeLeadWhere,
                     createdAt: {
                         gte: startOfDay
                     }
@@ -80,8 +82,8 @@ export async function GET() {
                 }
             }),
             prisma.lead.findMany({
-                where: leadWhere,
-                take: 50,
+                where: activeLeadWhere,
+                take: 10, // Dashboard usually needs fewer
                 orderBy: { updatedAt: 'desc' },
                 include: {
                     student: true

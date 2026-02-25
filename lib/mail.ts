@@ -60,3 +60,16 @@ export const sendStudentWelcomeEmail = async (
   };
   return transporter.sendMail(mailOptions);
 };
+export const sendCustomEmail = async (email: string, subject: string, body: string) => {
+  const mailOptions = {
+    from: process.env.SMTP_FROM || '"InterEd CRM" <noreply@example.com>',
+    to: email,
+    subject: subject,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
+        ${body.replace(/\n/g, '<br/>')}
+      </div>
+    `,
+  };
+  return transporter.sendMail(mailOptions);
+};

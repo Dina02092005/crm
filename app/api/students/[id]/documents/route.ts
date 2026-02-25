@@ -2,9 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import { randomUUID } from 'crypto';
+import { S3UploadService } from '@/lib/s3';
 
 export async function GET(
     req: Request,
@@ -46,9 +44,6 @@ export async function POST(
 
         const { id } = await params;
 
-        // Always resolve the uploader ID from the DB by email.
-        // session.user.id can be stale/wrong if the session was created before
-        // the userId JWT field was correctly populated.
         if (!session.user?.email) {
             return NextResponse.json({ message: 'Unauthorized: no email in session' }, { status: 401 });
         }
@@ -83,29 +78,26 @@ export async function POST(
             return NextResponse.json({ message: 'Invalid file type. Allowed: pdf, xls, xlsx, doc, docx, jpeg, jpg, png' }, { status: 400 });
         }
 
-        // Validate file size (3MB max)
-        const maxSize = 3 * 1024 * 1024; // 3MB
+        // Validate file size (10MB max for S3)
+        const maxSize = 10 * 1024 * 1024;
         if (file.size > maxSize) {
-            return NextResponse.json({ message: 'File size exceeds 3MB limit' }, { status: 400 });
+            return NextResponse.json({ message: 'File size exceeds 10MB limit' }, { status: 400 });
         }
 
-        // Save file
-        const fileBuffer = Buffer.from(await file.arrayBuffer());
-        const ext = file.name.split('.').pop();
-        const uniqueFileName = `${randomUUID()}.${ext}`;
-        const uploadDir = join(process.cwd(), 'public', 'uploads', 'student-documents');
+        // Upload to S3
+        const s3Service = new S3UploadService();
+        const uploadResult = await s3Service.uploadFile(file);
 
-        await mkdir(uploadDir, { recursive: true });
-        await writeFile(join(uploadDir, uniqueFileName), fileBuffer);
-
-        const fileUrl = `/uploads/student-documents/${uniqueFileName}`;
+        if (!uploadResult.success || !uploadResult.imageUrl) {
+            return NextResponse.json({ message: uploadResult.error || 'Upload failed' }, { status: 500 });
+        }
 
         const doc = await prisma.studentDocument.create({
             data: {
                 studentId: id,
                 uploadedBy: uploaderId,
                 fileName: file.name,
-                fileUrl,
+                fileUrl: uploadResult.imageUrl,
                 documentName,
                 countryId: countryId || null,
                 checklistId: checklistId || null,
@@ -151,6 +143,11 @@ export async function DELETE(
             return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
         }
 
+        // Delete from S3
+        const s3Service = new S3UploadService();
+        await s3Service.deleteFile(doc.fileUrl);
+
+        // Delete from database
         await prisma.studentDocument.delete({ where: { id: docId } });
 
         return NextResponse.json({ message: 'Document deleted' });

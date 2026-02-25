@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { readFile } from 'fs/promises';
-import { join, basename } from 'path';
-import { existsSync } from 'fs';
-import JSZip from 'jszip';
+import axios from 'axios';
+import { basename } from 'path';
 
-// GET /api/file-manager/download?file=/uploads/student-documents/xxx.pdf&name=Passport.pdf
+// GET /api/file-manager/download?file=https://...&name=Passport.pdf
 export async function GET(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions) as any;
@@ -22,21 +20,14 @@ export async function GET(req: NextRequest) {
             return NextResponse.json({ message: 'file param required' }, { status: 400 });
         }
 
-        // Security: only allow files from our uploads directory
-        if (!fileUrl.startsWith('/uploads/student-documents/')) {
-            return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
-        }
+        // Fetch file from S3
+        const response = await axios.get(fileUrl, { responseType: 'arraybuffer' });
+        const fileBuffer = Buffer.from(response.data);
 
-        const filePath = join(process.cwd(), 'public', fileUrl);
-        if (!existsSync(filePath)) {
-            return NextResponse.json({ message: 'File not found' }, { status: 404 });
-        }
-
-        const fileBuffer = await readFile(filePath);
-        const ext = fileUrl.split('.').pop()?.toLowerCase() || '';
+        const ext = fileUrl.split('.').pop()?.split('?')[0]?.toLowerCase() || '';
         const contentType = getContentType(ext);
 
-        return new NextResponse(fileBuffer, {
+        return new NextResponse(fileBuffer as any, {
             headers: {
                 'Content-Type': contentType,
                 'Content-Disposition': `attachment; filename="${encodeURIComponent(downloadName)}"`,
@@ -64,30 +55,27 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ message: 'No files provided' }, { status: 400 });
         }
 
-        // Validate all paths
-        for (const f of files) {
-            if (!f.url.startsWith('/uploads/student-documents/')) {
-                return NextResponse.json({ message: 'Forbidden file path' }, { status: 403 });
-            }
-        }
-
-        // Dynamically import JSZip (installed below)
+        // Dynamically import JSZip
         const JSZip = (await import('jszip')).default;
         const zip = new JSZip();
 
-        for (const f of files) {
-            const filePath = join(process.cwd(), 'public', f.url);
-            if (existsSync(filePath)) {
-                const buf = await readFile(filePath);
-                // Avoid duplicate names in zip
-                const safeName = f.name || basename(f.url);
-                zip.file(safeName, buf);
-            }
-        }
+        // Fetch all files in parallel
+        await Promise.all(
+            files.map(async (f) => {
+                try {
+                    const response = await axios.get(f.url, { responseType: 'arraybuffer' });
+                    const buf = Buffer.from(response.data);
+                    const safeName = f.name || basename(new URL(f.url).pathname);
+                    zip.file(safeName, buf);
+                } catch (err) {
+                    console.error(`Failed to fetch file for zip: ${f.url}`, err);
+                }
+            })
+        );
 
         const zipBuffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE' });
 
-        return new NextResponse(zipBuffer, {
+        return new NextResponse(zipBuffer as any, {
             headers: {
                 'Content-Type': 'application/zip',
                 'Content-Disposition': `attachment; filename="student-documents.zip"`,

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
-import { prisma, Role, LeadActivityType, LeadStatus } from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { Role, LeadActivityType, LeadStatus } from '@prisma/client';
 
 export async function POST(
     req: Request,
@@ -9,13 +10,28 @@ export async function POST(
 ) {
     try {
         const session = await getServerSession(authOptions) as any;
-        if (!session) {
+        if (!session || !session.user) {
             return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+        }
+
+        // Verify session user exists in DB (to prevent FK errors if session is from before DB reset)
+        const currentUser = await prisma.user.findUnique({
+            where: { id: session.user.id }
+        });
+
+        if (!currentUser) {
+            return NextResponse.json({
+                message: 'Your session is invalid (likely due to a database reset). Please log out and log back in.'
+            }, { status: 403 });
         }
 
         const { id } = await params;
         const body = await req.json();
-        const { action, reason } = body; // action: 'CONVERT' or 'LOST'
+        const { action, reason } = body;
+
+        console.log(`[Convert API] Session User ID: ${session.user.id}`);
+        console.log(`[Convert API] Lead ID: ${id}`);
+        console.log(`[Convert API] Action: ${action}`);
 
         const lead = await prisma.lead.findUnique({ where: { id } });
         if (!lead) {
@@ -23,6 +39,15 @@ export async function POST(
         }
 
         if (action === 'CONVERT') {
+            // Check if student already exists
+            const existingStudent = await prisma.student.findUnique({
+                where: { leadId: id }
+            });
+
+            if (existingStudent) {
+                return NextResponse.json({ message: 'Lead is already converted to a student' }, { status: 400 });
+            }
+
             const student = await prisma.$transaction(async (tx) => {
                 // 1. Create Student
                 const newStudent = await tx.student.create({
