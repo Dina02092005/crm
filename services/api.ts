@@ -34,8 +34,11 @@ export const deleteEmployee = async (id: string): Promise<void> => {
 };
 
 // Applications
-export const getApplications = async (page = 1, limit = 10, search = ''): Promise<{ applications: any[], pagination: any }> => {
-    return api.get(`/applications?page=${page}&limit=${limit}&search=${search}`);
+export const getApplications = async (page = 1, limit = 10, search = '', studentId?: string, status?: string | null): Promise<{ applications: any[], pagination: any }> => {
+    let url = `/applications?page=${page}&limit=${limit}&search=${search}`;
+    if (studentId) url += `&studentId=${studentId}`;
+    if (status) url += `&status=${status}`;
+    return api.get(url);
 };
 
 export const createApplication = async (data: any): Promise<any> => {
@@ -55,10 +58,9 @@ export const deleteApplicationsBulk = async (ids: string[]): Promise<void> => {
 };
 
 // Visa Applications
-export const getVisaApplications = async (studentId?: string, page = 1, limit = 10): Promise<{ visaApplications: any[], pagination: any }> => {
-    const url = studentId
-        ? `/visa-applications?studentId=${studentId}&page=${page}&limit=${limit}`
-        : `/visa-applications?page=${page}&limit=${limit}`;
+export const getVisaApplications = async (studentId?: string, page = 1, limit = 10, search = "", status = ""): Promise<{ visaApplications: any[], pagination: any }> => {
+    let url = `/visa-applications?page=${page}&limit=${limit}&search=${search}&status=${status}`;
+    if (studentId) url += `&studentId=${studentId}`;
     return api.get(url);
 };
 

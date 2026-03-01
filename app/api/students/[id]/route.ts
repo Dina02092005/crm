@@ -48,6 +48,21 @@ export async function GET(
                         workExperience: true,
                     },
                 },
+                applications: {
+                    include: {
+                        country: { select: { id: true, name: true } },
+                        university: { select: { id: true, name: true } },
+                        course: { select: { id: true, name: true } },
+                    },
+                    orderBy: { createdAt: 'desc' }
+                },
+                visaApplications: {
+                    include: {
+                        country: { select: { id: true, name: true } },
+                        university: { select: { id: true, name: true } },
+                    },
+                    orderBy: { createdAt: 'desc' }
+                }
             },
         });
 

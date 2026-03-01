@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useRolePath } from "@/hooks/use-role-path";
 import axios from "axios";
@@ -48,6 +48,7 @@ import {
 import StudentDocumentsSection from "@/components/student/StudentDocumentsSection";
 import VisaApplicationsSection from "@/components/student/VisaApplicationsSection";
 import { AddVisaApplicationModal } from "@/components/student/AddVisaApplicationModal";
+import { UniversityApplicationsSection } from "@/components/student/UniversityApplicationsSection";
 import { CallHistoryList } from "@/components/calls/CallHistoryList";
 
 function InfoField({ label, value }: { label: string; value?: string | null }) {
@@ -65,6 +66,8 @@ export default function StudentDetailPage() {
     const router = useRouter();
     const { data: session } = useSession() as any;
     const { prefixPath } = useRolePath();
+    const searchParams = useSearchParams();
+    const defaultTab = searchParams.get("tab") || "overview";
     const [student, setStudent] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [addVisaModalOpen, setAddVisaModalOpen] = useState(false);
@@ -195,6 +198,14 @@ export default function StudentDetailPage() {
 
     const lead = student.lead;
 
+    const tabs = [
+        { id: "overview", label: "Personal Details", icon: <User className="h-3.5 w-3.5" /> },
+        { id: "documents", label: "Documents", icon: <FolderOpen className="h-3.5 w-3.5" /> },
+        { id: "applications", label: "University Application", icon: <Briefcase className="h-3.5 w-3.5" /> },
+        { id: "visa", label: "Visa Application", icon: <Globe className="h-3.5 w-3.5" /> },
+        { id: "activity", label: "Activity", icon: <History className="h-3.5 w-3.5" /> },
+    ];
+
     return (
         <div className="flex flex-col gap-5 p-4 sm:p-6 max-w-7xl mx-auto w-full">
             {/* Header */}
@@ -208,41 +219,23 @@ export default function StudentDetailPage() {
                     <ArrowLeft className="h-4 w-4 text-muted-foreground" />
                 </Button>
                 <div>
-                    <h1 className="text-xl font-bold text-foreground">Student Details</h1>
-                    <p className="text-xs text-muted-foreground">Complete profile of the student</p>
+                    <h1 className="text-xl font-bold text-foreground">Visa Application Details</h1>
+                    <p className="text-xs text-muted-foreground">Complete profile of the student and their applications</p>
                 </div>
             </div>
 
-            <Tabs defaultValue="overview" className="w-full">
-                <TabsList className="w-full bg-muted/60 border border-border/50 rounded-xl h-10 p-1">
-                    <TabsTrigger
-                        value="overview"
-                        className="flex-1 text-xs font-semibold rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
-                    >
-                        <User className="h-3.5 w-3.5 mr-1.5" />
-                        Overview
-                    </TabsTrigger>
-                    <TabsTrigger
-                        value="documents"
-                        className="flex-1 text-xs font-semibold rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
-                    >
-                        <FolderOpen className="h-3.5 w-3.5 mr-1.5" />
-                        Documents
-                    </TabsTrigger>
-                    <TabsTrigger
-                        value="visa"
-                        className="flex-1 text-xs font-semibold rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
-                    >
-                        <Globe className="h-3.5 w-3.5 mr-1.5" />
-                        Visa
-                    </TabsTrigger>
-                    <TabsTrigger
-                        value="activity"
-                        className="flex-1 text-xs font-semibold rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
-                    >
-                        <History className="h-3.5 w-3.5 mr-1.5" />
-                        Activity
-                    </TabsTrigger>
+            <Tabs defaultValue={defaultTab} className="w-full">
+                <TabsList className="w-full bg-slate-100 border border-border/50 rounded-xl h-11 p-1 overflow-x-auto overflow-y-hidden no-scrollbar">
+                    {tabs.map((tab) => (
+                        <TabsTrigger
+                            key={tab.id}
+                            value={tab.id}
+                            className="flex-1 text-[11px] font-bold rounded-lg data-[state=active]:bg-[#3e3a8e] data-[state=active]:text-white data-[state=active]:shadow-sm transition-all whitespace-nowrap min-w-[80px]"
+                        >
+                            {tab.icon}
+                            <span className="ml-1.5 hidden sm:inline">{tab.label}</span>
+                        </TabsTrigger>
+                    ))}
                     <TabsTrigger
                         value="calls"
                         className="flex-1 text-xs font-semibold rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
@@ -487,7 +480,6 @@ export default function StudentDetailPage() {
                     </div>
                 </TabsContent>
 
-
                 {/* === DOCUMENTS TAB === */}
                 <TabsContent value="documents" className="mt-5">
                     <Card className="border border-border rounded-2xl bg-card shadow-none overflow-hidden">
@@ -500,6 +492,14 @@ export default function StudentDetailPage() {
                     </Card>
                 </TabsContent>
 
+                {/* === UNIVERSITY APPLICATIONS TAB === */}
+                <TabsContent value="applications" className="mt-5">
+                    <UniversityApplicationsSection
+                        studentId={student.id}
+                        studentName={student.name}
+                    />
+                </TabsContent>
+
                 {/* === VISA TAB === */}
                 <TabsContent value="visa" className="mt-5">
                     <VisaApplicationsSection
@@ -508,16 +508,17 @@ export default function StudentDetailPage() {
                     />
                 </TabsContent>
 
+
                 {/* === ACTIVITY TAB === */}
                 <TabsContent value="activity" className="mt-5">
                     <Card className="border border-border rounded-2xl bg-card shadow-none overflow-hidden">
-                        <CardHeader className="pb-2 border-b border-border/50">
+                        <CardHeader className="pb-2 border-b border-border/50 bg-white">
                             <CardTitle className="text-sm font-bold flex items-center gap-2">
                                 <History className="h-4 w-4 text-primary" />
                                 Activity History
                             </CardTitle>
                         </CardHeader>
-                        <CardContent className="p-0">
+                        <CardContent className="p-0 bg-white">
                             {isActivitiesLoading ? (
                                 <div className="flex items-center justify-center py-16">
                                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -565,7 +566,7 @@ export default function StudentDetailPage() {
                                         }}
                                     >
                                         <SelectTrigger className="h-8 w-[60px] text-xs bg-background border-border/50">
-                                            <SelectValue placeholder={activityPagination.limit} />
+                                            <SelectValue placeholder={activityPagination.limit.toString()} />
                                         </SelectTrigger>
                                         <SelectContent side="top">
                                             {[5, 10, 20, 50].map((pageSize) => (
@@ -590,7 +591,7 @@ export default function StudentDetailPage() {
                                             onClick={() => fetchActivities(activityPagination.page - 1)}
                                             disabled={activityPagination.page <= 1 || isActivitiesLoading}
                                         >
-                                            &lt;
+                                            {"<"}
                                         </Button>
                                         <Button
                                             variant="outline"
@@ -599,7 +600,7 @@ export default function StudentDetailPage() {
                                             onClick={() => fetchActivities(activityPagination.page + 1)}
                                             disabled={activityPagination.page >= activityPagination.totalPages || isActivitiesLoading}
                                         >
-                                            &gt;
+                                            {">"}
                                         </Button>
                                     </div>
                                 </div>
@@ -615,8 +616,6 @@ export default function StudentDetailPage() {
 
             </Tabs>
 
-
-
             <ConfirmDialog
                 isOpen={confirmConfig.isOpen}
                 onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
@@ -628,8 +627,6 @@ export default function StudentDetailPage() {
                 isLoading={confirmConfig.isLoading}
             />
 
-            {/* Modal removed as we now use separate page */}
-
             <AddVisaApplicationModal
                 isOpen={addVisaModalOpen}
                 onClose={() => {
@@ -640,8 +637,6 @@ export default function StudentDetailPage() {
                 studentName={student.name}
                 initialApplicationId={prefilledVisaData?.id}
                 onSuccess={() => {
-                    // Refetching visa applications is handled inside VisaApplicationsSection 
-                    // but we can also trigger a global refetch if needed.
                     toast.success("Visa application initiated");
                 }}
             />
