@@ -28,7 +28,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { LeadForm } from "./LeadForm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useUpdateLead, useDeleteLead } from "@/hooks/use-leads";
-import { Lead as PrismaLead } from "@prisma/client";
+import type { Lead as PrismaLead } from '@/lib/prisma';
 
 // Extended Lead type to include assignments (if not in PrismaLead)
 // PrismaLead usually has basic fields. We need to match what useLeads returns.

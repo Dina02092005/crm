@@ -722,7 +722,7 @@ const config = {
       "value": "prisma-client-js"
     },
     "output": {
-      "value": "D:\\pr1\\example\\prisma\\generated\\client",
+      "value": "D:\\Freelance\\naveen\\crm\\prisma\\generated\\client",
       "fromEnvVar": null
     },
     "config": {
@@ -740,7 +740,7 @@ const config = {
       }
     ],
     "previewFeatures": [],
-    "sourceFilePath": "D:\\pr1\\example\\prisma\\schema.prisma",
+    "sourceFilePath": "D:\\Freelance\\naveen\\crm\\prisma\\schema.prisma",
     "isCustomOutput": true
   },
   "relativeEnvPaths": {

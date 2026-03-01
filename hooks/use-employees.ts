@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { User } from "@prisma/client"; // Assuming Employee uses User model? Or Employee? Checking.
+import { User } from '@/lib/prisma'; // Assuming Employee uses User model? Or Employee? Checking.
 
 // Based on previous files, it seems Employees might be Users with specific roles.
 // Let's assume 'User' or 'Employee' model. Providing 'any' for now or checking schema is better.

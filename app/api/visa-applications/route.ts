@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { VisaStatus, VisaType } from '@prisma/client';
+import { VisaStatus, VisaType } from '@/lib/prisma';
 import { AuditLogService } from '@/lib/auditLog';
 import { notifyVisaStarted } from '@/lib/lifecycle-notifications';
 

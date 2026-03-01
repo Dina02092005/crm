@@ -1,4 +1,4 @@
-import { PrismaClient, LeadActivityType, LeadStatus, LeadTemperature } from '@prisma/client';
+import { PrismaClient, LeadActivityType, LeadStatus, LeadTemperature } from '@/lib/prisma';
 
 const prisma = new PrismaClient();
 

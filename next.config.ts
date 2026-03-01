@@ -17,7 +17,6 @@ const SHORTHAND_PATHS = [
 ];
 
 const nextConfig: NextConfig = {
-  output: "standalone",
   typescript: {
     ignoreBuildErrors: true,
   },

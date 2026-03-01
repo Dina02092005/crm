@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { AuditLogService } from "@/lib/auditLog";
 import { withPermission } from "@/lib/permissions";
 import { notifyApplicationCreated } from "@/lib/lifecycle-notifications";
-import { ApplicationStatus, VisaStatus } from "@prisma/client";
+import { ApplicationStatus, VisaStatus } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 

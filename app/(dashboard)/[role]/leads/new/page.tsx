@@ -44,7 +44,19 @@ import {
 } from "@/components/ui/select";
 import { PhoneInput } from "@/components/ui/phone-input";
 import { DatePicker } from "@/components/ui/date-picker";
-import { LeadStatus } from "@prisma/client";
+enum LeadStatus {
+    NEW = "NEW",
+    UNDER_REVIEW = "UNDER_REVIEW",
+    CONTACTED = "CONTACTED",
+    COUNSELLING_SCHEDULED = "COUNSELLING_SCHEDULED",
+    COUNSELLING_COMPLETED = "COUNSELLING_COMPLETED",
+    FOLLOWUP_REQUIRED = "FOLLOWUP_REQUIRED",
+    INTERESTED = "INTERESTED",
+    NOT_INTERESTED = "NOT_INTERESTED",
+    ON_HOLD = "ON_HOLD",
+    CLOSED = "CLOSED",
+    CONVERTED = "CONVERTED"
+}
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 

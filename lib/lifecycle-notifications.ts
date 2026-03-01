@@ -19,7 +19,7 @@ import { prisma } from "@/lib/prisma";
 import { sendEmail } from "@/lib/email";
 import { buildLifecycleEmail } from "@/lib/email";
 import { AuditLogService } from "@/lib/auditLog";
-import type { NotificationType } from "@prisma/client";
+import type { NotificationType } from '@/lib/prisma';
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 

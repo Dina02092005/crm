@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { VisaType, VisaStatus } from "@prisma/client";
+import { VisaType, VisaStatus } from "@/lib/enums";
 
+export const dynamic = "force-dynamic";
 export async function POST(
     req: NextRequest,
     context: { params: Promise<{ id: string }> | { id: string } }

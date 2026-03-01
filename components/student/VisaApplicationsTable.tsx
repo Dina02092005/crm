@@ -16,7 +16,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Eye, Trash2, Calendar, Globe, School, User, CheckCircle2, Clock, XCircle, AlertCircle, Plus, History, Undo2, CheckSquare, ArrowRightLeft } from "lucide-react";
-import { VisaStatus, VisaType } from "@prisma/client";
+import { VisaStatus, VisaType } from "@/lib/enums";
 import { useUpdateVisaApplication } from "@/hooks/useApi";
 import { useRouter } from "next/navigation";
 import { useRolePath } from "@/hooks/use-role-path";

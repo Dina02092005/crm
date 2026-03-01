@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-// import { Customer } from "@prisma/client"; // Verify Customer model existence
+// import { Customer } from '@/lib/prisma'; // Verify Customer model existence
 
 // Assuming Student model exists or using any for now
 interface Student {

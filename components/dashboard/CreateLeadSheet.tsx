@@ -31,7 +31,7 @@ import { PhoneInput } from "@/components/ui/phone-input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { ImageUpload } from "@/components/ui/image-upload";
 import { useCreateLead } from "@/hooks/use-leads";
-import { LeadStatus } from "@prisma/client";
+import { LeadStatus } from "@/lib/enums";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const formSchema = z.object({

@@ -43,7 +43,7 @@ import { useRolePath } from "@/hooks/use-role-path";
 import axios from "axios";
 import { toast } from "sonner";
 import { Application } from "@/types/api";
-import { ApplicationStatus } from "@prisma/client";
+import { ApplicationStatus } from "@/lib/enums";
 import { useUpdateApplication } from "@/hooks/useApi";
 import { Checkbox } from "@/components/ui/checkbox";
 import { format } from "date-fns";

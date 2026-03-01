@@ -7,7 +7,7 @@ import {
     flexRender,
 } from "@tanstack/react-table";
 import { Badge } from "@/components/ui/badge";
-import { Lead } from "@prisma/client";
+import type { Lead } from '@/lib/prisma';
 import { formatDistanceToNow } from "date-fns";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

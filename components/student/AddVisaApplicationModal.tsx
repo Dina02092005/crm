@@ -23,7 +23,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2, Calendar, Globe, GraduationCap, School, User, Info } from "lucide-react";
-import { VisaType, VisaStatus } from "@prisma/client";
+import { VisaType, VisaStatus } from "@/lib/enums";
 import { useCreateVisaApplication } from "@/hooks/useApi";
 
 interface AddVisaApplicationModalProps {

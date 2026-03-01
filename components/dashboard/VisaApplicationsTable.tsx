@@ -42,7 +42,7 @@ import {
     Mail,
     Undo2
 } from "lucide-react";
-import { VisaStatus } from "@prisma/client";
+import { VisaStatus } from "@/lib/enums";
 import { useUpdateVisaApplication } from "@/hooks/useApi";
 import { useRouter } from "next/navigation";
 import { useRolePath } from "@/hooks/use-role-path";

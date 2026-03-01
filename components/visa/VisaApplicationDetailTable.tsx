@@ -27,7 +27,7 @@ import {
     SelectTrigger,
     SelectValue
 } from "@/components/ui/select";
-import { VisaStatus } from "@prisma/client";
+import { VisaStatus } from "@/lib/enums";
 import { useUpdateVisaApplication } from "@/hooks/useApi";
 import { ArrowRightLeft, CheckSquare } from "lucide-react";
 

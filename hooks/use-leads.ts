@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { Lead } from "@prisma/client";
+import { Lead } from '@/lib/prisma';
 
 interface LeadsResponse {
     leads: Lead[];
