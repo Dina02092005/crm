@@ -712,6 +712,7 @@ enum AuditModule {
   COURSES
   VISA
   MASTERS
+  DASHBOARD
 }
 
 model UserRole {

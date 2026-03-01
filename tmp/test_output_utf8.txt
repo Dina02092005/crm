@@ -1,0 +1,36 @@
+﻿Testing groupBy with relation filter...
+node.exe : FAILED as expected 
+or not: 
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~
+    + CategoryInfo          :  
+   NotSpecified: (FAILED as e  
+  xpected or not: :String) [   
+ ], RemoteException
+    + FullyQualifiedErrorId :  
+   NativeCommandError
+ 
+Invalid 
+`prisma.lead.groupBy()` 
+invocation in
+D:\pr1\example\tmp\test_prisma.
+ts:12:43
+
+   9 
+  10 console.log("Testing 
+groupBy with relation 
+filter...");
+  11 try {
+ΓåÆ 12     const results = 
+await prisma.lead.groupBy(
+Too many database connections 
+opened: FATAL: remaining 
+connection slots are reserved 
+for roles with the SUPERUSER 
+attribute

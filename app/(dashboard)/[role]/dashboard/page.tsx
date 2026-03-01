@@ -1,5 +1,9 @@
 "use client";
 
+import { useSession } from "next-auth/react";
+import { AdminAnalyticsDashboard } from "@/components/dashboard/AdminAnalyticsDashboard";
+import { AgentDashboard } from "@/components/dashboard/AgentDashboard";
+import { CounselorDashboard } from "@/components/dashboard/CounselorDashboard";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { RecentLeadsTable } from "@/components/dashboard/RecentLeadsTable";
 import { MapPin, Users, TrendingUp, Briefcase, UserCheck } from "lucide-react";
@@ -12,6 +16,10 @@ import { LeadStudentRatio } from "@/components/dashboard/LeadStudentRatio";
 import { UpcomingTasks } from "@/components/dashboard/UpcomingTasks";
 import { LeadStatusDistribution } from "@/components/dashboard/LeadStatusDistribution";
 import { useRolePath } from "@/hooks/use-role-path";
+import { useRouter } from "next/navigation";
+import { useProfile } from "@/hooks/use-profile";
+import { Loader2 } from "lucide-react";
+import { useEffect } from "react";
 
 interface DashboardData {
     stats: {
@@ -31,7 +39,7 @@ interface DashboardData {
     analytics: any[];
 }
 
-export default function DashboardPage() {
+function StandardDashboard() {
     const { prefixPath } = useRolePath();
     const { data, isLoading } = useQuery<DashboardData>({
         queryKey: ["dashboard-stats"],
@@ -157,3 +165,53 @@ export default function DashboardPage() {
         </div>
     );
 }
+
+export default function DashboardPage() {
+    const { data: session } = useSession() as any;
+    const role = session?.user?.role;
+    const { prefixPath } = useRolePath();
+    const router = useRouter();
+    const { data: profile } = useProfile();
+
+    useEffect(() => {
+        if (role === "STUDENT" && profile?.studentProfile?.id) {
+            router.replace(prefixPath(`/students/${profile.studentProfile.id}`));
+        }
+    }, [role, profile, prefixPath, router]);
+
+    if (role === "ADMIN") {
+        return (
+            <div className="px-2 py-1">
+                <AdminAnalyticsDashboard />
+            </div>
+        );
+    }
+
+    if (role === "AGENT") {
+        return (
+            <div className="px-2 py-1">
+                <AgentDashboard />
+            </div>
+        );
+    }
+
+    if (role === "COUNSELOR") {
+        return (
+            <div className="px-2 py-1">
+                <CounselorDashboard />
+            </div>
+        );
+    }
+
+    if (role === "STUDENT") {
+        return (
+            <div className="p-8 flex flex-col items-center justify-center min-h-[400px] space-y-4">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <p className="text-muted-foreground font-medium">Redirecting to your profile...</p>
+            </div>
+        );
+    }
+
+    return <StandardDashboard />;
+}
+

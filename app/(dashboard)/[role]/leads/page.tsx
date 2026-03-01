@@ -12,12 +12,16 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRolePath } from "@/hooks/use-role-path";
+import { useSession } from "next-auth/react";
+import { BulkUploadLeadsButton } from "@/components/dashboard/BulkUploadLeadsButton";
 
 export default function LeadsPage() {
     const [search, setSearch] = useState("");
     const [status, setStatus] = useState("ALL");
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
+    const { data: session } = useSession() as any;
+    const role = session?.user?.role;
     const { prefixPath } = useRolePath();
 
     const debouncedSearch = useDebounce(search, 500);
@@ -53,7 +57,7 @@ export default function LeadsPage() {
             <Card className="border-0 rounded-3xl overflow-hidden bg-card">
                 <CardContent className="p-4">
                     {/* Integrated Search and Action Row */}
-                    <div className="flex flex-row items-center justify-between gap-4">
+                    <div className="flex flex-row items-center justify-between gap-2">
                         <div className="relative max-w-sm w-full">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
                             <Input
@@ -63,11 +67,14 @@ export default function LeadsPage() {
                                 className="pl-9 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-9 text-[13px] placeholder:text-muted-foreground/40 font-sans w-full"
                             />
                         </div>
-                        <Link href={prefixPath("/leads/new")}>
-                            <Button className="bg-[#10B981] hover:bg-[#059669] text-white rounded-xl h-9 px-4 text-[13px] font-bold shadow-sm flex items-center gap-2">
-                                <Plus className="h-4 w-4" /> Add Lead
-                            </Button>
-                        </Link>
+                        <div className="flex items-center gap-2">
+                            {role === "ADMIN" && <BulkUploadLeadsButton onSuccess={refetch} />}
+                            <Link href={prefixPath("/leads/new")}>
+                                <Button className="bg-[#10B981] hover:bg-[#059669] text-white rounded-xl h-9 px-4 text-[13px] font-bold shadow-sm flex items-center gap-2">
+                                    <Plus className="h-4 w-4" /> Add Lead
+                                </Button>
+                            </Link>
+                        </div>
                     </div>
 
                     {/* Filter Pills - Integrated below search */}
