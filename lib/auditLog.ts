@@ -12,7 +12,7 @@ export const AuditLogService = {
         metadata
     }: {
         userId: string;
-        action: "CREATED" | "UPDATED" | "DELETED";
+        action: "CREATED" | "UPDATED" | "DELETED" | "VIEW";
         module: string;
         entity: string;
         entityId: string;
@@ -25,7 +25,7 @@ export const AuditLogService = {
                 data: {
                     userId,
                     action,
-                    module,
+                    module: module as any,
                     entity,
                     entityId,
                     previousValues: previousValues ? JSON.parse(JSON.stringify(previousValues)) : null,

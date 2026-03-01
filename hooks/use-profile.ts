@@ -11,6 +11,9 @@ interface UserProfile extends User {
         department: string;
         // add other fields if needed
     } | null;
+    studentProfile?: {
+        id: string;
+    } | null;
 }
 
 export function useProfile() {

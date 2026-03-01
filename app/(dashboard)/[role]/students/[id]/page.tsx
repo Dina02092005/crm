@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useRolePath } from "@/hooks/use-role-path";
+import { useProfile } from "@/hooks/use-profile";
 import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,7 +23,6 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 import {
     ArrowLeft,
-    History,
     Pencil,
     Trash2,
     User,
@@ -38,18 +38,8 @@ import {
     Database,
 } from "lucide-react";
 import { toast } from "sonner";
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select";
 import StudentDocumentsSection from "@/components/student/StudentDocumentsSection";
-import VisaApplicationsSection from "@/components/student/VisaApplicationsSection";
 import { AddVisaApplicationModal } from "@/components/student/AddVisaApplicationModal";
-import { UniversityApplicationsSection } from "@/components/student/UniversityApplicationsSection";
-import { CallHistoryList } from "@/components/calls/CallHistoryList";
 
 function InfoField({ label, value }: { label: string; value?: string | null }) {
     if (!value) return null;
@@ -67,6 +57,7 @@ export default function StudentDetailPage() {
     const { data: session } = useSession() as any;
     const { prefixPath } = useRolePath();
     const searchParams = useSearchParams();
+    const { data: profile } = useProfile();
     const defaultTab = searchParams.get("tab") || "overview";
     const [student, setStudent] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
@@ -74,15 +65,6 @@ export default function StudentDetailPage() {
     const [prefilledVisaData, setPrefilledVisaData] = useState<any>(null);
     const [isCalling, setIsCalling] = useState(false);
 
-    // Activity Pagination State
-    const [activities, setActivities] = useState<any[]>([]);
-    const [activityPagination, setActivityPagination] = useState({
-        page: 1,
-        totalPages: 1,
-        total: 0,
-        limit: 10
-    });
-    const [isActivitiesLoading, setIsActivitiesLoading] = useState(false);
 
     // Confirm Dialog State
     const [confirmConfig, setConfirmConfig] = useState({
@@ -129,9 +111,6 @@ export default function StudentDetailPage() {
         try {
             const response = await axios.get(`/api/students/${params.id}`);
             setStudent(response.data);
-            if (response.data.lead?.id) {
-                fetchActivities(1, response.data.lead.id);
-            }
         } catch (error) {
             toast.error("Failed to fetch student details");
             router.push(prefixPath("/students"));
@@ -140,28 +119,6 @@ export default function StudentDetailPage() {
         }
     };
 
-    const fetchActivities = async (page: number, leadId?: string, limitOverride?: number) => {
-        const targetLeadId = leadId || student?.lead?.id;
-        const currentLimit = limitOverride || activityPagination.limit;
-        if (!targetLeadId) return;
-
-        setIsActivitiesLoading(true);
-        try {
-            const response = await axios.get(`/api/leads/${targetLeadId}/activities?page=${page}&limit=${currentLimit}`);
-            setActivities(response.data.activities);
-            setActivityPagination({
-                ...activityPagination,
-                page: response.data.pagination.page,
-                totalPages: response.data.pagination.totalPages,
-                total: response.data.pagination.total,
-                limit: currentLimit
-            });
-        } catch (error) {
-            console.error("Failed to fetch activities:", error);
-        } finally {
-            setIsActivitiesLoading(false);
-        }
-    };
 
     const handleDeleteStudent = () => {
         openConfirm(
@@ -198,13 +155,32 @@ export default function StudentDetailPage() {
 
     const lead = student.lead;
 
+    const isStudent = session?.user?.role === "STUDENT";
+
     const tabs = [
         { id: "overview", label: "Personal Details", icon: <User className="h-3.5 w-3.5" /> },
         { id: "documents", label: "Documents", icon: <FolderOpen className="h-3.5 w-3.5" /> },
-        { id: "applications", label: "University Application", icon: <Briefcase className="h-3.5 w-3.5" /> },
-        { id: "visa", label: "Visa Application", icon: <Globe className="h-3.5 w-3.5" /> },
-        { id: "activity", label: "Activity", icon: <History className="h-3.5 w-3.5" /> },
     ];
+
+    if (isStudent) {
+        // Security check: If student, they can only view their own ID
+        if (profile?.studentProfile && params.id !== profile.studentProfile.id) {
+            return (
+                <div className="p-8 flex flex-col items-center justify-center min-h-[400px] text-center">
+                    <Database className="h-12 w-12 text-destructive mb-4 opacity-20" />
+                    <h2 className="text-xl font-bold text-foreground">Access Denied</h2>
+                    <p className="text-muted-foreground mt-2">You are not authorized to view this profile.</p>
+                    <Button
+                        variant="link"
+                        onClick={() => router.push(prefixPath("/dashboard"))}
+                        className="mt-4"
+                    >
+                        Return to Dashboard
+                    </Button>
+                </div>
+            );
+        }
+    }
 
     return (
         <div className="flex flex-col gap-5 p-4 sm:p-6 max-w-7xl mx-auto w-full">
@@ -219,8 +195,8 @@ export default function StudentDetailPage() {
                     <ArrowLeft className="h-4 w-4 text-muted-foreground" />
                 </Button>
                 <div>
-                    <h1 className="text-xl font-bold text-foreground">Visa Application Details</h1>
-                    <p className="text-xs text-muted-foreground">Complete profile of the student and their applications</p>
+                    <h1 className="text-xl font-bold text-foreground">{isStudent ? "My Profile" : "Student Details"}</h1>
+                    <p className="text-xs text-muted-foreground">{isStudent ? "View and manage your personal documents and details" : "Complete profile of the student and their applications"}</p>
                 </div>
             </div>
 
@@ -236,13 +212,6 @@ export default function StudentDetailPage() {
                             <span className="ml-1.5 hidden sm:inline">{tab.label}</span>
                         </TabsTrigger>
                     ))}
-                    <TabsTrigger
-                        value="calls"
-                        className="flex-1 text-xs font-semibold rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm"
-                    >
-                        <Phone className="h-3.5 w-3.5 mr-1.5" />
-                        Calls
-                    </TabsTrigger>
                 </TabsList>
 
                 {/* === OVERVIEW TAB === */}
@@ -313,55 +282,57 @@ export default function StudentDetailPage() {
                                         </div>
                                     </div>
 
-                                    <div className="pt-3 border-t border-border/50 flex flex-col gap-2">
-                                        <Button
-                                            className="w-full bg-primary hover:bg-primary/90 rounded-xl h-9 text-sm font-bold shadow-sm"
-                                            disabled={isCalling}
-                                            onClick={async () => {
-                                                setIsCalling(true);
-                                                try {
-                                                    const res = await axios.post('/api/exotel/call', {
-                                                        employeeId: session?.user?.id,
-                                                        targetType: 'student',
-                                                        targetId: student.id,
-                                                    });
-                                                    toast.success(`Call initiated! SID: ${res.data.callSid}`);
-                                                } catch (err: any) {
-                                                    toast.error(err.response?.data?.error || 'Failed to initiate call');
-                                                } finally {
-                                                    setIsCalling(false);
-                                                }
-                                            }}
-                                        >
-                                            <Phone className="h-3.5 w-3.5 mr-2" />
-                                            {isCalling ? 'Calling...' : 'Call Student'}
-                                        </Button>
-                                        <Button
-                                            className="w-full bg-primary hover:bg-primary/90 rounded-xl h-9 text-sm font-bold shadow-sm"
-                                            onClick={() => router.push(prefixPath(`/students/${params.id}/applications/add`))}
-                                        >
-                                            <Briefcase className="h-3.5 w-3.5 mr-2" />
-                                            Move to Application
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            className="w-full border-primary/20 hover:bg-primary/5 rounded-xl h-9 text-sm font-semibold"
-                                            onClick={() => router.push(prefixPath(`/students/${params.id}/edit`))}
-                                        >
-                                            <Pencil className="h-3.5 w-3.5 mr-2" />
-                                            Edit Student
-                                        </Button>
-                                        {session?.user?.role === "ADMIN" && (
+                                    {!isStudent && (
+                                        <div className="pt-3 border-t border-border/50 flex flex-col gap-2">
                                             <Button
-                                                variant="ghost"
-                                                className="w-full text-destructive hover:text-destructive hover:bg-destructive/5 rounded-xl h-9 text-sm"
-                                                onClick={handleDeleteStudent}
+                                                className="w-full bg-primary hover:bg-primary/90 rounded-xl h-9 text-sm font-bold shadow-sm"
+                                                disabled={isCalling}
+                                                onClick={async () => {
+                                                    setIsCalling(true);
+                                                    try {
+                                                        const res = await axios.post('/api/exotel/call', {
+                                                            employeeId: session?.user?.id,
+                                                            targetType: 'student',
+                                                            targetId: student.id,
+                                                        });
+                                                        toast.success(`Call initiated! SID: ${res.data.callSid}`);
+                                                    } catch (err: any) {
+                                                        toast.error(err.response?.data?.error || 'Failed to initiate call');
+                                                    } finally {
+                                                        setIsCalling(false);
+                                                    }
+                                                }}
                                             >
-                                                <Trash2 className="h-3.5 w-3.5 mr-2" />
-                                                Delete Student
+                                                <Phone className="h-3.5 w-3.5 mr-2" />
+                                                {isCalling ? 'Calling...' : 'Call Student'}
                                             </Button>
-                                        )}
-                                    </div>
+                                            <Button
+                                                className="w-full bg-primary hover:bg-primary/90 rounded-xl h-9 text-sm font-bold shadow-sm"
+                                                onClick={() => router.push(prefixPath(`/students/${params.id}/applications/add`))}
+                                            >
+                                                <Briefcase className="h-3.5 w-3.5 mr-2" />
+                                                Move to Application
+                                            </Button>
+                                            <Button
+                                                variant="outline"
+                                                className="w-full border-primary/20 hover:bg-primary/5 rounded-xl h-9 text-sm font-semibold"
+                                                onClick={() => router.push(prefixPath(`/students/${params.id}/edit`))}
+                                            >
+                                                <Pencil className="h-3.5 w-3.5 mr-2" />
+                                                Edit Student
+                                            </Button>
+                                            {session?.user?.role === "ADMIN" && (
+                                                <Button
+                                                    variant="ghost"
+                                                    className="w-full text-destructive hover:text-destructive hover:bg-destructive/5 rounded-xl h-9 text-sm"
+                                                    onClick={handleDeleteStudent}
+                                                >
+                                                    <Trash2 className="h-3.5 w-3.5 mr-2" />
+                                                    Delete Student
+                                                </Button>
+                                            )}
+                                        </div>
+                                    )}
                                 </CardContent>
                             </Card>
                         </div>
@@ -492,127 +463,6 @@ export default function StudentDetailPage() {
                     </Card>
                 </TabsContent>
 
-                {/* === UNIVERSITY APPLICATIONS TAB === */}
-                <TabsContent value="applications" className="mt-5">
-                    <UniversityApplicationsSection
-                        studentId={student.id}
-                        studentName={student.name}
-                    />
-                </TabsContent>
-
-                {/* === VISA TAB === */}
-                <TabsContent value="visa" className="mt-5">
-                    <VisaApplicationsSection
-                        studentId={student.id}
-                        studentName={student.name}
-                    />
-                </TabsContent>
-
-
-                {/* === ACTIVITY TAB === */}
-                <TabsContent value="activity" className="mt-5">
-                    <Card className="border border-border rounded-2xl bg-card shadow-none overflow-hidden">
-                        <CardHeader className="pb-2 border-b border-border/50 bg-white">
-                            <CardTitle className="text-sm font-bold flex items-center gap-2">
-                                <History className="h-4 w-4 text-primary" />
-                                Activity History
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-0 bg-white">
-                            {isActivitiesLoading ? (
-                                <div className="flex items-center justify-center py-16">
-                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                                </div>
-                            ) : activities && activities.length > 0 ? (
-                                <div className="divide-y divide-border/50">
-                                    {activities.map((activity: any) => (
-                                        <div
-                                            key={activity.id}
-                                            className="p-4 hover:bg-muted/30 transition-colors"
-                                        >
-                                            <div className="flex items-center justify-between mb-1">
-                                                <div className="flex items-center gap-2">
-                                                    <Badge variant="secondary" className="text-[9px] font-bold uppercase py-0 px-2 rounded-md bg-primary/10 text-primary border-0">
-                                                        {activity.type.replace("_", " ")}
-                                                    </Badge>
-                                                    <span className="text-[10px] text-muted-foreground font-medium">
-                                                        {new Date(activity.createdAt).toLocaleString()}
-                                                    </span>
-                                                </div>
-                                                <p className="text-[10px] text-muted-foreground font-medium italic">
-                                                    {activity.user?.name || "System"}
-                                                </p>
-                                            </div>
-                                            <p className="text-sm text-foreground/90 leading-relaxed">{activity.content}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                <div className="flex flex-col items-center justify-center py-14 text-muted-foreground/50">
-                                    <History className="h-10 w-10 mb-3 opacity-10" />
-                                    <p className="text-xs font-medium italic tracking-tight">No activity recorded yet</p>
-                                </div>
-                            )}
-
-                            {/* Pagination */}
-                            <div className="p-4 border-t border-border/50 bg-muted/20 flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <p className="text-xs text-muted-foreground font-medium">Rows per page</p>
-                                    <Select
-                                        value={activityPagination.limit.toString()}
-                                        onValueChange={(value) => {
-                                            setActivityPagination(prev => ({ ...prev, limit: Number(value), page: 1 }));
-                                            setTimeout(() => fetchActivities(1, undefined, Number(value)), 0);
-                                        }}
-                                    >
-                                        <SelectTrigger className="h-8 w-[60px] text-xs bg-background border-border/50">
-                                            <SelectValue placeholder={activityPagination.limit.toString()} />
-                                        </SelectTrigger>
-                                        <SelectContent side="top">
-                                            {[5, 10, 20, 50].map((pageSize) => (
-                                                <SelectItem key={pageSize} value={pageSize.toString()} className="text-xs">
-                                                    {pageSize}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <p className="text-xs text-muted-foreground font-medium">
-                                        {activityPagination.total > 0
-                                            ? `${(activityPagination.page - 1) * activityPagination.limit + 1}-${Math.min(activityPagination.page * activityPagination.limit, activityPagination.total)} of ${activityPagination.total}`
-                                            : "No activities"}
-                                    </p>
-                                    <div className="flex items-center gap-2">
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="h-8 w-8 p-0 rounded-lg text-xs border-primary/20 text-primary hover:bg-primary/5"
-                                            onClick={() => fetchActivities(activityPagination.page - 1)}
-                                            disabled={activityPagination.page <= 1 || isActivitiesLoading}
-                                        >
-                                            {"<"}
-                                        </Button>
-                                        <Button
-                                            variant="outline"
-                                            size="sm"
-                                            className="h-8 w-8 p-0 rounded-lg text-xs border-primary/20 text-primary hover:bg-primary/5"
-                                            onClick={() => fetchActivities(activityPagination.page + 1)}
-                                            disabled={activityPagination.page >= activityPagination.totalPages || isActivitiesLoading}
-                                        >
-                                            {">"}
-                                        </Button>
-                                    </div>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </TabsContent>
-
-                {/* === CALLS TAB === */}
-                <TabsContent value="calls" className="mt-5">
-                    <CallHistoryList studentId={params.id as string} />
-                </TabsContent>
 
             </Tabs>
 

@@ -290,7 +290,8 @@ export const AuditModule: {
   UNIVERSITIES: 'UNIVERSITIES',
   COURSES: 'COURSES',
   VISA: 'VISA',
-  MASTERS: 'MASTERS'
+  MASTERS: 'MASTERS',
+  DASHBOARD: 'DASHBOARD'
 };
 
 export type AuditModule = (typeof AuditModule)[keyof typeof AuditModule]

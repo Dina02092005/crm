@@ -115,9 +115,6 @@ export function VisaApplicationDetailView({
                     <TabsTrigger value="documents" className="flex-1 min-w-[120px] rounded-xl data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm text-xs font-bold gap-2 transition-all">
                         <FolderOpen className="h-4 w-4" /> Documents
                     </TabsTrigger>
-                    <TabsTrigger value="university" className="flex-1 min-w-[150px] rounded-xl data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm text-xs font-bold gap-2 transition-all">
-                        <Database className="h-4 w-4" /> Univ Application
-                    </TabsTrigger>
                     <TabsTrigger value="visa" className="flex-1 min-w-[150px] rounded-xl data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-sm text-xs font-bold gap-2 transition-all">
                         <Plane className="h-4 w-4" /> Visa Application
                     </TabsTrigger>
@@ -179,12 +176,6 @@ export function VisaApplicationDetailView({
                     </Card>
                 </TabsContent>
 
-                <TabsContent value="university" className="focus-visible:ring-0">
-                    <UniversityApplicationDetailTable
-                        applications={visaApplication.universityApplication ? [visaApplication.universityApplication] : []}
-                        onUpdate={onUpdate}
-                    />
-                </TabsContent>
 
                 <TabsContent value="visa" className="focus-visible:ring-0">
                     <VisaApplicationDetailTable

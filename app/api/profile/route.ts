@@ -15,6 +15,9 @@ export async function GET(req: Request) {
             include: {
                 agentProfile: true,
                 counselorProfile: true,
+                studentProfile: {
+                    select: { id: true }
+                }
             },
         });
 
