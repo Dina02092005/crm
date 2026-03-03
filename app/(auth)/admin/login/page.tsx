@@ -5,7 +5,7 @@ import { LoginForm } from "@/components/auth/LoginForm";
 export default function AdminLoginPage() {
     console.log('Rendering AdminLoginPage');
     return (
-        <AuthLayout>
+        <AuthLayout loginType="admin">
             <LoginForm loginType="admin" />
         </AuthLayout>
     );

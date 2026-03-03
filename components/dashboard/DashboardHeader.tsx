@@ -73,7 +73,7 @@ export function DashboardHeader({ title, description, action }: DashboardHeaderP
     const isSubPage = pathname.split('/').length > 3 && !pathname.endsWith('/dashboard');
 
     return (
-        <header className="flex items-center justify-between px-2 py-4 mb-4 border-b border-border sticky top-0 z-50 bg-background dark:bg-sidebar">
+        <header className="flex items-center justify-between px-8 py-4 border-b border-border sticky top-0 z-50 bg-background dark:bg-sidebar shrink-0">
             {/* Greeting */}
             <div className="flex items-center gap-4 min-w-[180px]">
                 {mounted && isSubPage && (

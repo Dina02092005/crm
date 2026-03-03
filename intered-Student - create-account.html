@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Create Account — InterEd</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Source+Serif+Pro:wght@400;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue:          #1A6ED8;
+      --blue-hover:    #1557B0;
+      --teal:          #1EB3B1;
+      --slate:         #2D3748;
+      --cloud:         #F7FAFC;
+      --mint:          #4FD1C5;
+      --coral:         #FC8181;
+      --neutral-black: #111827;
+      --neutral-dark:  #1F2937;
+      --neutral-med:   #4B5563;
+      --neutral-gray:  #9CA3AF;
+      --neutral-light: #E5E7EB;
+      --neutral-white: #F9FAFB;
+      --ocean-grad:    linear-gradient(135deg, #1A6ED8, #1EB3B1);
+      --sky-grad:      linear-gradient(135deg, #63B3ED, #4FD1C5);
+    }
+
+    body {
+      font-family: 'Inter', system-ui, sans-serif;
+      background: var(--cloud);
+      min-height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ─── LEFT PANEL ─── */
+    .panel-left {
+      width: 52%;
+      background: var(--ocean-grad);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 3rem 3.5rem;
+      overflow: hidden;
+    }
+
+    .panel-left::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 60% at 20% 80%, rgba(30,179,177,0.35) 0%, transparent 60%),
+        radial-gradient(ellipse 60% 80% at 80% 10%, rgba(26,110,216,0.25) 0%, transparent 55%);
+      pointer-events: none;
+    }
+    .grid-lines {
+      position: absolute; inset: 0; pointer-events: none; opacity: 0.08;
+      background-image: linear-gradient(rgba(255,255,255,1) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(255,255,255,1) 1px, transparent 1px);
+      background-size: 48px 48px;
+    }
+    .bridge-arc {
+      position: absolute; bottom: -40px; right: -60px;
+      width: 340px; height: 340px;
+      border: 2px solid rgba(255,255,255,0.15); border-radius: 50%; pointer-events: none;
+    }
+    .bridge-arc::before {
+      content: ''; position: absolute; inset: 40px;
+      border: 2px solid rgba(255,255,255,0.10); border-radius: 50%;
+    }
+    .shape { position: absolute; border-radius: 50%; opacity: 0.08; animation: float 8s ease-in-out infinite; }
+    .shape-1 { width: 260px; height: 260px; background: #fff; top: -80px; right: -80px; }
+    .shape-2 { width: 140px; height: 140px; background: #fff; bottom: 140px; left: -50px; animation-delay: 3s; }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-16px)} }
+
+    .brand { position: relative; z-index: 1; }
+    .brand-logo { display: flex; align-items: center; gap: 0.65rem; text-decoration: none; }
+    .brand-icon {
+      width: 40px; height: 40px;
+      background: rgba(255,255,255,0.2); border: 1.5px solid rgba(255,255,255,0.4);
+      border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    }
+    .brand-icon svg { width: 22px; height: 22px; }
+    .brand-name { font-size: 1.5rem; font-weight: 700; color: #fff; letter-spacing: -0.5px; }
+    .brand-tagline { font-size: 0.68rem; color: rgba(255,255,255,0.6); letter-spacing: 1px; text-transform: uppercase; margin-top: 2px; }
+
+    .panel-copy { position: relative; z-index: 1; }
+    .panel-copy h1 {
+      font-family: 'Source Serif Pro', serif;
+      font-size: clamp(2rem, 3.2vw, 3rem); line-height: 1.15; color: #fff;
+      margin-bottom: 1.2rem; letter-spacing: -0.5px;
+    }
+    .panel-copy h1 em { font-style: italic; color: var(--mint); }
+    .panel-copy p { color: rgba(255,255,255,0.65); font-size: 0.95rem; line-height: 1.7; max-width: 340px; }
+
+    .feature-list { position: relative; z-index: 1; list-style: none; display: flex; flex-direction: column; gap: 0.75rem; }
+    .feature-list li {
+      display: flex; align-items: center; gap: 0.7rem;
+      color: rgba(255,255,255,0.75); font-size: 0.88rem;
+    }
+    .feature-list li .dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--mint); flex-shrink: 0;
+    }
+
+    /* ─── RIGHT PANEL ─── */
+    .panel-right {
+      flex: 1; display: flex; align-items: center; justify-content: center;
+      padding: 2rem; background: var(--neutral-white); position: relative; overflow-y: auto;
+    }
+
+    .form-card {
+      width: 100%; max-width: 460px;
+      animation: cardIn 0.65s cubic-bezier(0.16,1,0.3,1) both;
+    }
+    @keyframes cardIn { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
+
+    /* Steps */
+    .step { display: none; }
+    .step.active { display: block; animation: fadeIn 0.35s ease both; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+
+    .card-header { margin-bottom: 2rem; }
+    .eyebrow { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; color: var(--teal); font-weight: 600; margin-bottom: 0.5rem; }
+    .card-header h2 { font-size: 2rem; font-weight: 700; color: var(--neutral-black); letter-spacing: -0.5px; line-height: 1.2; }
+    .card-header p { margin-top: 0.4rem; color: var(--neutral-med); font-size: 0.88rem; line-height: 1.6; }
+
+    /* Form layout */
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.1rem; }
+    .form-group { margin-bottom: 1.1rem; }
+
+    label {
+      display: block; font-size: 0.82rem; font-weight: 600;
+      color: var(--neutral-dark); margin-bottom: 0.45rem;
+    }
+    label .req { color: var(--coral); margin-left: 2px; }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="tel"],
+    select {
+      width: 100%; padding: 0.78rem 1rem;
+      border: 1.5px solid var(--neutral-light); border-radius: 10px;
+      font-family: 'Inter', sans-serif; font-size: 0.9rem; color: var(--neutral-black);
+      background: #fff; outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      -webkit-appearance: none; appearance: none;
+    }
+    input::placeholder { color: var(--neutral-gray); }
+    input:focus, select:focus {
+      border-color: var(--blue); box-shadow: 0 0 0 3px rgba(26,110,216,0.12);
+    }
+
+    /* Phone field with country code */
+    .phone-wrap {
+      display: flex; border: 1.5px solid var(--neutral-light); border-radius: 10px;
+      overflow: hidden; background: #fff; transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .phone-wrap:focus-within { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(26,110,216,0.12); }
+    .country-code {
+      padding: 0 0.9rem; background: var(--cloud); border-right: 1.5px solid var(--neutral-light);
+      display: flex; align-items: center; gap: 0.35rem; font-size: 0.88rem; font-weight: 500;
+      color: var(--slate); white-space: nowrap; min-width: 70px;
+    }
+    .flag { font-size: 1rem; }
+    .phone-wrap input[type="tel"] {
+      border: none; box-shadow: none; border-radius: 0; padding: 0.78rem 1rem;
+    }
+    .phone-wrap input[type="tel"]:focus { border: none; box-shadow: none; }
+
+    /* Select with custom arrow */
+    .select-wrap { position: relative; }
+    .select-wrap::after {
+      content: '';
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      width: 0; height: 0;
+      border-left: 5px solid transparent; border-right: 5px solid transparent;
+      border-top: 6px solid var(--neutral-med); pointer-events: none;
+    }
+    .select-wrap select { padding-right: 2.5rem; cursor: pointer; }
+
+    /* Button */
+    .btn-primary {
+      width: 100%; padding: 0.9rem; background: var(--ocean-grad);
+      color: #fff; border: none; border-radius: 10px; font-family: 'Inter', sans-serif;
+      font-size: 0.95rem; font-weight: 600; cursor: pointer; letter-spacing: 0.2px;
+      transition: opacity 0.2s, transform 0.15s, box-shadow 0.2s;
+      margin-top: 0.4rem;
+    }
+    .btn-primary:hover { opacity: 0.92; box-shadow: 0 6px 22px rgba(26,110,216,0.35); transform: translateY(-1px); }
+    .btn-primary:active { transform: translateY(0); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+    .btn-primary .spinner {
+      display: none; width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.4); border-top-color: #fff;
+      border-radius: 50%; animation: spin 0.7s linear infinite; margin: 0 auto;
+    }
+    .btn-primary.loading .btn-text { display: none; }
+    .btn-primary.loading .spinner { display: block; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+
+    .signin-link { text-align: center; margin-top: 1.5rem; font-size: 0.85rem; color: var(--neutral-med); }
+    .signin-link a { color: var(--blue); font-weight: 600; text-decoration: underline; }
+    .signin-link a:hover { opacity: 0.75; }
+
+    /* OTP Step */
+    .otp-sent-to { text-align: center; font-size: 0.85rem; color: var(--neutral-med); margin-bottom: 1.8rem; line-height: 1.6; }
+    .otp-sent-to strong { color: var(--slate); }
+
+    .otp-group { display: flex; gap: 0.65rem; justify-content: center; margin: 0.5rem 0 0.25rem; }
+    .otp-box {
+      width: 54px; height: 58px; border: 1.5px solid var(--neutral-light); border-radius: 10px;
+      font-size: 1.5rem; font-weight: 600; color: var(--neutral-black); text-align: center;
+      outline: none; background: #fff; font-family: 'Inter', sans-serif;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    .otp-box:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(26,110,216,0.12); background: var(--cloud); }
+    .otp-box.filled { border-color: var(--teal); background: rgba(30,179,177,0.06); }
+
+    .resend-row { text-align: center; font-size: 0.83rem; color: var(--neutral-med); margin-top: 1rem; }
+    .resend-btn {
+      background: none; border: none; cursor: pointer; font-family: 'Inter', sans-serif;
+      font-size: 0.83rem; font-weight: 600; color: var(--blue); padding: 0; transition: opacity 0.2s;
+    }
+    .resend-btn:hover { opacity: 0.7; text-decoration: underline; }
+    .resend-btn:disabled { color: var(--neutral-gray); cursor: default; text-decoration: none; }
+    #countdown { font-weight: 600; color: var(--blue); }
+
+    .btn-back {
+      background: none; border: none; cursor: pointer; font-family: 'Inter', sans-serif;
+      font-size: 0.85rem; color: var(--neutral-med); font-weight: 500;
+      display: flex; align-items: center; gap: 0.4rem; padding: 0; margin-bottom: 2rem; transition: color 0.2s;
+    }
+    .btn-back:hover { color: var(--blue); }
+    .btn-back svg { width: 16px; height: 16px; }
+
+    /* Success */
+    .success-icon {
+      width: 72px; height: 72px; background: var(--sky-grad); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;
+      animation: popIn 0.5s cubic-bezier(0.34,1.56,0.64,1) both;
+    }
+    @keyframes popIn { from{transform:scale(0);opacity:0} to{transform:scale(1);opacity:1} }
+    .success-icon svg { width: 36px; height: 36px; color: #fff; }
+
+    /* Error */
+    .field-error { font-size: 0.75rem; color: var(--coral); margin-top: 0.3rem; display: none; }
+
+    @media (max-width: 900px) {
+      body { flex-direction: column; overflow: auto; }
+      .panel-left { width: 100%; padding: 2rem; min-height: 190px; }
+      .panel-copy h1 { font-size: 1.7rem; }
+      .feature-list { display: none; }
+      .panel-right { padding: 2rem 1.5rem; }
+      .form-row { grid-template-columns: 1fr; }
+      .otp-box { width: 46px; height: 50px; font-size: 1.3rem; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- LEFT PANEL -->
+<div class="panel-left">
+  <div class="grid-lines"></div>
+  <div class="bridge-arc"></div>
+  <div class="shape shape-1"></div>
+  <div class="shape shape-2"></div>
+
+  <div class="brand">
+    <a href="https://intered.in" class="brand-logo">
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 18 Q12 6 20 18"/>
+          <line x1="4" y1="18" x2="4" y2="14"/>
+          <line x1="20" y1="18" x2="20" y2="14"/>
+          <line x1="12" y1="11" x2="12" y2="18"/>
+        </svg>
+      </div>
+      <div>
+        <div class="brand-name">InterEd</div>
+        <div class="brand-tagline">Your Bridge to Global Education</div>
+      </div>
+    </a>
+  </div>
+
+  <div class="panel-copy">
+    <h1>Begin your<br/><em>global</em><br/>journey today.</h1>
+    <p>Join thousands of students who found their path to international education with expert guidance and personalised support.</p>
+  </div>
+
+  <ul class="feature-list">
+    <li><span class="dot"></span> Access 1,200+ courses worldwide</li>
+    <li><span class="dot"></span> Personal education counselor assigned</li>
+    <li><span class="dot"></span> End-to-end visa & admission support</li>
+    <li><span class="dot"></span> Scholarship matching & financial guidance</li>
+  </ul>
+</div>
+
+<!-- RIGHT PANEL -->
+<div class="panel-right">
+  <div class="form-card">
+
+    <!-- STEP 1: Registration Form -->
+    <div class="step active" id="step1">
+      <div class="card-header">
+        <div class="eyebrow">New Student</div>
+        <h2>Create Account</h2>
+        <p>Fill in your details below to get started.</p>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="firstName">First Name <span class="req">*</span></label>
+          <input type="text" id="firstName" placeholder="Enter your first name" autocomplete="given-name"/>
+          <div class="field-error" id="firstNameErr">Please enter your first name.</div>
+        </div>
+        <div class="form-group">
+          <label for="lastName">Last Name <span class="req">*</span></label>
+          <input type="text" id="lastName" placeholder="Enter your last name" autocomplete="family-name"/>
+          <div class="field-error" id="lastNameErr">Please enter your last name.</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="phone">Phone Number <span class="req">*</span></label>
+        <div class="phone-wrap" id="phoneWrap">
+          <div class="country-code"><span class="flag">🇮🇳</span> +91</div>
+          <input type="tel" id="phone" maxlength="10" placeholder="Enter your 10 digit phone number" inputmode="numeric"/>
+        </div>
+        <div class="field-error" id="phoneErr">Please enter a valid 10-digit mobile number.</div>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email Address <span class="req">*</span></label>
+        <input type="email" id="email" placeholder="Enter your email address" autocomplete="email"/>
+        <div class="field-error" id="emailErr">Please enter a valid email address.</div>
+      </div>
+
+      <div class="form-group">
+        <label for="office">Nearest Education Matters Office <span class="req">*</span></label>
+        <div class="select-wrap">
+          <select id="office">
+            <option value="">Select your nearest office</option>
+            <option value="chennai" selected>Chennai</option>
+            <option value="bangalore">Bangalore</option>
+            <option value="mumbai">Mumbai</option>
+            <option value="delhi">Delhi</option>
+            <option value="hyderabad">Hyderabad</option>
+            <option value="pune">Pune</option>
+            <option value="kolkata">Kolkata</option>
+            <option value="ahmedabad">Ahmedabad</option>
+            <option value="coimbatore">Coimbatore</option>
+            <option value="kochi">Kochi</option>
+            <option value="trichy">Trichy</option>
+            <option value="madurai">Madurai</option>
+          </select>
+        </div>
+        <div class="field-error" id="officeErr">Please select your nearest office.</div>
+      </div>
+
+      <button class="btn-primary" id="getOtpBtn" onclick="getOtp()">
+        <span class="btn-text">Get OTP</span>
+        <span class="spinner"></span>
+      </button>
+
+      <div class="signin-link">Already have an account? <a href="intered-student-login.html">Sign in</a></div>
+    </div>
+
+    <!-- STEP 2: OTP Verification -->
+    <div class="step" id="step2">
+      <button class="btn-back" onclick="goBack()">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"/></svg>
+        Back
+      </button>
+      <div class="card-header">
+        <div class="eyebrow">Verify Mobile</div>
+        <h2>Enter OTP</h2>
+      </div>
+
+      <p class="otp-sent-to">
+        A 6-digit OTP has been sent to<br/><strong id="displayPhone"></strong>
+      </p>
+
+      <label style="text-align:center; display:block; margin-bottom:0.8rem;">Enter the 6-digit code</label>
+      <div class="otp-group" id="otpGroup">
+        <input class="otp-box" type="text" maxlength="1" inputmode="numeric"/>
+        <input class="otp-box" type="text" maxlength="1" inputmode="numeric"/>
+        <input class="otp-box" type="text" maxlength="1" inputmode="numeric"/>
+        <input class="otp-box" type="text" maxlength="1" inputmode="numeric"/>
+        <input class="otp-box" type="text" maxlength="1" inputmode="numeric"/>
+        <input class="otp-box" type="text" maxlength="1" inputmode="numeric"/>
+      </div>
+
+      <p id="otpError" style="color:var(--coral);font-size:0.78rem;text-align:center;margin-top:0.5rem;display:none;">
+        Incorrect OTP. Please try again.
+      </p>
+
+      <div style="margin-top:1.4rem;">
+        <button class="btn-primary" id="verifyBtn" onclick="verifyOtp()">
+          <span class="btn-text">Verify &amp; Create Account</span>
+          <span class="spinner"></span>
+        </button>
+      </div>
+
+      <div class="resend-row">
+        Didn't receive the OTP? &nbsp;
+        <button class="resend-btn" id="resendBtn" onclick="resendOtp()" disabled>Resend OTP</button>
+        <span id="countdown"> (30s)</span>
+      </div>
+    </div>
+
+    <!-- STEP 3: Success -->
+    <div class="step" id="step3">
+      <div class="success-icon">
+        <svg fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <div class="card-header" style="text-align:center;">
+        <div class="eyebrow">Account Created</div>
+        <h2>Welcome to InterEd! 🎉</h2>
+        <p>Your account has been created successfully.<br/>Redirecting to your dashboard...</p>
+      </div>
+      <div style="height:6px;background:var(--neutral-light);border-radius:99px;overflow:hidden;margin-top:1.5rem;">
+        <div id="progressBar" style="height:100%;width:0%;background:var(--ocean-grad);border-radius:99px;transition:width 2.5s ease;"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  let countdownTimer;
+
+  function validate() {
+    let ok = true;
+
+    const first = document.getElementById('firstName').value.trim();
+    const last  = document.getElementById('lastName').value.trim();
+    const phone = document.getElementById('phone').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const office = document.getElementById('office').value;
+
+    setErr('firstNameErr', !first);
+    setErr('lastNameErr', !last);
+    setErr('phoneErr', !/^[6-9]\d{9}$/.test(phone));
+    setErr('emailErr', !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
+    setErr('officeErr', !office);
+
+    if (!first || !last || !/^[6-9]\d{9}$/.test(phone) || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !office) ok = false;
+    return ok;
+  }
+
+  function setErr(id, show) {
+    const el = document.getElementById(id);
+    el.style.display = show ? 'block' : 'none';
+  }
+
+  function getOtp() {
+    if (!validate()) return;
+    const btn = document.getElementById('getOtpBtn');
+    btn.classList.add('loading'); btn.disabled = true;
+    setTimeout(() => {
+      btn.classList.remove('loading'); btn.disabled = false;
+      const phone = document.getElementById('phone').value.trim();
+      document.getElementById('displayPhone').textContent = '+91 ' + phone.replace(/(\d{5})(\d{5})/, '$1 $2');
+      showStep('step2');
+      startCountdown(30);
+      document.querySelectorAll('.otp-box')[0].focus();
+    }, 1500);
+  }
+
+  function goBack() {
+    clearInterval(countdownTimer);
+    document.querySelectorAll('.otp-box').forEach(b => { b.value=''; b.classList.remove('filled'); });
+    document.getElementById('otpError').style.display = 'none';
+    showStep('step1');
+  }
+
+  function verifyOtp() {
+    const otp = [...document.querySelectorAll('.otp-box')].map(b => b.value).join('');
+    if (otp.length < 6) { shakeOtp(); return; }
+    const btn = document.getElementById('verifyBtn');
+    btn.classList.add('loading'); btn.disabled = true;
+    setTimeout(() => {
+      btn.classList.remove('loading'); btn.disabled = false;
+      clearInterval(countdownTimer);
+      showStep('step3');
+      setTimeout(() => { document.getElementById('progressBar').style.width = '100%'; }, 100);
+    }, 1800);
+  }
+
+  function resendOtp() {
+    document.querySelectorAll('.otp-box').forEach(b => { b.value=''; b.classList.remove('filled'); });
+    document.getElementById('otpError').style.display = 'none';
+    startCountdown(30);
+    document.querySelectorAll('.otp-box')[0].focus();
+  }
+
+  function startCountdown(s) {
+    const resend = document.getElementById('resendBtn');
+    const cd = document.getElementById('countdown');
+    resend.disabled = true; cd.style.display = 'inline';
+    cd.textContent = ` (${s}s)`;
+    clearInterval(countdownTimer);
+    countdownTimer = setInterval(() => {
+      s--;
+      if (s <= 0) { clearInterval(countdownTimer); resend.disabled = false; cd.style.display = 'none'; }
+      else cd.textContent = ` (${s}s)`;
+    }, 1000);
+  }
+
+  function shakeOtp() {
+    const g = document.getElementById('otpGroup');
+    g.style.animation = 'none'; g.offsetHeight;
+    g.style.animation = 'shake 0.4s ease';
+  }
+
+  function showStep(id) {
+    document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+
+  // OTP box interactions
+  document.querySelectorAll('.otp-box').forEach((box, i, boxes) => {
+    box.addEventListener('input', e => {
+      const val = e.target.value.replace(/\D/g,'');
+      box.value = val ? val[0] : '';
+      box.classList.toggle('filled', box.value !== '');
+      if (box.value && i < boxes.length - 1) boxes[i+1].focus();
+      if ([...boxes].every(b => b.value)) verifyOtp();
+    });
+    box.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !box.value && i > 0) boxes[i-1].focus();
+    });
+    box.addEventListener('paste', e => {
+      e.preventDefault();
+      const paste = (e.clipboardData || window.clipboardData).getData('text').replace(/\D/g,'').slice(0,6);
+      [...paste].forEach((ch, j) => { if (boxes[j]) { boxes[j].value=ch; boxes[j].classList.add('filled'); } });
+      if (paste.length === 6) verifyOtp();
+      else if (boxes[paste.length]) boxes[paste.length].focus();
+    });
+  });
+
+  // Clear errors on input
+  ['firstName','lastName','email'].forEach(id => {
+    document.getElementById(id).addEventListener('input', () => setErr(id+'Err', false));
+  });
+  document.getElementById('phone').addEventListener('input', () => setErr('phoneErr', false));
+  document.getElementById('office').addEventListener('change', () => setErr('officeErr', false));
+
+  const style = document.createElement('style');
+  style.textContent = `@keyframes shake{0%,100%{transform:translateX(0)}20%,60%{transform:translateX(-6px)}40%,80%{transform:translateX(6px)}}`;
+  document.head.appendChild(style);
+</script>
+</body>
+</html>

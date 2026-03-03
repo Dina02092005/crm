@@ -2,10 +2,10 @@ import { Suspense } from "react";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { LoginForm } from "@/components/auth/LoginForm";
 
-export default function AgentLoginPage() {
+export default function CounselorLoginPage() {
     return (
-        <AuthLayout loginType="agent">
-            <LoginForm loginType="agent" />
+        <AuthLayout loginType="counselor">
+            <LoginForm loginType="counselor" />
         </AuthLayout>
     );
 }

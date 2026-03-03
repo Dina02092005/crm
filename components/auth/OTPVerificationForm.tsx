@@ -18,8 +18,19 @@ function OTPVerificationFormContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const email = searchParams.get("email");
+    const loginType = (searchParams.get("role") || "student") as "student" | "admin" | "agent" | "counselor";
     const [isLoading, setIsLoading] = useState(false);
     const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+
+    // Role-specific accents
+    const accents: Record<string, any> = {
+        admin: { text: "text-indigo-600", eyebrow: "Admin Portal", borderHover: "hover:border-indigo-400", focusBorder: "focus-visible:border-indigo-500", ring: "focus-visible:ring-indigo-500/5", bg: "bg-indigo-600", shadow: "shadow-indigo-600/20", groupFocus: "group-focus-within:text-indigo-600" },
+        student: { text: "text-teal-600", eyebrow: "Student Portal", borderHover: "hover:border-teal-400", focusBorder: "focus-visible:border-teal-500", ring: "focus-visible:ring-teal-500/5", bg: "bg-gradient-to-r from-teal-600 to-[#1EB3B1]", shadow: "shadow-teal-600/20", groupFocus: "group-focus-within:text-teal-600" },
+        agent: { text: "text-blue-600", eyebrow: "Agent Portal", borderHover: "hover:border-blue-400", focusBorder: "focus-visible:border-blue-500", ring: "focus-visible:ring-blue-500/5", bg: "bg-blue-600", shadow: "shadow-blue-600/20", groupFocus: "group-focus-within:text-blue-600" },
+        counselor: { text: "text-purple-600", eyebrow: "Counselor Portal", borderHover: "hover:border-purple-400", focusBorder: "focus-visible:border-purple-500", ring: "focus-visible:ring-purple-500/5", bg: "bg-purple-600", shadow: "shadow-purple-600/20", groupFocus: "group-focus-within:text-purple-600" },
+    };
+
+    const clr = accents[loginType] || accents.student;
 
     useEffect(() => {
         if (!email) {
@@ -68,7 +79,7 @@ function OTPVerificationFormContent() {
         try {
             await axios.post("/api/auth/verify", { email, otp: code });
             toast.success("Email verified successfully!");
-            router.push("/login?verified=true");
+            router.push(`/login?verified=true&type=${loginType}`);
         } catch (error: any) {
             const message = error.response?.data?.message || "Verification failed. Please check the code and try again.";
             toast.error(message);
@@ -87,63 +98,70 @@ function OTPVerificationFormContent() {
     };
 
     return (
-        <Card className="w-full max-w-sm sm:max-w-md rounded-3xl border-0 bg-white shadow-2xl">
-            <CardHeader className="pb-4 pt-6 px-6 sm:pt-8 sm:px-8">
-                <CardTitle className="text-center text-2xl sm:text-3xl font-bold tracking-tight text-gray-900">
+        <div className="w-full">
+            <div className="mb-10">
+                <div className={`text-[10px] uppercase tracking-[0.2em] ${clr.text} font-bold mb-2 transition-colors`}>
+                    {clr.eyebrow}
+                </div>
+                <h2 className="text-3xl font-bold text-gray-900 tracking-tight mb-2">
                     Verify Email
-                </CardTitle>
-                <p className="text-center text-sm text-gray-600 mt-2">
-                    Enter the 6-digit code sent to <strong>{email}</strong>
+                </h2>
+                <p className="text-sm text-gray-500 leading-relaxed font-medium">
+                    Enter the 6-digit code sent to <strong>{email}</strong> to verify your account.
                 </p>
-            </CardHeader>
-            <CardContent className="space-y-4 sm:space-y-5 px-6 sm:px-8 pb-6 sm:pb-8">
-                <form className="space-y-5" onSubmit={handleVerify}>
-                    <div className="flex gap-2 justify-center">
+            </div>
+
+            <div className="space-y-8">
+                <form className="space-y-6" onSubmit={handleVerify}>
+                    <div className="flex gap-2 sm:gap-3 justify-between">
                         {otp.map((digit, index) => (
-                            <Input
-                                key={index}
-                                id={`otp-${index}`}
-                                type="text"
-                                inputMode="numeric"
-                                maxLength={1}
-                                value={digit}
-                                onChange={(e) => handleChange(index, e.target.value)}
-                                onKeyDown={(e) => handleKeyDown(index, e)}
-                                className="h-12 w-12 sm:h-14 sm:w-14 text-center text-xl font-semibold rounded-lg border-gray-300 bg-gray-50 transition-colors hover:border-gray-400 focus-visible:border-cyan-500 focus-visible:ring-2 focus-visible:ring-cyan-500/20 focus-visible:bg-white"
-                            />
+                            <div key={index} className="relative group">
+                                <Input
+                                    id={`otp-${index}`}
+                                    type="text"
+                                    inputMode="numeric"
+                                    maxLength={1}
+                                    value={digit}
+                                    onChange={(e) => handleChange(index, e.target.value)}
+                                    onKeyDown={(e) => handleKeyDown(index, e)}
+                                    className={`h-12 w-10 sm:h-14 sm:w-14 text-center text-xl font-bold rounded-xl border-gray-200 bg-white text-gray-900 transition-all ${clr.borderHover} ${clr.focusBorder} focus-visible:ring-4 ${clr.ring} shadow-sm`}
+                                />
+                            </div>
                         ))}
                     </div>
                     <Button
                         type="submit"
                         disabled={isLoading}
-                        className="h-12 w-full rounded-lg bg-cyan-600 text-base font-semibold text-white shadow-md transition-all hover:bg-cyan-700 hover:shadow-lg focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2"
+                        className={`h-12 w-full rounded-xl ${clr.bg} text-sm font-bold text-white shadow-lg ${clr.shadow} transition-all hover:opacity-90 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50`}
                     >
-                        {isLoading ? "Verifying..." : "Verify Code"}
+                        {isLoading ? (
+                            <div className="flex items-center gap-2">
+                                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                <span>Verifying...</span>
+                            </div>
+                        ) : "Verify Code"}
                     </Button>
                 </form>
 
-                <div className="text-center space-y-2">
-                    <p className="text-sm text-gray-600">
+                <div className="text-center space-y-4 pt-2">
+                    <p className="text-sm text-gray-500 font-medium">
                         Didn&apos;t receive the code?{" "}
                         <button
                             type="button"
                             onClick={handleResend}
-                            className="font-semibold text-cyan-600 hover:text-cyan-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 rounded"
+                            className={`${clr.text} font-bold hover:underline ml-1 transition-colors`}
                         >
                             Resend Code
                         </button>
                     </p>
-                    <p className="text-sm text-gray-600">
-                        <Link
-                            href="/login"
-                            className="font-semibold text-blue-600 hover:text-blue-700 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 rounded"
-                        >
+                    <div className="pt-2 border-t border-gray-100">
+                        <Link href={`/login?type=${loginType}`} className="text-sm text-gray-400 font-bold hover:text-gray-600 transition-colors">
                             Back to Login
                         </Link>
-                    </p>
+                    </div>
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 }
 

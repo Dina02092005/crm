@@ -58,6 +58,7 @@ export default function FileManagerPage() {
     const [expandedStudentId, setExpandedStudentId] = useState<string | null>(null);
     const [documents, setDocuments] = useState<Record<string, StudentDocument[]>>({});
     const [isLoadingDocs, setIsLoadingDocs] = useState<Record<string, boolean>>({});
+    const [isZipping, setIsZipping] = useState<Record<string, boolean>>({});
     const [previewFile, setPreviewFile] = useState<{ url: string; name: string } | null>(null);
 
     const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -115,6 +116,40 @@ export default function FileManagerPage() {
     const handleSingleDownload = (doc: StudentDocument) => {
         const params = new URLSearchParams({ file: doc.fileUrl, name: `${doc.documentName}_${doc.fileName}` });
         window.open(`/api/file-manager/download?${params}`, "_blank");
+    };
+
+    const handleBulkDownload = async (studentId: string) => {
+        const studentDocs = documents[studentId];
+        if (!studentDocs || studentDocs.length === 0) {
+            toast.error("No documents to download");
+            return;
+        }
+
+        setIsZipping(prev => ({ ...prev, [studentId]: true }));
+        try {
+            const res = await axios.post("/api/file-manager/download", {
+                files: studentDocs.map(doc => ({
+                    url: doc.fileUrl,
+                    name: `${doc.documentName}_${doc.fileName}`
+                }))
+            }, { responseType: 'blob' });
+
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            const studentName = students.find(s => s.id === studentId)?.name || 'student';
+            link.setAttribute('download', `${studentName}_documents.zip`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success("Download started");
+        } catch (error) {
+            console.error("ZIP_DOWNLOAD_ERROR", error);
+            toast.error("Failed to generate zip");
+        } finally {
+            setIsZipping(prev => ({ ...prev, [studentId]: false }));
+        }
     };
 
     return (
@@ -314,9 +349,27 @@ export default function FileManagerPage() {
                                         <p className="text-sm text-slate-500 font-medium">Manage and view uploaded files</p>
                                     </div>
                                 </div>
-                                <Button variant="ghost" size="icon" onClick={() => setExpandedStudentId(null)} className="rounded-full">
-                                    <ChevronRight className="h-6 w-6 rotate-45" />
-                                </Button>
+                                <div className="flex items-center gap-3">
+                                    {documents[expandedStudentId] && documents[expandedStudentId].length > 0 && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            className="hidden sm:flex items-center gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 h-9 px-4 rounded-xl font-bold transition-all"
+                                            onClick={() => handleBulkDownload(expandedStudentId)}
+                                            disabled={isZipping[expandedStudentId]}
+                                        >
+                                            {isZipping[expandedStudentId] ? (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <Download className="h-4 w-4" />
+                                            )}
+                                            {isZipping[expandedStudentId] ? "Zipping..." : "Download All as ZIP"}
+                                        </Button>
+                                    )}
+                                    <Button variant="ghost" size="icon" onClick={() => setExpandedStudentId(null)} className="rounded-full w-10 h-10 hover:bg-slate-100">
+                                        <MoreHorizontal className="h-5 w-5 rotate-45" />
+                                    </Button>
+                                </div>
                             </div>
 
                             <div className="flex-1 overflow-y-auto p-6">

@@ -12,7 +12,7 @@ const ROLE_PREFIX: Record<string, string> = {
     ADMIN: "/admin",
     MANAGER: "/admin",
     AGENT: "/agent",
-    COUNSELOR: "/agent",
+    COUNSELOR: "/counselor",
     SALES_REP: "/agent",
     SUPPORT_AGENT: "/agent",
     STUDENT: "/student",
@@ -21,14 +21,16 @@ const ROLE_PREFIX: Record<string, string> = {
 // Which roles are allowed in each namespace
 const NAMESPACE_ROLES: Record<string, string[]> = {
     "/admin": ["ADMIN", "MANAGER"],
-    "/agent": ["AGENT", "COUNSELOR", "SALES_REP", "SUPPORT_AGENT"],
+    "/agent": ["AGENT", "SALES_REP", "SUPPORT_AGENT"],
+    "/counselor": ["COUNSELOR"],
     "/student": ["STUDENT"],
 };
 
 // Login page for each namespace
 const NAMESPACE_LOGIN: Record<string, string> = {
-    "/admin": "/admin",
+    "/admin": "/admin/login",
     "/agent": "/agent/login",
+    "/counselor": "/counselor/login",
     "/student": "/login",
 };
 
@@ -62,13 +64,37 @@ export default withAuth(
 
             // Redirect shorthand paths like /leads → /admin/leads (or /agent/leads)
             const shortSegment = pathname.split("/")[1]; // e.g. "leads" from "/leads"
-            if (SHORTHAND_PATHS.includes(shortSegment) && !pathname.startsWith("/admin") && !pathname.startsWith("/agent") && !pathname.startsWith("/student")) {
+            if (SHORTHAND_PATHS.includes(shortSegment) && !pathname.startsWith("/admin") && !pathname.startsWith("/agent") && !pathname.startsWith("/student") && !pathname.startsWith("/counselor")) {
                 const rest = pathname.slice(shortSegment.length + 1); // preserve sub-paths e.g. /leads/123
                 return NextResponse.redirect(new URL(`${prefix}/${shortSegment}${rest}`, req.url));
             }
 
             const namespace = getNamespace(pathname);
-            const isLoginPage = pathname === "/login" || pathname === "/admin" || pathname === "/agent/login";
+            const isLoginPage = pathname === "/login" || pathname === "/admin/login" || pathname === "/agent/login" || pathname === "/counselor/login";
+            const authPages = [
+                "/login", "/admin/login", "/agent/login", "/counselor/login",
+                "/register", "/agent/register", "/forgot-password", "/new-password", "/verify-otp"
+            ];
+
+            // Redirect authenticated users away from auth pages
+            if (token && authPages.some(p => pathname === p || pathname.startsWith(p + "/"))) {
+                return NextResponse.redirect(new URL(`${prefix}/dashboard`, req.url));
+            }
+
+            // Role root redirection logic
+            const roleRoots = ["/admin", "/agent", "/counselor", "/student"];
+            const currentRoot = roleRoots.find(root => pathname === root || pathname === `${root}/`);
+
+            if (currentRoot) {
+                if (token) {
+                    // Authenticated: Go to dashboard
+                    return NextResponse.redirect(new URL(`${currentRoot}/dashboard`, req.url));
+                } else {
+                    // Unauthenticated: Go to role-specific login
+                    const loginPath = NAMESPACE_LOGIN[currentRoot] || "/login";
+                    return NextResponse.redirect(new URL(loginPath, req.url));
+                }
+            }
 
             if (namespace && !isLoginPage) {
                 // Check that this role is allowed in this namespace
@@ -91,8 +117,12 @@ export default withAuth(
             authorized: ({ token, req }) => {
                 // Public auth pages — always allow
                 const pathname = req.nextUrl.pathname;
-                const publicPaths = ["/login", "/admin", "/agent/login", "/register", "/forgot-password", "/new-password", "/verify-otp"];
-                if (publicPaths.some((p) => pathname === p || pathname.startsWith(p + "/"))) {
+                const publicPaths = [
+                    "/login", "/admin/login", "/agent/login", "/counselor/login",
+                    "/register", "/agent/register", "/forgot-password", "/new-password", "/verify-otp",
+                    "/admin", "/agent", "/counselor", "/student" // Allow roots so middleware can redirect
+                ];
+                if (publicPaths.some((p) => pathname === p || pathname === `${p}/`)) {
                     return true;
                 }
                 return !!token;

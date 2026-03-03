@@ -426,7 +426,7 @@ export default function AddLeadPage() {
                                 )} />
                                 <form.Field name="source" children={(field) => (
                                     <div className="space-y-1">
-                                        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-tight">Source</Label>
+                                        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-tight">Source <span className="text-red-500">*</span></Label>
                                         <Select value={field.state.value} onValueChange={field.handleChange}>
                                             <SelectTrigger className={iconicInputClass}>
                                                 <div className="flex items-center gap-2">
@@ -438,6 +438,7 @@ export default function AddLeadPage() {
                                                 {websites.map(w => <SelectItem key={w.id} value={w.name}>{w.name}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
+                                        <ErrorMessage field={field} />
                                     </div>
                                 )} />
                                 <form.Field name="status" children={(field) => (

@@ -47,9 +47,9 @@ export default async function DashboardLayout({ children, params }: DashboardLay
             <Sidebar />
 
             {/* Main Content - straight, integrated, full height */}
-            <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
-                <div className="bg-background h-full w-full overflow-y-auto scrollbar-hide border-l border-border flex-1">
-                    <DashboardHeader />
+            <div className="flex-1 flex flex-col h-screen overflow-hidden bg-background">
+                <DashboardHeader />
+                <div className="overflow-y-auto scrollbar-hide border-l border-border flex-1">
                     <div className="px-4 md:px-6 pb-6">
                         {children}
                     </div>

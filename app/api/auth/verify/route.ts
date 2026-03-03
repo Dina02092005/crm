@@ -25,14 +25,25 @@ export async function POST(req: Request) {
             return NextResponse.json({ message: 'OTP expired' }, { status: 400 });
         }
 
-        await prisma.user.update({
+        const updatedUser = await prisma.user.update({
             where: { email },
             data: {
                 emailVerified: new Date(),
                 otp: null,
                 otpExpiresAt: null,
             },
+            include: {
+                lead: true
+            }
         });
+
+        // If the user is a student/lead, update the lead status
+        if (updatedUser.lead) {
+            await prisma.lead.update({
+                where: { id: updatedUser.lead.id },
+                data: { status: 'CONTACTED' }
+            });
+        }
 
         return NextResponse.json({ message: 'Email verified successfully' }, { status: 200 });
 
