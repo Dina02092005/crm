@@ -41,7 +41,33 @@ export function useUpdateProfile() {
     });
 }
 
+export function useStudentProfile() {
+    return useQuery({
+        queryKey: ["student-profile"],
+        queryFn: async () => {
+            const { data } = await axios.get("/api/student/profile");
+            return data;
+        },
+    });
+}
+
+export function useUpdateStudentProfile() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (profileData: any) => {
+            const { data } = await axios.patch("/api/student/profile", profileData);
+            return data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["student-profile"] });
+            queryClient.invalidateQueries({ queryKey: ["profile"] });
+        },
+    });
+}
+
 export function useUpdatePassword() {
+    // ... existing
     return useMutation({
         mutationFn: async (passwordData: any) => {
             const { data } = await axios.post("/api/profile/password", passwordData);

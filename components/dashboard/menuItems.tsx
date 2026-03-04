@@ -8,6 +8,7 @@ import {
     FaCheckCircle,
     FaClock,
     FaSync,
+    FaStickyNote,
 } from "react-icons/fa";
 
 export interface MenuItem {
@@ -21,10 +22,11 @@ export interface MenuItem {
 
 export const menuItems: MenuItem[] = [
     { label: "Dashboard", icon: <FaTachometerAlt />, href: "/dashboard" },
-    { label: "Leads", icon: <FaHeadset />, href: "/leads" },
-    { label: "Students", icon: <FaUsers />, href: "/students" },
-    { label: "Applications", icon: <FaFolderOpen />, href: "/applications", roles: ["ADMIN", "MANAGER", "AGENT", "COUNSELOR", "SALES_REP", "SUPPORT_AGENT"] },
-    { label: "Visa Applications", icon: <FaSitemap />, href: "/visa-applications", roles: ["ADMIN", "MANAGER", "AGENT", "COUNSELOR"] },
+    { label: "My Notes", icon: <FaStickyNote />, href: "/notes" },
+    { label: "Leads", icon: <FaHeadset />, href: "/leads", roles: ["ADMIN", "MANAGER", "AGENT", "COUNSELOR", "SALES_REP", "SUPPORT_AGENT"] },
+    { label: "Students", icon: <FaUsers />, href: "/students", roles: ["ADMIN", "MANAGER", "AGENT", "COUNSELOR", "SALES_REP", "SUPPORT_AGENT"] },
+    { label: "Applications", icon: <FaFolderOpen />, href: "/applications", roles: ["ADMIN", "MANAGER", "AGENT", "COUNSELOR", "SALES_REP", "SUPPORT_AGENT", "STUDENT"] },
+    { label: "Visa Applications", icon: <FaSitemap />, href: "/visa-applications", roles: ["ADMIN", "MANAGER", "AGENT", "COUNSELOR", "STUDENT"] },
     {
         label: "Defer / Enrolled",
         icon: <FaSync />,
@@ -35,7 +37,8 @@ export const menuItems: MenuItem[] = [
         ]
     },
     { label: "My Profile", icon: <FaUserCog />, href: "/profile", roles: ["STUDENT"] },
-    { label: "My Documents", icon: <FaSitemap />, href: "/profile?tab=documents", roles: ["STUDENT"] },
+    { label: "My Documents", icon: <FaFolderOpen />, href: "/profile?tab=documents", roles: ["STUDENT"] },
+    { label: "Course Finder", icon: <FaSitemap />, href: "/master/universities", roles: ["STUDENT"] },
     { label: "Agents", icon: <FaHeadset />, href: "/agents", roles: ["ADMIN"] },
     { label: "Counselors", icon: <FaUserCog />, href: "/employees", roles: ["ADMIN", "AGENT"] },
     {

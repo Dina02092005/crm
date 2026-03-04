@@ -28,9 +28,20 @@ import { ApplicationCommentsModal } from "@/components/applications/ApplicationC
 
 import { Suspense } from "react";
 
-function ApplicationsPageContent() {
+import { StudentApplicationsView } from "@/components/applications/StudentApplicationsView";
+import { use } from "react";
+
+function ApplicationsPageContent({ role }: { role: string }) {
     const searchParams = useSearchParams();
     const urlStatus = searchParams.get("status");
+
+    if (role === "student") {
+        return (
+            <div className="p-3 sm:p-4 bg-slate-50/50 min-h-screen">
+                <StudentApplicationsView />
+            </div>
+        );
+    }
 
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
@@ -327,10 +338,11 @@ function ApplicationsPageContent() {
     );
 }
 
-export default function ApplicationsPage() {
+export default function ApplicationsPage({ params }: { params: Promise<{ role: string }> }) {
+    const { role } = use(params);
     return (
         <Suspense fallback={<div className="p-10 animate-pulse bg-muted/20 h-screen rounded-2xl" />}>
-            <ApplicationsPageContent />
+            <ApplicationsPageContent role={role} />
         </Suspense>
     );
 }

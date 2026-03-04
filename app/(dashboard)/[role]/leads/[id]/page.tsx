@@ -37,6 +37,7 @@ import {
     ChevronRight,
     Database,
     GraduationCap,
+    Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -106,6 +107,7 @@ export default function LeadDetailPage() {
     const [editingItem, setEditingItem] = useState<any>(null); // For notes/activities
     const [editSheetOpen, setEditSheetOpen] = useState(false);
     const [isConvertModalOpen, setIsConvertModalOpen] = useState(false);
+    const [isLogging, setIsLogging] = useState(false);
 
     // FollowUp & Appointment state
     const [followUps, setFollowUps] = useState<any[]>([]);
@@ -231,12 +233,15 @@ export default function LeadDetailPage() {
     };
 
     const handleLogActivity = async (type: string, content: string, updateLead: boolean = false) => {
+        setIsLogging(true);
         try {
             await axios.post(`/api/leads/${params.id}/activities`, { type, content, updateLead });
             toast.success(`${type} logged successfully`);
             fetchLead();
         } catch (error) {
             toast.error("Failed to log activity");
+        } finally {
+            setIsLogging(false);
         }
     };
 
@@ -1414,80 +1419,121 @@ export default function LeadDetailPage() {
 
 
                 {activeTab === "notes" && (
-                    <div className="bg-card rounded-3xl border border-border shadow-sm overflow-hidden flex flex-col h-[500px]">
-                        <div className="p-4 border-b border-border flex items-center justify-between bg-card">
-                            <h3 className="font-bold text-foreground">Internal Notes</h3>
-                            <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-none">
+                    <div className="bg-card rounded-3xl border border-border shadow-sm overflow-hidden flex flex-col h-[600px]">
+                        <div className="p-6 border-b border-border flex items-center justify-between bg-card">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                                    <MessageSquare className="h-5 w-5" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-foreground">Internal Notes</h3>
+                                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">Confidential Team Communication</p>
+                                </div>
+                            </div>
+                            <Badge className="bg-primary/10 text-primary hover:bg-primary/20 border-none px-3 py-1 rounded-full text-xs font-bold">
                                 {lead.activities?.filter((a: any) => a.type === 'NOTE').length || 0} Notes
                             </Badge>
                         </div>
-                        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-muted/10">
+                        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-muted/5">
                             {lead.activities?.filter((a: any) => a.type === 'NOTE').length > 0 ? (
                                 lead.activities
                                     .filter((a: any) => a.type === 'NOTE')
-                                    .map((note: any, idx: number) => (
-                                        <div key={idx} className="bg-card border-l-4 border-l-primary border-y border-r border-border p-4 rounded-xl shadow-sm group transition-all hover:bg-muted/50">
-                                            <div className="flex justify-between items-start mb-2">
-                                                <div className="flex items-center gap-2">
-                                                    <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-[10px] font-bold">
-                                                        {note.user?.name?.charAt(0) || 'U'}
-                                                    </div>
-                                                    <div>
-                                                        <p className="text-xs font-bold text-foreground leading-none">{note.user?.name || 'User'}</p>
-                                                        <p className="text-[9px] text-muted-foreground mt-0.5">{formatRelativeTime(note.createdAt)}</p>
-                                                    </div>
+                                    .map((note: any, idx: number) => {
+                                        const isCurrentUser = session?.user?.id === note.userId;
+                                        return (
+                                            <div key={idx} className={cn(
+                                                "flex flex-col gap-1 max-w-[85%]",
+                                                isCurrentUser ? "ml-auto items-end" : "mr-auto items-start"
+                                            )}>
+                                                <div className="flex items-center gap-2 mb-1">
+                                                    {!isCurrentUser && (
+                                                        <div className="w-6 h-6 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold">
+                                                            {note.user?.name?.charAt(0) || 'U'}
+                                                        </div>
+                                                    )}
+                                                    <span className="text-[10px] font-bold text-muted-foreground">
+                                                        {isCurrentUser ? "You" : (note.user?.name || 'User')} • {formatRelativeTime(note.createdAt)}
+                                                    </span>
                                                 </div>
-                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    {session?.user?.id === note.userId && (
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-7 w-7 rounded-lg hover:bg-primary/10 text-primary"
-                                                            onClick={() => setEditingItem(note)}
-                                                        >
-                                                            <Pencil className="h-3 w-3" />
-                                                        </Button>
-                                                    )}
-                                                    {session?.user?.role === 'ADMIN' && (
-                                                        <Button
-                                                            variant="ghost"
-                                                            size="icon"
-                                                            className="h-7 w-7 rounded-lg text-red-500 hover:bg-red-500/10"
-                                                            onClick={() => handleDeleteActivity(note.id)}
-                                                        >
-                                                            <Trash2 className="h-3 w-3" />
-                                                        </Button>
-                                                    )}
+                                                <div className={cn(
+                                                    "p-4 rounded-2xl shadow-sm relative group transition-all",
+                                                    isCurrentUser
+                                                        ? "bg-primary text-primary-foreground rounded-tr-none"
+                                                        : "bg-card border border-border rounded-tl-none hover:bg-muted/50 text-foreground"
+                                                )}>
+                                                    <p className="text-sm leading-relaxed whitespace-pre-wrap">{note.content}</p>
+
+                                                    {/* Actions Overlay */}
+                                                    <div className={cn(
+                                                        "absolute -top-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity",
+                                                        isCurrentUser ? "-left-16" : "-right-16"
+                                                    )}>
+                                                        {isCurrentUser && (
+                                                            <Button
+                                                                variant="secondary"
+                                                                size="icon"
+                                                                className="h-7 w-7 rounded-full shadow-md bg-card border border-border text-primary hover:bg-primary/10"
+                                                                onClick={() => setEditingItem(note)}
+                                                            >
+                                                                <Pencil className="h-3 w-3" />
+                                                            </Button>
+                                                        )}
+                                                        {(session?.user?.role === 'ADMIN' || isCurrentUser) && (
+                                                            <Button
+                                                                variant="secondary"
+                                                                size="icon"
+                                                                className="h-7 w-7 rounded-full shadow-md bg-card border border-border text-red-500 hover:bg-red-50"
+                                                                onClick={() => handleDeleteActivity(note.id)}
+                                                            >
+                                                                <Trash2 className="h-3 w-3" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <p className="text-sm text-foreground/80 leading-relaxed">{note.content}</p>
-                                        </div>
-                                    ))
+                                        );
+                                    })
                             ) : (
-                                <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
-                                    <MessageSquare className="h-10 w-10 mb-2 opacity-20" />
-                                    <p className="text-sm italic">No notes added yet</p>
+                                <div className="flex flex-col items-center justify-center h-full text-muted-foreground pb-12">
+                                    <div className="w-20 h-20 rounded-full bg-muted/20 flex items-center justify-center mb-4">
+                                        <MessageSquare className="h-10 w-10 opacity-20" />
+                                    </div>
+                                    <h4 className="font-bold text-foreground">No notes yet</h4>
+                                    <p className="text-sm italic">Start the conversation by adding a private note below.</p>
                                 </div>
                             )}
                         </div>
-                        <div className="p-4 border-t border-border bg-card">
+                        <div className="p-6 border-t border-border bg-card">
                             <form onSubmit={(e: any) => {
                                 e.preventDefault();
                                 const content = e.target.note.value;
-                                if (content) {
+                                if (content.trim()) {
                                     handleLogActivity('NOTE', content);
                                     e.target.reset();
                                 }
-                            }} className="flex gap-2">
-                                <textarea
-                                    name="note"
-                                    placeholder="Add a private note..."
-                                    className="flex-1 bg-muted/30 border border-border rounded-2xl p-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none h-12 transition-all focus:bg-background"
-                                />
-                                <Button type="submit" className="rounded-2xl h-12 w-12 bg-primary hover:bg-primary/90 shadow-sm" size="icon">
-                                    <Plus className="h-5 w-5 text-white" />
+                            }} className="flex items-end gap-3">
+                                <div className="flex-1 relative">
+                                    <textarea
+                                        name="note"
+                                        placeholder="Type an internal note..."
+                                        rows={1}
+                                        onInput={(e: any) => {
+                                            e.target.style.height = 'auto';
+                                            e.target.style.height = Math.min(e.target.scrollHeight, 150) + 'px';
+                                        }}
+                                        className="w-full bg-muted/30 border border-border rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none min-h-[56px] transition-all focus:bg-background pr-12"
+                                    />
+                                    <div className="absolute right-4 bottom-4 text-[10px] font-bold text-muted-foreground/30 pointer-events-none uppercase tracking-widest">
+                                        Private
+                                    </div>
+                                </div>
+                                <Button type="submit" disabled={isLogging} className="rounded-2xl h-14 w-14 bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 shrink-0" size="icon">
+                                    {isLogging ? <Loader2 className="h-6 w-6 text-white animate-spin" /> : <Plus className="h-6 w-6 text-white" />}
                                 </Button>
                             </form>
+                            <p className="text-[10px] text-muted-foreground text-center mt-3 font-medium opacity-50">
+                                Notes are only visible to authorized team members and are not shared with students.
+                            </p>
                         </div>
                     </div>
                 )}

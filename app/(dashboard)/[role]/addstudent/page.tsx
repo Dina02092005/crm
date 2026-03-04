@@ -212,7 +212,8 @@ export default function AddStudentPage() {
                 toast.success("Student created successfully");
                 router.push(prefixPath("/students"));
             } catch (error: any) {
-                toast.error(error.response?.data?.message || "Failed to add student");
+                const errorMessage = error.response?.data?.error || error.response?.data?.message || "Failed to add student";
+                toast.error(errorMessage);
             }
         },
     });
@@ -253,16 +254,16 @@ export default function AddStudentPage() {
             >
                 <Tabs defaultValue="personal" className="w-full">
                     <TabsList className="grid w-full grid-cols-4 h-16 bg-card border border-border rounded-2xl p-1 gap-2 sticky top-[72px] z-10 shadow-sm">
-                        <TabsTrigger value="personal" className="rounded-xl data-[state=active]:bg-teal-600 data-[state=active]:text-white transition-all text-muted-foreground font-bold flex items-center gap-2">
+                        <TabsTrigger value="personal" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white transition-all text-muted-foreground font-bold flex items-center gap-2">
                             <User className="h-4 w-4" /> Personal Details
                         </TabsTrigger>
-                        <TabsTrigger value="academic" className="rounded-xl data-[state=active]:bg-teal-600 data-[state=active]:text-white transition-all text-muted-foreground font-bold flex items-center gap-2">
+                        <TabsTrigger value="academic" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white transition-all text-muted-foreground font-bold flex items-center gap-2">
                             <GraduationCap className="h-4 w-4" /> Academic Details
                         </TabsTrigger>
-                        <TabsTrigger value="proficiency" className="rounded-xl data-[state=active]:bg-teal-600 data-[state=active]:text-white transition-all text-muted-foreground font-bold flex items-center gap-2">
+                        <TabsTrigger value="proficiency" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white transition-all text-muted-foreground font-bold flex items-center gap-2">
                             <ClipboardList className="h-4 w-4" /> Proficiency Test
                         </TabsTrigger>
-                        <TabsTrigger value="work" className="rounded-xl data-[state=active]:bg-teal-600 data-[state=active]:text-white transition-all text-muted-foreground font-bold flex items-center gap-2">
+                        <TabsTrigger value="work" className="rounded-xl data-[state=active]:bg-primary data-[state=active]:text-white transition-all text-muted-foreground font-bold flex items-center gap-2">
                             <Briefcase className="h-4 w-4" /> Work Experience
                         </TabsTrigger>
                     </TabsList>
@@ -678,12 +679,12 @@ export default function AddStudentPage() {
 
                         <div className="flex justify-end pt-4 pb-12">
                             <form.Subscribe
-                                selector={(state) => [state.canSubmit, state.isSubmitting]}
-                                children={([canSubmit, isSubmitting]) => (
+                                selector={(state) => [state.isSubmitting]}
+                                children={([isSubmitting]) => (
                                     <Button
                                         type="submit"
-                                        disabled={!canSubmit || isSubmitting}
-                                        className="w-full md:w-64 bg-teal-600 hover:bg-teal-700 text-white rounded-xl h-12 font-bold text-base shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                                        disabled={isSubmitting}
+                                        className="w-full md:w-64 bg-primary hover:bg-primary/90 text-white rounded-xl h-12 font-bold text-base shadow-lg transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                                     >
                                         <Save className="h-5 w-5" />
                                         {isSubmitting ? "Saving..." : "Create Student"}

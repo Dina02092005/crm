@@ -19,6 +19,11 @@ export type PrismaPromise<T> = $Public.PrismaPromise<T>
  */
 export type User = $Result.DefaultSelection<Prisma.$UserPayload>
 /**
+ * Model Note
+ * 
+ */
+export type Note = $Result.DefaultSelection<Prisma.$NotePayload>
+/**
  * Model Notification
  * 
  */
@@ -557,6 +562,16 @@ export class PrismaClient<
     * ```
     */
   get user(): Prisma.UserDelegate<ExtArgs>;
+
+  /**
+   * `prisma.note`: Exposes CRUD operations for the **Note** model.
+    * Example usage:
+    * ```ts
+    * // Fetch zero or more Notes
+    * const notes = await prisma.note.findMany()
+    * ```
+    */
+  get note(): Prisma.NoteDelegate<ExtArgs>;
 
   /**
    * `prisma.notification`: Exposes CRUD operations for the **Notification** model.
@@ -1299,6 +1314,7 @@ export namespace Prisma {
 
   export const ModelName: {
     User: 'User',
+    Note: 'Note',
     Notification: 'Notification',
     AgentProfile: 'AgentProfile',
     CounselorProfile: 'CounselorProfile',
@@ -1344,7 +1360,7 @@ export namespace Prisma {
 
   export type TypeMap<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs, ClientOptions = {}> = {
     meta: {
-      modelProps: "user" | "notification" | "agentProfile" | "counselorProfile" | "employeeProfile" | "lead" | "followUp" | "appointment" | "leadAssignment" | "leadActivity" | "leadTask" | "reminder" | "leadDocument" | "student" | "studentDocument" | "auditLog" | "website" | "qualification" | "country" | "university" | "applicationChecklist" | "academicDetail" | "workExperience" | "course" | "courseIntake" | "universityApplication" | "applicationNote" | "visaApplication" | "userRole" | "rolePermission" | "callLog"
+      modelProps: "user" | "note" | "notification" | "agentProfile" | "counselorProfile" | "employeeProfile" | "lead" | "followUp" | "appointment" | "leadAssignment" | "leadActivity" | "leadTask" | "reminder" | "leadDocument" | "student" | "studentDocument" | "auditLog" | "website" | "qualification" | "country" | "university" | "applicationChecklist" | "academicDetail" | "workExperience" | "course" | "courseIntake" | "universityApplication" | "applicationNote" | "visaApplication" | "userRole" | "rolePermission" | "callLog"
       txIsolationLevel: Prisma.TransactionIsolationLevel
     }
     model: {
@@ -1415,6 +1431,76 @@ export namespace Prisma {
           count: {
             args: Prisma.UserCountArgs<ExtArgs>
             result: $Utils.Optional<UserCountAggregateOutputType> | number
+          }
+        }
+      }
+      Note: {
+        payload: Prisma.$NotePayload<ExtArgs>
+        fields: Prisma.NoteFieldRefs
+        operations: {
+          findUnique: {
+            args: Prisma.NoteFindUniqueArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotePayload> | null
+          }
+          findUniqueOrThrow: {
+            args: Prisma.NoteFindUniqueOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotePayload>
+          }
+          findFirst: {
+            args: Prisma.NoteFindFirstArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotePayload> | null
+          }
+          findFirstOrThrow: {
+            args: Prisma.NoteFindFirstOrThrowArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotePayload>
+          }
+          findMany: {
+            args: Prisma.NoteFindManyArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotePayload>[]
+          }
+          create: {
+            args: Prisma.NoteCreateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotePayload>
+          }
+          createMany: {
+            args: Prisma.NoteCreateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          createManyAndReturn: {
+            args: Prisma.NoteCreateManyAndReturnArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotePayload>[]
+          }
+          delete: {
+            args: Prisma.NoteDeleteArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotePayload>
+          }
+          update: {
+            args: Prisma.NoteUpdateArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotePayload>
+          }
+          deleteMany: {
+            args: Prisma.NoteDeleteManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          updateMany: {
+            args: Prisma.NoteUpdateManyArgs<ExtArgs>
+            result: BatchPayload
+          }
+          upsert: {
+            args: Prisma.NoteUpsertArgs<ExtArgs>
+            result: $Utils.PayloadToResult<Prisma.$NotePayload>
+          }
+          aggregate: {
+            args: Prisma.NoteAggregateArgs<ExtArgs>
+            result: $Utils.Optional<AggregateNote>
+          }
+          groupBy: {
+            args: Prisma.NoteGroupByArgs<ExtArgs>
+            result: $Utils.Optional<NoteGroupByOutputType>[]
+          }
+          count: {
+            args: Prisma.NoteCountArgs<ExtArgs>
+            result: $Utils.Optional<NoteCountAggregateOutputType> | number
           }
         }
       }
@@ -3703,6 +3789,7 @@ export namespace Prisma {
     agentVisaApps: number
     counselorVisaApps: number
     callLogs: number
+    notes: number
   }
 
   export type UserCountOutputTypeSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -3730,6 +3817,7 @@ export namespace Prisma {
     agentVisaApps?: boolean | UserCountOutputTypeCountAgentVisaAppsArgs
     counselorVisaApps?: boolean | UserCountOutputTypeCountCounselorVisaAppsArgs
     callLogs?: boolean | UserCountOutputTypeCountCallLogsArgs
+    notes?: boolean | UserCountOutputTypeCountNotesArgs
   }
 
   // Custom InputTypes
@@ -3909,6 +3997,13 @@ export namespace Prisma {
    */
   export type UserCountOutputTypeCountCallLogsArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
     where?: CallLogWhereInput
+  }
+
+  /**
+   * UserCountOutputType without action
+   */
+  export type UserCountOutputTypeCountNotesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: NoteWhereInput
   }
 
 
@@ -4651,6 +4746,7 @@ export namespace Prisma {
     agentVisaApps?: boolean | User$agentVisaAppsArgs<ExtArgs>
     counselorVisaApps?: boolean | User$counselorVisaAppsArgs<ExtArgs>
     callLogs?: boolean | User$callLogsArgs<ExtArgs>
+    notes?: boolean | User$notesArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["user"]>
 
@@ -4718,6 +4814,7 @@ export namespace Prisma {
     agentVisaApps?: boolean | User$agentVisaAppsArgs<ExtArgs>
     counselorVisaApps?: boolean | User$counselorVisaAppsArgs<ExtArgs>
     callLogs?: boolean | User$callLogsArgs<ExtArgs>
+    notes?: boolean | User$notesArgs<ExtArgs>
     _count?: boolean | UserCountOutputTypeDefaultArgs<ExtArgs>
   }
   export type UserIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -4757,6 +4854,7 @@ export namespace Prisma {
       agentVisaApps: Prisma.$VisaApplicationPayload<ExtArgs>[]
       counselorVisaApps: Prisma.$VisaApplicationPayload<ExtArgs>[]
       callLogs: Prisma.$CallLogPayload<ExtArgs>[]
+      notes: Prisma.$NotePayload<ExtArgs>[]
     }
     scalars: $Extensions.GetPayloadResult<{
       id: string
@@ -5166,6 +5264,7 @@ export namespace Prisma {
     agentVisaApps<T extends User$agentVisaAppsArgs<ExtArgs> = {}>(args?: Subset<T, User$agentVisaAppsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$VisaApplicationPayload<ExtArgs>, T, "findMany"> | Null>
     counselorVisaApps<T extends User$counselorVisaAppsArgs<ExtArgs> = {}>(args?: Subset<T, User$counselorVisaAppsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$VisaApplicationPayload<ExtArgs>, T, "findMany"> | Null>
     callLogs<T extends User$callLogsArgs<ExtArgs> = {}>(args?: Subset<T, User$callLogsArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$CallLogPayload<ExtArgs>, T, "findMany"> | Null>
+    notes<T extends User$notesArgs<ExtArgs> = {}>(args?: Subset<T, User$notesArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotePayload<ExtArgs>, T, "findMany"> | Null>
     /**
      * Attaches callbacks for the resolution and/or rejection of the Promise.
      * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -6096,6 +6195,26 @@ export namespace Prisma {
   }
 
   /**
+   * User.notes
+   */
+  export type User$notesArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Note
+     */
+    select?: NoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteInclude<ExtArgs> | null
+    where?: NoteWhereInput
+    orderBy?: NoteOrderByWithRelationInput | NoteOrderByWithRelationInput[]
+    cursor?: NoteWhereUniqueInput
+    take?: number
+    skip?: number
+    distinct?: NoteScalarFieldEnum | NoteScalarFieldEnum[]
+  }
+
+  /**
    * User without action
    */
   export type UserDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -6107,6 +6226,951 @@ export namespace Prisma {
      * Choose, which related nodes to fetch as well
      */
     include?: UserInclude<ExtArgs> | null
+  }
+
+
+  /**
+   * Model Note
+   */
+
+  export type AggregateNote = {
+    _count: NoteCountAggregateOutputType | null
+    _min: NoteMinAggregateOutputType | null
+    _max: NoteMaxAggregateOutputType | null
+  }
+
+  export type NoteMinAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    title: string | null
+    content: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type NoteMaxAggregateOutputType = {
+    id: string | null
+    userId: string | null
+    title: string | null
+    content: string | null
+    createdAt: Date | null
+    updatedAt: Date | null
+  }
+
+  export type NoteCountAggregateOutputType = {
+    id: number
+    userId: number
+    title: number
+    content: number
+    createdAt: number
+    updatedAt: number
+    _all: number
+  }
+
+
+  export type NoteMinAggregateInputType = {
+    id?: true
+    userId?: true
+    title?: true
+    content?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type NoteMaxAggregateInputType = {
+    id?: true
+    userId?: true
+    title?: true
+    content?: true
+    createdAt?: true
+    updatedAt?: true
+  }
+
+  export type NoteCountAggregateInputType = {
+    id?: true
+    userId?: true
+    title?: true
+    content?: true
+    createdAt?: true
+    updatedAt?: true
+    _all?: true
+  }
+
+  export type NoteAggregateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Note to aggregate.
+     */
+    where?: NoteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Notes to fetch.
+     */
+    orderBy?: NoteOrderByWithRelationInput | NoteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the start position
+     */
+    cursor?: NoteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Notes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Notes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Count returned Notes
+    **/
+    _count?: true | NoteCountAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the minimum value
+    **/
+    _min?: NoteMinAggregateInputType
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/aggregations Aggregation Docs}
+     * 
+     * Select which fields to find the maximum value
+    **/
+    _max?: NoteMaxAggregateInputType
+  }
+
+  export type GetNoteAggregateType<T extends NoteAggregateArgs> = {
+        [P in keyof T & keyof AggregateNote]: P extends '_count' | 'count'
+      ? T[P] extends true
+        ? number
+        : GetScalarType<T[P], AggregateNote[P]>
+      : GetScalarType<T[P], AggregateNote[P]>
+  }
+
+
+
+
+  export type NoteGroupByArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    where?: NoteWhereInput
+    orderBy?: NoteOrderByWithAggregationInput | NoteOrderByWithAggregationInput[]
+    by: NoteScalarFieldEnum[] | NoteScalarFieldEnum
+    having?: NoteScalarWhereWithAggregatesInput
+    take?: number
+    skip?: number
+    _count?: NoteCountAggregateInputType | true
+    _min?: NoteMinAggregateInputType
+    _max?: NoteMaxAggregateInputType
+  }
+
+  export type NoteGroupByOutputType = {
+    id: string
+    userId: string
+    title: string | null
+    content: string
+    createdAt: Date
+    updatedAt: Date
+    _count: NoteCountAggregateOutputType | null
+    _min: NoteMinAggregateOutputType | null
+    _max: NoteMaxAggregateOutputType | null
+  }
+
+  type GetNoteGroupByPayload<T extends NoteGroupByArgs> = Prisma.PrismaPromise<
+    Array<
+      PickEnumerable<NoteGroupByOutputType, T['by']> &
+        {
+          [P in ((keyof T) & (keyof NoteGroupByOutputType))]: P extends '_count'
+            ? T[P] extends boolean
+              ? number
+              : GetScalarType<T[P], NoteGroupByOutputType[P]>
+            : GetScalarType<T[P], NoteGroupByOutputType[P]>
+        }
+      >
+    >
+
+
+  export type NoteSelect<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    title?: boolean
+    content?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["note"]>
+
+  export type NoteSelectCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = $Extensions.GetSelect<{
+    id?: boolean
+    userId?: boolean
+    title?: boolean
+    content?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }, ExtArgs["result"]["note"]>
+
+  export type NoteSelectScalar = {
+    id?: boolean
+    userId?: boolean
+    title?: boolean
+    content?: boolean
+    createdAt?: boolean
+    updatedAt?: boolean
+  }
+
+  export type NoteInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+  export type NoteIncludeCreateManyAndReturn<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    user?: boolean | UserDefaultArgs<ExtArgs>
+  }
+
+  export type $NotePayload<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    name: "Note"
+    objects: {
+      user: Prisma.$UserPayload<ExtArgs>
+    }
+    scalars: $Extensions.GetPayloadResult<{
+      id: string
+      userId: string
+      title: string | null
+      content: string
+      createdAt: Date
+      updatedAt: Date
+    }, ExtArgs["result"]["note"]>
+    composites: {}
+  }
+
+  type NoteGetPayload<S extends boolean | null | undefined | NoteDefaultArgs> = $Result.GetResult<Prisma.$NotePayload, S>
+
+  type NoteCountArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = 
+    Omit<NoteFindManyArgs, 'select' | 'include' | 'distinct'> & {
+      select?: NoteCountAggregateInputType | true
+    }
+
+  export interface NoteDelegate<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> {
+    [K: symbol]: { types: Prisma.TypeMap<ExtArgs>['model']['Note'], meta: { name: 'Note' } }
+    /**
+     * Find zero or one Note that matches the filter.
+     * @param {NoteFindUniqueArgs} args - Arguments to find a Note
+     * @example
+     * // Get one Note
+     * const note = await prisma.note.findUnique({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUnique<T extends NoteFindUniqueArgs>(args: SelectSubset<T, NoteFindUniqueArgs<ExtArgs>>): Prisma__NoteClient<$Result.GetResult<Prisma.$NotePayload<ExtArgs>, T, "findUnique"> | null, null, ExtArgs>
+
+    /**
+     * Find one Note that matches the filter or throw an error with `error.code='P2025'` 
+     * if no matches were found.
+     * @param {NoteFindUniqueOrThrowArgs} args - Arguments to find a Note
+     * @example
+     * // Get one Note
+     * const note = await prisma.note.findUniqueOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findUniqueOrThrow<T extends NoteFindUniqueOrThrowArgs>(args: SelectSubset<T, NoteFindUniqueOrThrowArgs<ExtArgs>>): Prisma__NoteClient<$Result.GetResult<Prisma.$NotePayload<ExtArgs>, T, "findUniqueOrThrow">, never, ExtArgs>
+
+    /**
+     * Find the first Note that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoteFindFirstArgs} args - Arguments to find a Note
+     * @example
+     * // Get one Note
+     * const note = await prisma.note.findFirst({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirst<T extends NoteFindFirstArgs>(args?: SelectSubset<T, NoteFindFirstArgs<ExtArgs>>): Prisma__NoteClient<$Result.GetResult<Prisma.$NotePayload<ExtArgs>, T, "findFirst"> | null, null, ExtArgs>
+
+    /**
+     * Find the first Note that matches the filter or
+     * throw `PrismaKnownClientError` with `P2025` code if no matches were found.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoteFindFirstOrThrowArgs} args - Arguments to find a Note
+     * @example
+     * // Get one Note
+     * const note = await prisma.note.findFirstOrThrow({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     */
+    findFirstOrThrow<T extends NoteFindFirstOrThrowArgs>(args?: SelectSubset<T, NoteFindFirstOrThrowArgs<ExtArgs>>): Prisma__NoteClient<$Result.GetResult<Prisma.$NotePayload<ExtArgs>, T, "findFirstOrThrow">, never, ExtArgs>
+
+    /**
+     * Find zero or more Notes that matches the filter.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoteFindManyArgs} args - Arguments to filter and select certain fields only.
+     * @example
+     * // Get all Notes
+     * const notes = await prisma.note.findMany()
+     * 
+     * // Get first 10 Notes
+     * const notes = await prisma.note.findMany({ take: 10 })
+     * 
+     * // Only select the `id`
+     * const noteWithIdOnly = await prisma.note.findMany({ select: { id: true } })
+     * 
+     */
+    findMany<T extends NoteFindManyArgs>(args?: SelectSubset<T, NoteFindManyArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotePayload<ExtArgs>, T, "findMany">>
+
+    /**
+     * Create a Note.
+     * @param {NoteCreateArgs} args - Arguments to create a Note.
+     * @example
+     * // Create one Note
+     * const Note = await prisma.note.create({
+     *   data: {
+     *     // ... data to create a Note
+     *   }
+     * })
+     * 
+     */
+    create<T extends NoteCreateArgs>(args: SelectSubset<T, NoteCreateArgs<ExtArgs>>): Prisma__NoteClient<$Result.GetResult<Prisma.$NotePayload<ExtArgs>, T, "create">, never, ExtArgs>
+
+    /**
+     * Create many Notes.
+     * @param {NoteCreateManyArgs} args - Arguments to create many Notes.
+     * @example
+     * // Create many Notes
+     * const note = await prisma.note.createMany({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     *     
+     */
+    createMany<T extends NoteCreateManyArgs>(args?: SelectSubset<T, NoteCreateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create many Notes and returns the data saved in the database.
+     * @param {NoteCreateManyAndReturnArgs} args - Arguments to create many Notes.
+     * @example
+     * // Create many Notes
+     * const note = await prisma.note.createManyAndReturn({
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * 
+     * // Create many Notes and only return the `id`
+     * const noteWithIdOnly = await prisma.note.createManyAndReturn({ 
+     *   select: { id: true },
+     *   data: [
+     *     // ... provide data here
+     *   ]
+     * })
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * 
+     */
+    createManyAndReturn<T extends NoteCreateManyAndReturnArgs>(args?: SelectSubset<T, NoteCreateManyAndReturnArgs<ExtArgs>>): Prisma.PrismaPromise<$Result.GetResult<Prisma.$NotePayload<ExtArgs>, T, "createManyAndReturn">>
+
+    /**
+     * Delete a Note.
+     * @param {NoteDeleteArgs} args - Arguments to delete one Note.
+     * @example
+     * // Delete one Note
+     * const Note = await prisma.note.delete({
+     *   where: {
+     *     // ... filter to delete one Note
+     *   }
+     * })
+     * 
+     */
+    delete<T extends NoteDeleteArgs>(args: SelectSubset<T, NoteDeleteArgs<ExtArgs>>): Prisma__NoteClient<$Result.GetResult<Prisma.$NotePayload<ExtArgs>, T, "delete">, never, ExtArgs>
+
+    /**
+     * Update one Note.
+     * @param {NoteUpdateArgs} args - Arguments to update one Note.
+     * @example
+     * // Update one Note
+     * const note = await prisma.note.update({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    update<T extends NoteUpdateArgs>(args: SelectSubset<T, NoteUpdateArgs<ExtArgs>>): Prisma__NoteClient<$Result.GetResult<Prisma.$NotePayload<ExtArgs>, T, "update">, never, ExtArgs>
+
+    /**
+     * Delete zero or more Notes.
+     * @param {NoteDeleteManyArgs} args - Arguments to filter Notes to delete.
+     * @example
+     * // Delete a few Notes
+     * const { count } = await prisma.note.deleteMany({
+     *   where: {
+     *     // ... provide filter here
+     *   }
+     * })
+     * 
+     */
+    deleteMany<T extends NoteDeleteManyArgs>(args?: SelectSubset<T, NoteDeleteManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Update zero or more Notes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoteUpdateManyArgs} args - Arguments to update one or more rows.
+     * @example
+     * // Update many Notes
+     * const note = await prisma.note.updateMany({
+     *   where: {
+     *     // ... provide filter here
+     *   },
+     *   data: {
+     *     // ... provide data here
+     *   }
+     * })
+     * 
+     */
+    updateMany<T extends NoteUpdateManyArgs>(args: SelectSubset<T, NoteUpdateManyArgs<ExtArgs>>): Prisma.PrismaPromise<BatchPayload>
+
+    /**
+     * Create or update one Note.
+     * @param {NoteUpsertArgs} args - Arguments to update or create a Note.
+     * @example
+     * // Update or create a Note
+     * const note = await prisma.note.upsert({
+     *   create: {
+     *     // ... data to create a Note
+     *   },
+     *   update: {
+     *     // ... in case it already exists, update
+     *   },
+     *   where: {
+     *     // ... the filter for the Note we want to update
+     *   }
+     * })
+     */
+    upsert<T extends NoteUpsertArgs>(args: SelectSubset<T, NoteUpsertArgs<ExtArgs>>): Prisma__NoteClient<$Result.GetResult<Prisma.$NotePayload<ExtArgs>, T, "upsert">, never, ExtArgs>
+
+
+    /**
+     * Count the number of Notes.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoteCountArgs} args - Arguments to filter Notes to count.
+     * @example
+     * // Count the number of Notes
+     * const count = await prisma.note.count({
+     *   where: {
+     *     // ... the filter for the Notes we want to count
+     *   }
+     * })
+    **/
+    count<T extends NoteCountArgs>(
+      args?: Subset<T, NoteCountArgs>,
+    ): Prisma.PrismaPromise<
+      T extends $Utils.Record<'select', any>
+        ? T['select'] extends true
+          ? number
+          : GetScalarType<T['select'], NoteCountAggregateOutputType>
+        : number
+    >
+
+    /**
+     * Allows you to perform aggregations operations on a Note.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoteAggregateArgs} args - Select which aggregations you would like to apply and on what fields.
+     * @example
+     * // Ordered by age ascending
+     * // Where email contains prisma.io
+     * // Limited to the 10 users
+     * const aggregations = await prisma.user.aggregate({
+     *   _avg: {
+     *     age: true,
+     *   },
+     *   where: {
+     *     email: {
+     *       contains: "prisma.io",
+     *     },
+     *   },
+     *   orderBy: {
+     *     age: "asc",
+     *   },
+     *   take: 10,
+     * })
+    **/
+    aggregate<T extends NoteAggregateArgs>(args: Subset<T, NoteAggregateArgs>): Prisma.PrismaPromise<GetNoteAggregateType<T>>
+
+    /**
+     * Group by Note.
+     * Note, that providing `undefined` is treated as the value not being there.
+     * Read more here: https://pris.ly/d/null-undefined
+     * @param {NoteGroupByArgs} args - Group by arguments.
+     * @example
+     * // Group by city, order by createdAt, get count
+     * const result = await prisma.user.groupBy({
+     *   by: ['city', 'createdAt'],
+     *   orderBy: {
+     *     createdAt: true
+     *   },
+     *   _count: {
+     *     _all: true
+     *   },
+     * })
+     * 
+    **/
+    groupBy<
+      T extends NoteGroupByArgs,
+      HasSelectOrTake extends Or<
+        Extends<'skip', Keys<T>>,
+        Extends<'take', Keys<T>>
+      >,
+      OrderByArg extends True extends HasSelectOrTake
+        ? { orderBy: NoteGroupByArgs['orderBy'] }
+        : { orderBy?: NoteGroupByArgs['orderBy'] },
+      OrderFields extends ExcludeUnderscoreKeys<Keys<MaybeTupleToUnion<T['orderBy']>>>,
+      ByFields extends MaybeTupleToUnion<T['by']>,
+      ByValid extends Has<ByFields, OrderFields>,
+      HavingFields extends GetHavingFields<T['having']>,
+      HavingValid extends Has<ByFields, HavingFields>,
+      ByEmpty extends T['by'] extends never[] ? True : False,
+      InputErrors extends ByEmpty extends True
+      ? `Error: "by" must not be empty.`
+      : HavingValid extends False
+      ? {
+          [P in HavingFields]: P extends ByFields
+            ? never
+            : P extends string
+            ? `Error: Field "${P}" used in "having" needs to be provided in "by".`
+            : [
+                Error,
+                'Field ',
+                P,
+                ` in "having" needs to be provided in "by"`,
+              ]
+        }[HavingFields]
+      : 'take' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "take", you also need to provide "orderBy"'
+      : 'skip' extends Keys<T>
+      ? 'orderBy' extends Keys<T>
+        ? ByValid extends True
+          ? {}
+          : {
+              [P in OrderFields]: P extends ByFields
+                ? never
+                : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+            }[OrderFields]
+        : 'Error: If you provide "skip", you also need to provide "orderBy"'
+      : ByValid extends True
+      ? {}
+      : {
+          [P in OrderFields]: P extends ByFields
+            ? never
+            : `Error: Field "${P}" in "orderBy" needs to be provided in "by"`
+        }[OrderFields]
+    >(args: SubsetIntersection<T, NoteGroupByArgs, OrderByArg> & InputErrors): {} extends InputErrors ? GetNoteGroupByPayload<T> : Prisma.PrismaPromise<InputErrors>
+  /**
+   * Fields of the Note model
+   */
+  readonly fields: NoteFieldRefs;
+  }
+
+  /**
+   * The delegate class that acts as a "Promise-like" for Note.
+   * Why is this prefixed with `Prisma__`?
+   * Because we want to prevent naming conflicts as mentioned in
+   * https://github.com/prisma/prisma-client-js/issues/707
+   */
+  export interface Prisma__NoteClient<T, Null = never, ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> extends Prisma.PrismaPromise<T> {
+    readonly [Symbol.toStringTag]: "PrismaPromise"
+    user<T extends UserDefaultArgs<ExtArgs> = {}>(args?: Subset<T, UserDefaultArgs<ExtArgs>>): Prisma__UserClient<$Result.GetResult<Prisma.$UserPayload<ExtArgs>, T, "findUniqueOrThrow"> | Null, Null, ExtArgs>
+    /**
+     * Attaches callbacks for the resolution and/or rejection of the Promise.
+     * @param onfulfilled The callback to execute when the Promise is resolved.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of which ever callback is executed.
+     */
+    then<TResult1 = T, TResult2 = never>(onfulfilled?: ((value: T) => TResult1 | PromiseLike<TResult1>) | undefined | null, onrejected?: ((reason: any) => TResult2 | PromiseLike<TResult2>) | undefined | null): $Utils.JsPromise<TResult1 | TResult2>
+    /**
+     * Attaches a callback for only the rejection of the Promise.
+     * @param onrejected The callback to execute when the Promise is rejected.
+     * @returns A Promise for the completion of the callback.
+     */
+    catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | undefined | null): $Utils.JsPromise<T | TResult>
+    /**
+     * Attaches a callback that is invoked when the Promise is settled (fulfilled or rejected). The
+     * resolved value cannot be modified from the callback.
+     * @param onfinally The callback to execute when the Promise is settled (fulfilled or rejected).
+     * @returns A Promise for the completion of the callback.
+     */
+    finally(onfinally?: (() => void) | undefined | null): $Utils.JsPromise<T>
+  }
+
+
+
+
+  /**
+   * Fields of the Note model
+   */ 
+  interface NoteFieldRefs {
+    readonly id: FieldRef<"Note", 'String'>
+    readonly userId: FieldRef<"Note", 'String'>
+    readonly title: FieldRef<"Note", 'String'>
+    readonly content: FieldRef<"Note", 'String'>
+    readonly createdAt: FieldRef<"Note", 'DateTime'>
+    readonly updatedAt: FieldRef<"Note", 'DateTime'>
+  }
+    
+
+  // Custom InputTypes
+  /**
+   * Note findUnique
+   */
+  export type NoteFindUniqueArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Note
+     */
+    select?: NoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteInclude<ExtArgs> | null
+    /**
+     * Filter, which Note to fetch.
+     */
+    where: NoteWhereUniqueInput
+  }
+
+  /**
+   * Note findUniqueOrThrow
+   */
+  export type NoteFindUniqueOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Note
+     */
+    select?: NoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteInclude<ExtArgs> | null
+    /**
+     * Filter, which Note to fetch.
+     */
+    where: NoteWhereUniqueInput
+  }
+
+  /**
+   * Note findFirst
+   */
+  export type NoteFindFirstArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Note
+     */
+    select?: NoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteInclude<ExtArgs> | null
+    /**
+     * Filter, which Note to fetch.
+     */
+    where?: NoteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Notes to fetch.
+     */
+    orderBy?: NoteOrderByWithRelationInput | NoteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Notes.
+     */
+    cursor?: NoteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Notes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Notes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Notes.
+     */
+    distinct?: NoteScalarFieldEnum | NoteScalarFieldEnum[]
+  }
+
+  /**
+   * Note findFirstOrThrow
+   */
+  export type NoteFindFirstOrThrowArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Note
+     */
+    select?: NoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteInclude<ExtArgs> | null
+    /**
+     * Filter, which Note to fetch.
+     */
+    where?: NoteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Notes to fetch.
+     */
+    orderBy?: NoteOrderByWithRelationInput | NoteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for searching for Notes.
+     */
+    cursor?: NoteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Notes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Notes.
+     */
+    skip?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/distinct Distinct Docs}
+     * 
+     * Filter by unique combinations of Notes.
+     */
+    distinct?: NoteScalarFieldEnum | NoteScalarFieldEnum[]
+  }
+
+  /**
+   * Note findMany
+   */
+  export type NoteFindManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Note
+     */
+    select?: NoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteInclude<ExtArgs> | null
+    /**
+     * Filter, which Notes to fetch.
+     */
+    where?: NoteWhereInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/sorting Sorting Docs}
+     * 
+     * Determine the order of Notes to fetch.
+     */
+    orderBy?: NoteOrderByWithRelationInput | NoteOrderByWithRelationInput[]
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination#cursor-based-pagination Cursor Docs}
+     * 
+     * Sets the position for listing Notes.
+     */
+    cursor?: NoteWhereUniqueInput
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Take `±n` Notes from the position of the cursor.
+     */
+    take?: number
+    /**
+     * {@link https://www.prisma.io/docs/concepts/components/prisma-client/pagination Pagination Docs}
+     * 
+     * Skip the first `n` Notes.
+     */
+    skip?: number
+    distinct?: NoteScalarFieldEnum | NoteScalarFieldEnum[]
+  }
+
+  /**
+   * Note create
+   */
+  export type NoteCreateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Note
+     */
+    select?: NoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteInclude<ExtArgs> | null
+    /**
+     * The data needed to create a Note.
+     */
+    data: XOR<NoteCreateInput, NoteUncheckedCreateInput>
+  }
+
+  /**
+   * Note createMany
+   */
+  export type NoteCreateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to create many Notes.
+     */
+    data: NoteCreateManyInput | NoteCreateManyInput[]
+    skipDuplicates?: boolean
+  }
+
+  /**
+   * Note createManyAndReturn
+   */
+  export type NoteCreateManyAndReturnArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Note
+     */
+    select?: NoteSelectCreateManyAndReturn<ExtArgs> | null
+    /**
+     * The data used to create many Notes.
+     */
+    data: NoteCreateManyInput | NoteCreateManyInput[]
+    skipDuplicates?: boolean
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteIncludeCreateManyAndReturn<ExtArgs> | null
+  }
+
+  /**
+   * Note update
+   */
+  export type NoteUpdateArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Note
+     */
+    select?: NoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteInclude<ExtArgs> | null
+    /**
+     * The data needed to update a Note.
+     */
+    data: XOR<NoteUpdateInput, NoteUncheckedUpdateInput>
+    /**
+     * Choose, which Note to update.
+     */
+    where: NoteWhereUniqueInput
+  }
+
+  /**
+   * Note updateMany
+   */
+  export type NoteUpdateManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * The data used to update Notes.
+     */
+    data: XOR<NoteUpdateManyMutationInput, NoteUncheckedUpdateManyInput>
+    /**
+     * Filter which Notes to update
+     */
+    where?: NoteWhereInput
+  }
+
+  /**
+   * Note upsert
+   */
+  export type NoteUpsertArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Note
+     */
+    select?: NoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteInclude<ExtArgs> | null
+    /**
+     * The filter to search for the Note to update in case it exists.
+     */
+    where: NoteWhereUniqueInput
+    /**
+     * In case the Note found by the `where` argument doesn't exist, create a new Note with this data.
+     */
+    create: XOR<NoteCreateInput, NoteUncheckedCreateInput>
+    /**
+     * In case the Note was found with the provided `where` argument, update it with this data.
+     */
+    update: XOR<NoteUpdateInput, NoteUncheckedUpdateInput>
+  }
+
+  /**
+   * Note delete
+   */
+  export type NoteDeleteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Note
+     */
+    select?: NoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteInclude<ExtArgs> | null
+    /**
+     * Filter which Note to delete.
+     */
+    where: NoteWhereUniqueInput
+  }
+
+  /**
+   * Note deleteMany
+   */
+  export type NoteDeleteManyArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Filter which Notes to delete
+     */
+    where?: NoteWhereInput
+  }
+
+  /**
+   * Note without action
+   */
+  export type NoteDefaultArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
+    /**
+     * Select specific fields to fetch from the Note
+     */
+    select?: NoteSelect<ExtArgs> | null
+    /**
+     * Choose, which related nodes to fetch as well
+     */
+    include?: NoteInclude<ExtArgs> | null
   }
 
 
@@ -37320,6 +38384,18 @@ export namespace Prisma {
   export type UserScalarFieldEnum = (typeof UserScalarFieldEnum)[keyof typeof UserScalarFieldEnum]
 
 
+  export const NoteScalarFieldEnum: {
+    id: 'id',
+    userId: 'userId',
+    title: 'title',
+    content: 'content',
+    createdAt: 'createdAt',
+    updatedAt: 'updatedAt'
+  };
+
+  export type NoteScalarFieldEnum = (typeof NoteScalarFieldEnum)[keyof typeof NoteScalarFieldEnum]
+
+
   export const NotificationScalarFieldEnum: {
     id: 'id',
     userId: 'userId',
@@ -38165,6 +39241,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationListRelationFilter
     counselorVisaApps?: VisaApplicationListRelationFilter
     callLogs?: CallLogListRelationFilter
+    notes?: NoteListRelationFilter
   }
 
   export type UserOrderByWithRelationInput = {
@@ -38211,6 +39288,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationOrderByRelationAggregateInput
     counselorVisaApps?: VisaApplicationOrderByRelationAggregateInput
     callLogs?: CallLogOrderByRelationAggregateInput
+    notes?: NoteOrderByRelationAggregateInput
   }
 
   export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -38260,6 +39338,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationListRelationFilter
     counselorVisaApps?: VisaApplicationListRelationFilter
     callLogs?: CallLogListRelationFilter
+    notes?: NoteListRelationFilter
   }, "id" | "email">
 
   export type UserOrderByWithAggregationInput = {
@@ -38298,6 +39377,66 @@ export namespace Prisma {
     otpExpiresAt?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     emailVerified?: DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
     imageUrl?: StringNullableWithAggregatesFilter<"User"> | string | null
+  }
+
+  export type NoteWhereInput = {
+    AND?: NoteWhereInput | NoteWhereInput[]
+    OR?: NoteWhereInput[]
+    NOT?: NoteWhereInput | NoteWhereInput[]
+    id?: StringFilter<"Note"> | string
+    userId?: StringFilter<"Note"> | string
+    title?: StringNullableFilter<"Note"> | string | null
+    content?: StringFilter<"Note"> | string
+    createdAt?: DateTimeFilter<"Note"> | Date | string
+    updatedAt?: DateTimeFilter<"Note"> | Date | string
+    user?: XOR<UserRelationFilter, UserWhereInput>
+  }
+
+  export type NoteOrderByWithRelationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    title?: SortOrderInput | SortOrder
+    content?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    user?: UserOrderByWithRelationInput
+  }
+
+  export type NoteWhereUniqueInput = Prisma.AtLeast<{
+    id?: string
+    AND?: NoteWhereInput | NoteWhereInput[]
+    OR?: NoteWhereInput[]
+    NOT?: NoteWhereInput | NoteWhereInput[]
+    userId?: StringFilter<"Note"> | string
+    title?: StringNullableFilter<"Note"> | string | null
+    content?: StringFilter<"Note"> | string
+    createdAt?: DateTimeFilter<"Note"> | Date | string
+    updatedAt?: DateTimeFilter<"Note"> | Date | string
+    user?: XOR<UserRelationFilter, UserWhereInput>
+  }, "id">
+
+  export type NoteOrderByWithAggregationInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    title?: SortOrderInput | SortOrder
+    content?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+    _count?: NoteCountOrderByAggregateInput
+    _max?: NoteMaxOrderByAggregateInput
+    _min?: NoteMinOrderByAggregateInput
+  }
+
+  export type NoteScalarWhereWithAggregatesInput = {
+    AND?: NoteScalarWhereWithAggregatesInput | NoteScalarWhereWithAggregatesInput[]
+    OR?: NoteScalarWhereWithAggregatesInput[]
+    NOT?: NoteScalarWhereWithAggregatesInput | NoteScalarWhereWithAggregatesInput[]
+    id?: StringWithAggregatesFilter<"Note"> | string
+    userId?: StringWithAggregatesFilter<"Note"> | string
+    title?: StringNullableWithAggregatesFilter<"Note"> | string | null
+    content?: StringWithAggregatesFilter<"Note"> | string
+    createdAt?: DateTimeWithAggregatesFilter<"Note"> | Date | string
+    updatedAt?: DateTimeWithAggregatesFilter<"Note"> | Date | string
   }
 
   export type NotificationWhereInput = {
@@ -40955,6 +42094,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateInput = {
@@ -41000,6 +42140,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserUpdateInput = {
@@ -41045,6 +42186,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateInput = {
@@ -41090,6 +42232,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateManyInput = {
@@ -41137,6 +42280,68 @@ export namespace Prisma {
     otpExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
     imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type NoteCreateInput = {
+    id?: string
+    title?: string | null
+    content: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    user: UserCreateNestedOneWithoutNotesInput
+  }
+
+  export type NoteUncheckedCreateInput = {
+    id?: string
+    userId: string
+    title?: string | null
+    content: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type NoteUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: NullableStringFieldUpdateOperationsInput | string | null
+    content?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    user?: UserUpdateOneRequiredWithoutNotesNestedInput
+  }
+
+  export type NoteUncheckedUpdateInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    title?: NullableStringFieldUpdateOperationsInput | string | null
+    content?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NoteCreateManyInput = {
+    id?: string
+    userId: string
+    title?: string | null
+    content: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type NoteUpdateManyMutationInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: NullableStringFieldUpdateOperationsInput | string | null
+    content?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NoteUncheckedUpdateManyInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    userId?: StringFieldUpdateOperationsInput | string
+    title?: NullableStringFieldUpdateOperationsInput | string | null
+    content?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type NotificationCreateInput = {
@@ -44142,6 +45347,12 @@ export namespace Prisma {
     none?: CallLogWhereInput
   }
 
+  export type NoteListRelationFilter = {
+    every?: NoteWhereInput
+    some?: NoteWhereInput
+    none?: NoteWhereInput
+  }
+
   export type SortOrderInput = {
     sort: SortOrder
     nulls?: NullsOrder
@@ -44204,6 +45415,10 @@ export namespace Prisma {
   }
 
   export type CallLogOrderByRelationAggregateInput = {
+    _count?: SortOrder
+  }
+
+  export type NoteOrderByRelationAggregateInput = {
     _count?: SortOrder
   }
 
@@ -44337,16 +45552,43 @@ export namespace Prisma {
     _max?: NestedDateTimeNullableFilter<$PrismaModel>
   }
 
+  export type UserRelationFilter = {
+    is?: UserWhereInput
+    isNot?: UserWhereInput
+  }
+
+  export type NoteCountOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    title?: SortOrder
+    content?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type NoteMaxOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    title?: SortOrder
+    content?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
+  export type NoteMinOrderByAggregateInput = {
+    id?: SortOrder
+    userId?: SortOrder
+    title?: SortOrder
+    content?: SortOrder
+    createdAt?: SortOrder
+    updatedAt?: SortOrder
+  }
+
   export type EnumNotificationTypeFilter<$PrismaModel = never> = {
     equals?: $Enums.NotificationType | EnumNotificationTypeFieldRefInput<$PrismaModel>
     in?: $Enums.NotificationType[] | ListEnumNotificationTypeFieldRefInput<$PrismaModel>
     notIn?: $Enums.NotificationType[] | ListEnumNotificationTypeFieldRefInput<$PrismaModel>
     not?: NestedEnumNotificationTypeFilter<$PrismaModel> | $Enums.NotificationType
-  }
-
-  export type UserRelationFilter = {
-    is?: UserWhereInput
-    isNot?: UserWhereInput
   }
 
   export type NotificationCountOrderByAggregateInput = {
@@ -46249,6 +47491,13 @@ export namespace Prisma {
     connect?: CallLogWhereUniqueInput | CallLogWhereUniqueInput[]
   }
 
+  export type NoteCreateNestedManyWithoutUserInput = {
+    create?: XOR<NoteCreateWithoutUserInput, NoteUncheckedCreateWithoutUserInput> | NoteCreateWithoutUserInput[] | NoteUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: NoteCreateOrConnectWithoutUserInput | NoteCreateOrConnectWithoutUserInput[]
+    createMany?: NoteCreateManyUserInputEnvelope
+    connect?: NoteWhereUniqueInput | NoteWhereUniqueInput[]
+  }
+
   export type AgentProfileUncheckedCreateNestedOneWithoutUserInput = {
     create?: XOR<AgentProfileCreateWithoutUserInput, AgentProfileUncheckedCreateWithoutUserInput>
     connectOrCreate?: AgentProfileCreateOrConnectWithoutUserInput
@@ -46445,6 +47694,13 @@ export namespace Prisma {
     connectOrCreate?: CallLogCreateOrConnectWithoutEmployeeInput | CallLogCreateOrConnectWithoutEmployeeInput[]
     createMany?: CallLogCreateManyEmployeeInputEnvelope
     connect?: CallLogWhereUniqueInput | CallLogWhereUniqueInput[]
+  }
+
+  export type NoteUncheckedCreateNestedManyWithoutUserInput = {
+    create?: XOR<NoteCreateWithoutUserInput, NoteUncheckedCreateWithoutUserInput> | NoteCreateWithoutUserInput[] | NoteUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: NoteCreateOrConnectWithoutUserInput | NoteCreateOrConnectWithoutUserInput[]
+    createMany?: NoteCreateManyUserInputEnvelope
+    connect?: NoteWhereUniqueInput | NoteWhereUniqueInput[]
   }
 
   export type StringFieldUpdateOperationsInput = {
@@ -46867,6 +48123,20 @@ export namespace Prisma {
     deleteMany?: CallLogScalarWhereInput | CallLogScalarWhereInput[]
   }
 
+  export type NoteUpdateManyWithoutUserNestedInput = {
+    create?: XOR<NoteCreateWithoutUserInput, NoteUncheckedCreateWithoutUserInput> | NoteCreateWithoutUserInput[] | NoteUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: NoteCreateOrConnectWithoutUserInput | NoteCreateOrConnectWithoutUserInput[]
+    upsert?: NoteUpsertWithWhereUniqueWithoutUserInput | NoteUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: NoteCreateManyUserInputEnvelope
+    set?: NoteWhereUniqueInput | NoteWhereUniqueInput[]
+    disconnect?: NoteWhereUniqueInput | NoteWhereUniqueInput[]
+    delete?: NoteWhereUniqueInput | NoteWhereUniqueInput[]
+    connect?: NoteWhereUniqueInput | NoteWhereUniqueInput[]
+    update?: NoteUpdateWithWhereUniqueWithoutUserInput | NoteUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: NoteUpdateManyWithWhereWithoutUserInput | NoteUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: NoteScalarWhereInput | NoteScalarWhereInput[]
+  }
+
   export type AgentProfileUncheckedUpdateOneWithoutUserNestedInput = {
     create?: XOR<AgentProfileCreateWithoutUserInput, AgentProfileUncheckedCreateWithoutUserInput>
     connectOrCreate?: AgentProfileCreateOrConnectWithoutUserInput
@@ -47251,6 +48521,34 @@ export namespace Prisma {
     update?: CallLogUpdateWithWhereUniqueWithoutEmployeeInput | CallLogUpdateWithWhereUniqueWithoutEmployeeInput[]
     updateMany?: CallLogUpdateManyWithWhereWithoutEmployeeInput | CallLogUpdateManyWithWhereWithoutEmployeeInput[]
     deleteMany?: CallLogScalarWhereInput | CallLogScalarWhereInput[]
+  }
+
+  export type NoteUncheckedUpdateManyWithoutUserNestedInput = {
+    create?: XOR<NoteCreateWithoutUserInput, NoteUncheckedCreateWithoutUserInput> | NoteCreateWithoutUserInput[] | NoteUncheckedCreateWithoutUserInput[]
+    connectOrCreate?: NoteCreateOrConnectWithoutUserInput | NoteCreateOrConnectWithoutUserInput[]
+    upsert?: NoteUpsertWithWhereUniqueWithoutUserInput | NoteUpsertWithWhereUniqueWithoutUserInput[]
+    createMany?: NoteCreateManyUserInputEnvelope
+    set?: NoteWhereUniqueInput | NoteWhereUniqueInput[]
+    disconnect?: NoteWhereUniqueInput | NoteWhereUniqueInput[]
+    delete?: NoteWhereUniqueInput | NoteWhereUniqueInput[]
+    connect?: NoteWhereUniqueInput | NoteWhereUniqueInput[]
+    update?: NoteUpdateWithWhereUniqueWithoutUserInput | NoteUpdateWithWhereUniqueWithoutUserInput[]
+    updateMany?: NoteUpdateManyWithWhereWithoutUserInput | NoteUpdateManyWithWhereWithoutUserInput[]
+    deleteMany?: NoteScalarWhereInput | NoteScalarWhereInput[]
+  }
+
+  export type UserCreateNestedOneWithoutNotesInput = {
+    create?: XOR<UserCreateWithoutNotesInput, UserUncheckedCreateWithoutNotesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutNotesInput
+    connect?: UserWhereUniqueInput
+  }
+
+  export type UserUpdateOneRequiredWithoutNotesNestedInput = {
+    create?: XOR<UserCreateWithoutNotesInput, UserUncheckedCreateWithoutNotesInput>
+    connectOrCreate?: UserCreateOrConnectWithoutNotesInput
+    upsert?: UserUpsertWithoutNotesInput
+    connect?: UserWhereUniqueInput
+    update?: XOR<XOR<UserUpdateToOneWithWhereWithoutNotesInput, UserUpdateWithoutNotesInput>, UserUncheckedUpdateWithoutNotesInput>
   }
 
   export type UserCreateNestedOneWithoutNotificationsInput = {
@@ -51266,6 +52564,32 @@ export namespace Prisma {
     skipDuplicates?: boolean
   }
 
+  export type NoteCreateWithoutUserInput = {
+    id?: string
+    title?: string | null
+    content: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type NoteUncheckedCreateWithoutUserInput = {
+    id?: string
+    title?: string | null
+    content: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
+  }
+
+  export type NoteCreateOrConnectWithoutUserInput = {
+    where: NoteWhereUniqueInput
+    create: XOR<NoteCreateWithoutUserInput, NoteUncheckedCreateWithoutUserInput>
+  }
+
+  export type NoteCreateManyUserInputEnvelope = {
+    data: NoteCreateManyUserInput | NoteCreateManyUserInput[]
+    skipDuplicates?: boolean
+  }
+
   export type UserRoleUpsertWithoutUsersInput = {
     update: XOR<UserRoleUpdateWithoutUsersInput, UserRoleUncheckedUpdateWithoutUsersInput>
     create: XOR<UserRoleCreateWithoutUsersInput, UserRoleUncheckedCreateWithoutUsersInput>
@@ -52182,6 +53506,230 @@ export namespace Prisma {
     leadActivityId?: StringNullableFilter<"CallLog"> | string | null
   }
 
+  export type NoteUpsertWithWhereUniqueWithoutUserInput = {
+    where: NoteWhereUniqueInput
+    update: XOR<NoteUpdateWithoutUserInput, NoteUncheckedUpdateWithoutUserInput>
+    create: XOR<NoteCreateWithoutUserInput, NoteUncheckedCreateWithoutUserInput>
+  }
+
+  export type NoteUpdateWithWhereUniqueWithoutUserInput = {
+    where: NoteWhereUniqueInput
+    data: XOR<NoteUpdateWithoutUserInput, NoteUncheckedUpdateWithoutUserInput>
+  }
+
+  export type NoteUpdateManyWithWhereWithoutUserInput = {
+    where: NoteScalarWhereInput
+    data: XOR<NoteUpdateManyMutationInput, NoteUncheckedUpdateManyWithoutUserInput>
+  }
+
+  export type NoteScalarWhereInput = {
+    AND?: NoteScalarWhereInput | NoteScalarWhereInput[]
+    OR?: NoteScalarWhereInput[]
+    NOT?: NoteScalarWhereInput | NoteScalarWhereInput[]
+    id?: StringFilter<"Note"> | string
+    userId?: StringFilter<"Note"> | string
+    title?: StringNullableFilter<"Note"> | string | null
+    content?: StringFilter<"Note"> | string
+    createdAt?: DateTimeFilter<"Note"> | Date | string
+    updatedAt?: DateTimeFilter<"Note"> | Date | string
+  }
+
+  export type UserCreateWithoutNotesInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash?: string | null
+    role: $Enums.Role
+    isActive?: boolean
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    otp?: string | null
+    otpExpiresAt?: Date | string | null
+    emailVerified?: Date | string | null
+    imageUrl?: string | null
+    roleProfile?: UserRoleCreateNestedOneWithoutUsersInput
+    agentProfile?: AgentProfileCreateNestedOneWithoutUserInput
+    applications?: UniversityApplicationCreateNestedManyWithoutAssociateInput
+    visaOfficerApplications?: VisaApplicationCreateNestedManyWithoutAssignedOfficerInput
+    appointments?: AppointmentCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogCreateNestedManyWithoutUserInput
+    counselorProfile?: CounselorProfileCreateNestedOneWithoutUserInput
+    employeeProfile?: EmployeeProfileCreateNestedOneWithoutUserInput
+    followUps?: FollowUpCreateNestedManyWithoutUserInput
+    lead?: LeadCreateNestedOneWithoutUserInput
+    activities?: LeadActivityCreateNestedManyWithoutUserInput
+    assignedByLeads?: LeadAssignmentCreateNestedManyWithoutAdminInput
+    assignedLeads?: LeadAssignmentCreateNestedManyWithoutEmployeeInput
+    documents?: LeadDocumentCreateNestedManyWithoutUserInput
+    tasks?: LeadTaskCreateNestedManyWithoutUserInput
+    notifications?: NotificationCreateNestedManyWithoutUserInput
+    onboardedStudents?: StudentCreateNestedManyWithoutUserInput
+    studentProfile?: StudentCreateNestedOneWithoutStudentUserInput
+    studentDocuments?: StudentDocumentCreateNestedManyWithoutUploaderInput
+    assignedApplications?: UniversityApplicationCreateNestedManyWithoutAssignedToInput
+    createdApplications?: UniversityApplicationCreateNestedManyWithoutAssignedByInput
+    applicationNotes?: ApplicationNoteCreateNestedManyWithoutUserInput
+    managedEmployees?: EmployeeProfileCreateNestedManyWithoutManagerInput
+    agentStudents?: StudentCreateNestedManyWithoutAgentInput
+    counselorStudents?: StudentCreateNestedManyWithoutCounselorInput
+    agentApplications?: UniversityApplicationCreateNestedManyWithoutAgentInput
+    counselorApplications?: UniversityApplicationCreateNestedManyWithoutCounselorInput
+    agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
+    counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
+    callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+  }
+
+  export type UserUncheckedCreateWithoutNotesInput = {
+    id?: string
+    name: string
+    email: string
+    passwordHash?: string | null
+    role: $Enums.Role
+    isActive?: boolean
+    roleId?: string | null
+    createdAt?: Date | string
+    updatedAt?: Date | string
+    otp?: string | null
+    otpExpiresAt?: Date | string | null
+    emailVerified?: Date | string | null
+    imageUrl?: string | null
+    agentProfile?: AgentProfileUncheckedCreateNestedOneWithoutUserInput
+    applications?: UniversityApplicationUncheckedCreateNestedManyWithoutAssociateInput
+    visaOfficerApplications?: VisaApplicationUncheckedCreateNestedManyWithoutAssignedOfficerInput
+    appointments?: AppointmentUncheckedCreateNestedManyWithoutUserInput
+    auditLogs?: AuditLogUncheckedCreateNestedManyWithoutUserInput
+    counselorProfile?: CounselorProfileUncheckedCreateNestedOneWithoutUserInput
+    employeeProfile?: EmployeeProfileUncheckedCreateNestedOneWithoutUserInput
+    followUps?: FollowUpUncheckedCreateNestedManyWithoutUserInput
+    lead?: LeadUncheckedCreateNestedOneWithoutUserInput
+    activities?: LeadActivityUncheckedCreateNestedManyWithoutUserInput
+    assignedByLeads?: LeadAssignmentUncheckedCreateNestedManyWithoutAdminInput
+    assignedLeads?: LeadAssignmentUncheckedCreateNestedManyWithoutEmployeeInput
+    documents?: LeadDocumentUncheckedCreateNestedManyWithoutUserInput
+    tasks?: LeadTaskUncheckedCreateNestedManyWithoutUserInput
+    notifications?: NotificationUncheckedCreateNestedManyWithoutUserInput
+    onboardedStudents?: StudentUncheckedCreateNestedManyWithoutUserInput
+    studentProfile?: StudentUncheckedCreateNestedOneWithoutStudentUserInput
+    studentDocuments?: StudentDocumentUncheckedCreateNestedManyWithoutUploaderInput
+    assignedApplications?: UniversityApplicationUncheckedCreateNestedManyWithoutAssignedToInput
+    createdApplications?: UniversityApplicationUncheckedCreateNestedManyWithoutAssignedByInput
+    applicationNotes?: ApplicationNoteUncheckedCreateNestedManyWithoutUserInput
+    managedEmployees?: EmployeeProfileUncheckedCreateNestedManyWithoutManagerInput
+    agentStudents?: StudentUncheckedCreateNestedManyWithoutAgentInput
+    counselorStudents?: StudentUncheckedCreateNestedManyWithoutCounselorInput
+    agentApplications?: UniversityApplicationUncheckedCreateNestedManyWithoutAgentInput
+    counselorApplications?: UniversityApplicationUncheckedCreateNestedManyWithoutCounselorInput
+    agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
+    counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
+    callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+  }
+
+  export type UserCreateOrConnectWithoutNotesInput = {
+    where: UserWhereUniqueInput
+    create: XOR<UserCreateWithoutNotesInput, UserUncheckedCreateWithoutNotesInput>
+  }
+
+  export type UserUpsertWithoutNotesInput = {
+    update: XOR<UserUpdateWithoutNotesInput, UserUncheckedUpdateWithoutNotesInput>
+    create: XOR<UserCreateWithoutNotesInput, UserUncheckedCreateWithoutNotesInput>
+    where?: UserWhereInput
+  }
+
+  export type UserUpdateToOneWithWhereWithoutNotesInput = {
+    where?: UserWhereInput
+    data: XOR<UserUpdateWithoutNotesInput, UserUncheckedUpdateWithoutNotesInput>
+  }
+
+  export type UserUpdateWithoutNotesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    otp?: NullableStringFieldUpdateOperationsInput | string | null
+    otpExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    roleProfile?: UserRoleUpdateOneWithoutUsersNestedInput
+    agentProfile?: AgentProfileUpdateOneWithoutUserNestedInput
+    applications?: UniversityApplicationUpdateManyWithoutAssociateNestedInput
+    visaOfficerApplications?: VisaApplicationUpdateManyWithoutAssignedOfficerNestedInput
+    appointments?: AppointmentUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUpdateManyWithoutUserNestedInput
+    counselorProfile?: CounselorProfileUpdateOneWithoutUserNestedInput
+    employeeProfile?: EmployeeProfileUpdateOneWithoutUserNestedInput
+    followUps?: FollowUpUpdateManyWithoutUserNestedInput
+    lead?: LeadUpdateOneWithoutUserNestedInput
+    activities?: LeadActivityUpdateManyWithoutUserNestedInput
+    assignedByLeads?: LeadAssignmentUpdateManyWithoutAdminNestedInput
+    assignedLeads?: LeadAssignmentUpdateManyWithoutEmployeeNestedInput
+    documents?: LeadDocumentUpdateManyWithoutUserNestedInput
+    tasks?: LeadTaskUpdateManyWithoutUserNestedInput
+    notifications?: NotificationUpdateManyWithoutUserNestedInput
+    onboardedStudents?: StudentUpdateManyWithoutUserNestedInput
+    studentProfile?: StudentUpdateOneWithoutStudentUserNestedInput
+    studentDocuments?: StudentDocumentUpdateManyWithoutUploaderNestedInput
+    assignedApplications?: UniversityApplicationUpdateManyWithoutAssignedToNestedInput
+    createdApplications?: UniversityApplicationUpdateManyWithoutAssignedByNestedInput
+    applicationNotes?: ApplicationNoteUpdateManyWithoutUserNestedInput
+    managedEmployees?: EmployeeProfileUpdateManyWithoutManagerNestedInput
+    agentStudents?: StudentUpdateManyWithoutAgentNestedInput
+    counselorStudents?: StudentUpdateManyWithoutCounselorNestedInput
+    agentApplications?: UniversityApplicationUpdateManyWithoutAgentNestedInput
+    counselorApplications?: UniversityApplicationUpdateManyWithoutCounselorNestedInput
+    agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
+    counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
+    callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+  }
+
+  export type UserUncheckedUpdateWithoutNotesInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    name?: StringFieldUpdateOperationsInput | string
+    email?: StringFieldUpdateOperationsInput | string
+    passwordHash?: NullableStringFieldUpdateOperationsInput | string | null
+    role?: EnumRoleFieldUpdateOperationsInput | $Enums.Role
+    isActive?: BoolFieldUpdateOperationsInput | boolean
+    roleId?: NullableStringFieldUpdateOperationsInput | string | null
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    otp?: NullableStringFieldUpdateOperationsInput | string | null
+    otpExpiresAt?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    emailVerified?: NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+    imageUrl?: NullableStringFieldUpdateOperationsInput | string | null
+    agentProfile?: AgentProfileUncheckedUpdateOneWithoutUserNestedInput
+    applications?: UniversityApplicationUncheckedUpdateManyWithoutAssociateNestedInput
+    visaOfficerApplications?: VisaApplicationUncheckedUpdateManyWithoutAssignedOfficerNestedInput
+    appointments?: AppointmentUncheckedUpdateManyWithoutUserNestedInput
+    auditLogs?: AuditLogUncheckedUpdateManyWithoutUserNestedInput
+    counselorProfile?: CounselorProfileUncheckedUpdateOneWithoutUserNestedInput
+    employeeProfile?: EmployeeProfileUncheckedUpdateOneWithoutUserNestedInput
+    followUps?: FollowUpUncheckedUpdateManyWithoutUserNestedInput
+    lead?: LeadUncheckedUpdateOneWithoutUserNestedInput
+    activities?: LeadActivityUncheckedUpdateManyWithoutUserNestedInput
+    assignedByLeads?: LeadAssignmentUncheckedUpdateManyWithoutAdminNestedInput
+    assignedLeads?: LeadAssignmentUncheckedUpdateManyWithoutEmployeeNestedInput
+    documents?: LeadDocumentUncheckedUpdateManyWithoutUserNestedInput
+    tasks?: LeadTaskUncheckedUpdateManyWithoutUserNestedInput
+    notifications?: NotificationUncheckedUpdateManyWithoutUserNestedInput
+    onboardedStudents?: StudentUncheckedUpdateManyWithoutUserNestedInput
+    studentProfile?: StudentUncheckedUpdateOneWithoutStudentUserNestedInput
+    studentDocuments?: StudentDocumentUncheckedUpdateManyWithoutUploaderNestedInput
+    assignedApplications?: UniversityApplicationUncheckedUpdateManyWithoutAssignedToNestedInput
+    createdApplications?: UniversityApplicationUncheckedUpdateManyWithoutAssignedByNestedInput
+    applicationNotes?: ApplicationNoteUncheckedUpdateManyWithoutUserNestedInput
+    managedEmployees?: EmployeeProfileUncheckedUpdateManyWithoutManagerNestedInput
+    agentStudents?: StudentUncheckedUpdateManyWithoutAgentNestedInput
+    counselorStudents?: StudentUncheckedUpdateManyWithoutCounselorNestedInput
+    agentApplications?: UniversityApplicationUncheckedUpdateManyWithoutAgentNestedInput
+    counselorApplications?: UniversityApplicationUncheckedUpdateManyWithoutCounselorNestedInput
+    agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
+    counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
+    callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+  }
+
   export type UserCreateWithoutNotificationsInput = {
     id?: string
     name: string
@@ -52224,6 +53772,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutNotificationsInput = {
@@ -52268,6 +53817,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutNotificationsInput = {
@@ -52328,6 +53878,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutNotificationsInput = {
@@ -52372,6 +53923,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutAgentProfileInput = {
@@ -52416,6 +53968,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAgentProfileInput = {
@@ -52460,6 +54013,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAgentProfileInput = {
@@ -52550,6 +54104,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAgentProfileInput = {
@@ -52594,6 +54149,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type CounselorProfileUpsertWithWhereUniqueWithoutAgentInput = {
@@ -52691,6 +54247,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCounselorProfileInput = {
@@ -52735,6 +54292,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCounselorProfileInput = {
@@ -52824,6 +54382,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCounselorProfileInput = {
@@ -52868,6 +54427,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutManagedEmployeesInput = {
@@ -52912,6 +54472,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutManagedEmployeesInput = {
@@ -52956,6 +54517,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutManagedEmployeesInput = {
@@ -53005,6 +54567,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutEmployeeProfileInput = {
@@ -53049,6 +54612,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutEmployeeProfileInput = {
@@ -53109,6 +54673,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutManagedEmployeesInput = {
@@ -53153,6 +54718,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserUpsertWithoutEmployeeProfileInput = {
@@ -53208,6 +54774,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutEmployeeProfileInput = {
@@ -53252,6 +54819,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type AcademicDetailCreateWithoutLeadInput = {
@@ -53398,6 +54966,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutLeadInput = {
@@ -53442,6 +55011,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutLeadInput = {
@@ -53805,6 +55375,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutLeadInput = {
@@ -53849,6 +55420,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type LeadActivityUpsertWithWhereUniqueWithoutLeadInput = {
@@ -54154,6 +55726,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutFollowUpsInput = {
@@ -54198,6 +55771,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutFollowUpsInput = {
@@ -54359,6 +55933,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutFollowUpsInput = {
@@ -54403,6 +55978,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type LeadCreateWithoutAppointmentsInput = {
@@ -54542,6 +56118,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAppointmentsInput = {
@@ -54586,6 +56163,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAppointmentsInput = {
@@ -54747,6 +56325,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAppointmentsInput = {
@@ -54791,6 +56370,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutAssignedByLeadsInput = {
@@ -54835,6 +56415,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAssignedByLeadsInput = {
@@ -54879,6 +56460,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAssignedByLeadsInput = {
@@ -54928,6 +56510,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAssignedLeadsInput = {
@@ -54972,6 +56555,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAssignedLeadsInput = {
@@ -55127,6 +56711,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAssignedByLeadsInput = {
@@ -55171,6 +56756,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserUpsertWithoutAssignedLeadsInput = {
@@ -55226,6 +56812,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAssignedLeadsInput = {
@@ -55270,6 +56857,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type LeadUpsertWithoutAssignmentsInput = {
@@ -55510,6 +57098,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutActivitiesInput = {
@@ -55554,6 +57143,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutActivitiesInput = {
@@ -55715,6 +57305,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutActivitiesInput = {
@@ -55759,6 +57350,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutTasksInput = {
@@ -55803,6 +57395,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutTasksInput = {
@@ -55847,6 +57440,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutTasksInput = {
@@ -56030,6 +57624,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutTasksInput = {
@@ -56074,6 +57669,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type LeadUpsertWithoutTasksInput = {
@@ -56407,6 +58003,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutDocumentsInput = {
@@ -56451,6 +58048,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutDocumentsInput = {
@@ -56612,6 +58210,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutDocumentsInput = {
@@ -56656,6 +58255,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UniversityApplicationCreateWithoutStudentInput = {
@@ -56909,6 +58509,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutOnboardedStudentsInput = {
@@ -56953,6 +58554,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutOnboardedStudentsInput = {
@@ -57002,6 +58604,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAgentStudentsInput = {
@@ -57046,6 +58649,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAgentStudentsInput = {
@@ -57095,6 +58699,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCounselorStudentsInput = {
@@ -57139,6 +58744,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCounselorStudentsInput = {
@@ -57188,6 +58794,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutStudentProfileInput = {
@@ -57232,6 +58839,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutStudentProfileInput = {
@@ -57501,6 +59109,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutOnboardedStudentsInput = {
@@ -57545,6 +59154,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserUpsertWithoutAgentStudentsInput = {
@@ -57600,6 +59210,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAgentStudentsInput = {
@@ -57644,6 +59255,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserUpsertWithoutCounselorStudentsInput = {
@@ -57699,6 +59311,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCounselorStudentsInput = {
@@ -57743,6 +59356,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserUpsertWithoutStudentProfileInput = {
@@ -57798,6 +59412,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutStudentProfileInput = {
@@ -57842,6 +59457,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type StudentDocumentUpsertWithWhereUniqueWithoutStudentInput = {
@@ -58000,6 +59616,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutStudentDocumentsInput = {
@@ -58044,6 +59661,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutStudentDocumentsInput = {
@@ -58198,6 +59816,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutStudentDocumentsInput = {
@@ -58242,6 +59861,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserCreateWithoutAuditLogsInput = {
@@ -58286,6 +59906,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAuditLogsInput = {
@@ -58330,6 +59951,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAuditLogsInput = {
@@ -58390,6 +60012,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAuditLogsInput = {
@@ -58434,6 +60057,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UniversityApplicationCreateWithoutCountryInput = {
@@ -60241,6 +61865,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutApplicationsInput = {
@@ -60285,6 +61910,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutApplicationsInput = {
@@ -60334,6 +61960,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCreatedApplicationsInput = {
@@ -60378,6 +62005,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCreatedApplicationsInput = {
@@ -60427,6 +62055,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAssignedApplicationsInput = {
@@ -60471,6 +62100,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAssignedApplicationsInput = {
@@ -60520,6 +62150,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAgentApplicationsInput = {
@@ -60564,6 +62195,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAgentApplicationsInput = {
@@ -60613,6 +62245,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCounselorApplicationsInput = {
@@ -60657,6 +62290,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCounselorApplicationsInput = {
@@ -60991,6 +62625,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutApplicationsInput = {
@@ -61035,6 +62670,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserUpsertWithoutCreatedApplicationsInput = {
@@ -61090,6 +62726,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCreatedApplicationsInput = {
@@ -61134,6 +62771,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserUpsertWithoutAssignedApplicationsInput = {
@@ -61189,6 +62827,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAssignedApplicationsInput = {
@@ -61233,6 +62872,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserUpsertWithoutAgentApplicationsInput = {
@@ -61288,6 +62928,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAgentApplicationsInput = {
@@ -61332,6 +62973,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserUpsertWithoutCounselorApplicationsInput = {
@@ -61387,6 +63029,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCounselorApplicationsInput = {
@@ -61431,6 +63074,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type VisaApplicationUpsertWithWhereUniqueWithoutUniversityApplicationInput = {
@@ -61558,6 +63202,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutApplicationNotesInput = {
@@ -61602,6 +63247,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutApplicationNotesInput = {
@@ -61719,6 +63365,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutApplicationNotesInput = {
@@ -61763,6 +63410,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type StudentCreateWithoutVisaApplicationsInput = {
@@ -62020,6 +63668,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutVisaOfficerApplicationsInput = {
@@ -62064,6 +63713,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutVisaOfficerApplicationsInput = {
@@ -62113,6 +63763,7 @@ export namespace Prisma {
     counselorApplications?: UniversityApplicationCreateNestedManyWithoutCounselorInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutAgentVisaAppsInput = {
@@ -62157,6 +63808,7 @@ export namespace Prisma {
     counselorApplications?: UniversityApplicationUncheckedCreateNestedManyWithoutCounselorInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutAgentVisaAppsInput = {
@@ -62206,6 +63858,7 @@ export namespace Prisma {
     counselorApplications?: UniversityApplicationCreateNestedManyWithoutCounselorInput
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCounselorVisaAppsInput = {
@@ -62250,6 +63903,7 @@ export namespace Prisma {
     counselorApplications?: UniversityApplicationUncheckedCreateNestedManyWithoutCounselorInput
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCounselorVisaAppsInput = {
@@ -62553,6 +64207,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutVisaOfficerApplicationsInput = {
@@ -62597,6 +64252,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserUpsertWithoutAgentVisaAppsInput = {
@@ -62652,6 +64308,7 @@ export namespace Prisma {
     counselorApplications?: UniversityApplicationUpdateManyWithoutCounselorNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutAgentVisaAppsInput = {
@@ -62696,6 +64353,7 @@ export namespace Prisma {
     counselorApplications?: UniversityApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserUpsertWithoutCounselorVisaAppsInput = {
@@ -62751,6 +64409,7 @@ export namespace Prisma {
     counselorApplications?: UniversityApplicationUpdateManyWithoutCounselorNestedInput
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCounselorVisaAppsInput = {
@@ -62795,6 +64454,7 @@ export namespace Prisma {
     counselorApplications?: UniversityApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type RolePermissionCreateWithoutRoleInput = {
@@ -62867,6 +64527,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogCreateNestedManyWithoutEmployeeInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutRoleProfileInput = {
@@ -62911,6 +64572,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
     callLogs?: CallLogUncheckedCreateNestedManyWithoutEmployeeInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutRoleProfileInput = {
@@ -63089,6 +64751,7 @@ export namespace Prisma {
     counselorApplications?: UniversityApplicationCreateNestedManyWithoutCounselorInput
     agentVisaApps?: VisaApplicationCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationCreateNestedManyWithoutCounselorInput
+    notes?: NoteCreateNestedManyWithoutUserInput
   }
 
   export type UserUncheckedCreateWithoutCallLogsInput = {
@@ -63133,6 +64796,7 @@ export namespace Prisma {
     counselorApplications?: UniversityApplicationUncheckedCreateNestedManyWithoutCounselorInput
     agentVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutAgentInput
     counselorVisaApps?: VisaApplicationUncheckedCreateNestedManyWithoutCounselorInput
+    notes?: NoteUncheckedCreateNestedManyWithoutUserInput
   }
 
   export type UserCreateOrConnectWithoutCallLogsInput = {
@@ -63337,6 +65001,7 @@ export namespace Prisma {
     counselorApplications?: UniversityApplicationUpdateManyWithoutCounselorNestedInput
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutCallLogsInput = {
@@ -63381,6 +65046,7 @@ export namespace Prisma {
     counselorApplications?: UniversityApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type LeadUpsertWithoutCallLogsInput = {
@@ -63904,6 +65570,14 @@ export namespace Prisma {
     leadId?: string | null
     studentId?: string | null
     leadActivityId?: string | null
+  }
+
+  export type NoteCreateManyUserInput = {
+    id?: string
+    title?: string | null
+    content: string
+    createdAt?: Date | string
+    updatedAt?: Date | string
   }
 
   export type UniversityApplicationUpdateWithoutAssociateInput = {
@@ -65051,6 +66725,30 @@ export namespace Prisma {
     leadId?: NullableStringFieldUpdateOperationsInput | string | null
     studentId?: NullableStringFieldUpdateOperationsInput | string | null
     leadActivityId?: NullableStringFieldUpdateOperationsInput | string | null
+  }
+
+  export type NoteUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: NullableStringFieldUpdateOperationsInput | string | null
+    content?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NoteUncheckedUpdateWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: NullableStringFieldUpdateOperationsInput | string | null
+    content?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
+  }
+
+  export type NoteUncheckedUpdateManyWithoutUserInput = {
+    id?: StringFieldUpdateOperationsInput | string
+    title?: NullableStringFieldUpdateOperationsInput | string | null
+    content?: StringFieldUpdateOperationsInput | string
+    createdAt?: DateTimeFieldUpdateOperationsInput | Date | string
+    updatedAt?: DateTimeFieldUpdateOperationsInput | Date | string
   }
 
   export type CounselorProfileCreateManyAgentInput = {
@@ -66922,6 +68620,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateWithoutRoleProfileInput = {
@@ -66966,6 +68665,7 @@ export namespace Prisma {
     agentVisaApps?: VisaApplicationUncheckedUpdateManyWithoutAgentNestedInput
     counselorVisaApps?: VisaApplicationUncheckedUpdateManyWithoutCounselorNestedInput
     callLogs?: CallLogUncheckedUpdateManyWithoutEmployeeNestedInput
+    notes?: NoteUncheckedUpdateManyWithoutUserNestedInput
   }
 
   export type UserUncheckedUpdateManyWithoutRoleProfileInput = {
@@ -67032,6 +68732,10 @@ export namespace Prisma {
      * @deprecated Use UserDefaultArgs instead
      */
     export type UserArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = UserDefaultArgs<ExtArgs>
+    /**
+     * @deprecated Use NoteDefaultArgs instead
+     */
+    export type NoteArgs<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = NoteDefaultArgs<ExtArgs>
     /**
      * @deprecated Use NotificationDefaultArgs instead
      */

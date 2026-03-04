@@ -63,8 +63,8 @@ export default function UniversitiesCountryListPage() {
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold tracking-tight">Masters &gt; Universities</h1>
-                <p className="text-muted-foreground">Select a country to manage its universities.</p>
+                <h1 className="text-2xl font-bold tracking-tight">Masters &gt; Universities</h1>
+                <p className="text-sm text-muted-foreground">Select a country to manage its universities.</p>
             </div>
 
             <div className="relative max-w-sm">

@@ -138,6 +138,15 @@ exports.Prisma.UserScalarFieldEnum = {
   imageUrl: 'imageUrl'
 };
 
+exports.Prisma.NoteScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  title: 'title',
+  content: 'content',
+  createdAt: 'createdAt',
+  updatedAt: 'updatedAt'
+};
+
 exports.Prisma.NotificationScalarFieldEnum = {
   id: 'id',
   userId: 'userId',
@@ -711,6 +720,7 @@ exports.VisaStatus = exports.$Enums.VisaStatus = {
 
 exports.Prisma.ModelName = {
   User: 'User',
+  Note: 'Note',
   Notification: 'Notification',
   AgentProfile: 'AgentProfile',
   CounselorProfile: 'CounselorProfile',
