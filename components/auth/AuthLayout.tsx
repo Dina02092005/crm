@@ -37,8 +37,8 @@ export function AuthLayout({ children, loginType = "student" }: { children: Reac
     student: {
       brandName: "InterEd",
       tagline: "Your Bridge to Global Education",
-      gradient: "from-[#064e3b] via-[#065f46] to-[#059669]",
-      accent: "#34d399",
+      gradient: "from-[#1d6fce] via-[#1e9fd4] to-[#17b8a6]",
+      accent: "#5eead4",
       heading: (
         <>Begin your<br /><em>global</em><br />journey today.</>
       ),
@@ -125,19 +125,24 @@ export function AuthLayout({ children, loginType = "student" }: { children: Reac
 
         {/* Brand */}
         <div className="relative z-10">
-          <Link href="/" className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-white/20 border border-white/40 rounded-xl flex items-center justify-center backdrop-blur-sm">
-              <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
-                <path d="M4 18 Q12 6 20 18" />
-                <line x1="4" y1="18" x2="4" y2="14" />
-                <line x1="20" y1="18" x2="20" y2="14" />
-                <line x1="12" y1="11" x2="12" y2="18" />
-              </svg>
-            </div>
-            <div>
-              <div className="text-white text-2xl font-bold tracking-tight">{config.brandName}</div>
-              <div className="text-white/60 text-[10px] uppercase tracking-wider font-medium">{config.tagline}</div>
-            </div>
+          <Link href="/">
+            {(loginType === "agent" || loginType === "counselor") ? (
+              // InterWise Logo for agent & counselor login
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src="/logos/interwise-logo.png"
+                alt="InterWise"
+                className="h-10 object-contain"
+              />
+            ) : (
+              // InterEd Logo for admin & student login
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src="/logos/intered-logo.png"
+                alt="InterEd"
+                className="h-10 object-contain"
+              />
+            )}
           </Link>
         </div>
 

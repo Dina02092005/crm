@@ -28,6 +28,9 @@ export function Sidebar() {
         return null;
     })();
 
+    // Agent roles use the InterWise brand (Icon Colour.png when collapsed)
+    const isAgentRole = ["AGENT", "COUNSELOR", "SALES_REP", "SUPPORT_AGENT"].includes(session?.user?.role ?? "");
+
     // Persistence
     useEffect(() => {
         const saved = localStorage.getItem("sidebar-collapsed");
@@ -112,16 +115,24 @@ export function Sidebar() {
             <aside className={`fixed left-0 top-0 h-screen bg-sidebar text-white overflow-hidden flex flex-col transition-all duration-300 ${collapsedWidth} hover:${expandedWidth} ${isCollapsed ? 'xl:w-[78px] xl:hover:w-[252px]' : 'xl:w-[252px]'} group z-60 shadow-2xl`}>
                 {/* Logo - Sticky */}
                 <div className="px-4 py-4 flex justify-center shrink-0">
-                    <Link href={`${rolePrefix}/dashboard`} className={`relative w-8 h-10 transition-all duration-300 overflow-hidden flex items-center ${!isCollapsed ? 'xl:w-48' : 'xl:w-8 xl:group-hover:w-48'} group-hover:w-48`}>
-                        {/* Icon always visible */}
-                        <div className="shrink-0 w-8 h-8 rounded-full overflow-hidden">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src="/intered-icon.png" alt="InterEd" width={32} height={32} className="object-cover w-full h-full" />
-                        </div>
-                        {/* Text shown when expanded */}
-                        <span className={`ml-3 text-xl font-bold text-white whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden group-hover:inline ${!isCollapsed ? 'xl:opacity-100 xl:inline' : ''}`}>
-                            InterEd
-                        </span>
+                    <Link href={`${rolePrefix}/dashboard`} className="flex items-center">
+                        {/* Collapsed icon — role-aware */}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                            src={isAgentRole ? "/logos/interwise-icon.png" : "/logos/intered-circle.png"}
+                            alt={isAgentRole ? "InterWise" : "InterEd"}
+                            width={40}
+                            height={40}
+                            className={`shrink-0 object-contain transition-all duration-300 ${!isCollapsed ? 'xl:hidden' : 'xl:group-hover:hidden'} group-hover:hidden`}
+                        />
+                        {/* Expanded: Full letter logo (same for all roles — InterEd brand) */}
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                            src="/logos/intered-logo.png"
+                            alt="InterEd"
+                            height={36}
+                            className={`h-9 object-contain transition-all duration-300 hidden group-hover:block ${!isCollapsed ? 'xl:block' : ''}`}
+                        />
                     </Link>
                 </div>
 

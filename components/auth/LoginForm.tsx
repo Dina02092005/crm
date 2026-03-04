@@ -46,12 +46,12 @@ function LoginFormContent({ loginType = 'student' }: LoginFormProps) {
 
   const { eyebrow, title, subtitle } = getWelcomeText();
 
-  // Role-specific accents
+  // Role-specific accents — ALL class strings must be fully written out (no dynamic concatenation) for Tailwind JIT
   const accents: Record<string, any> = {
-    admin: { text: "text-indigo-600", borderHover: "hover:border-indigo-400", focusBorder: "focus-visible:border-indigo-500", ring: "focus-visible:ring-indigo-500/5", accent: "accent-indigo-600", groupFocus: "group-focus-within:text-indigo-600", ringColor: "indigo-500" },
-    student: { text: "text-teal-600", borderHover: "hover:border-teal-400", focusBorder: "focus-visible:border-teal-500", ring: "focus-visible:ring-teal-500/5", accent: "accent-teal-600", groupFocus: "group-focus-within:text-teal-600", ringColor: "teal-500" },
-    agent: { text: "text-blue-600", borderHover: "hover:border-blue-400", focusBorder: "focus-visible:border-blue-500", ring: "focus-visible:ring-blue-500/5", accent: "accent-blue-600", groupFocus: "group-focus-within:text-blue-600", ringColor: "blue-500" },
-    counselor: { text: "text-purple-600", borderHover: "hover:border-purple-400", focusBorder: "focus-visible:border-purple-500", ring: "focus-visible:ring-purple-500/5", accent: "accent-purple-600", groupFocus: "group-focus-within:text-purple-600", ringColor: "purple-500" },
+    admin: { text: "text-indigo-600", borderHover: "hover:border-indigo-400", focusBorder: "focus-visible:border-indigo-500", ring: "focus-visible:ring-indigo-500/5", accent: "accent-indigo-600", groupFocus: "group-focus-within:text-indigo-600", groupHoverText: "group-hover:text-indigo-600", focusRing: "focus:ring-indigo-500" },
+    student: { text: "text-cyan-600", borderHover: "hover:border-cyan-400", focusBorder: "focus-visible:border-cyan-500", ring: "focus-visible:ring-cyan-500/5", accent: "accent-cyan-600", groupFocus: "group-focus-within:text-cyan-600", groupHoverText: "group-hover:text-cyan-600", focusRing: "focus:ring-cyan-500" },
+    agent: { text: "text-blue-600", borderHover: "hover:border-blue-400", focusBorder: "focus-visible:border-blue-500", ring: "focus-visible:ring-blue-500/5", accent: "accent-blue-600", groupFocus: "group-focus-within:text-blue-600", groupHoverText: "group-hover:text-blue-600", focusRing: "focus:ring-blue-500" },
+    counselor: { text: "text-purple-600", borderHover: "hover:border-purple-400", focusBorder: "focus-visible:border-purple-500", ring: "focus-visible:ring-purple-500/5", accent: "accent-purple-600", groupFocus: "group-focus-within:text-purple-600", groupHoverText: "group-hover:text-purple-600", focusRing: "focus:ring-purple-500" },
   };
 
   const clr = accents[loginType] || accents.student;
@@ -210,8 +210,8 @@ function LoginFormContent({ loginType = 'student' }: LoginFormProps) {
 
           <div className="flex items-center justify-between px-1">
             <label className="flex items-center gap-2 cursor-pointer group">
-              <input type="checkbox" className={`w-4 h-4 rounded border-gray-300 focus:ring-${clr.ringColor} ${clr.accent}`} />
-              <span className={`text-xs font-medium text-gray-500 group-hover:${clr.text} transition-colors`}>Keep me signed in</span>
+              <input type="checkbox" className={`w-4 h-4 rounded border-gray-300 ${clr.focusRing} ${clr.accent}`} />
+              <span className={`text-xs font-medium text-gray-500 ${clr.groupHoverText} transition-colors`}>Keep me signed in</span>
             </label>
             <Link
               href={`/forgot-password?type=${loginType}`}
@@ -227,7 +227,7 @@ function LoginFormContent({ loginType = 'student' }: LoginFormProps) {
             className={`h-12 w-full rounded-xl text-sm font-bold text-white shadow-lg transition-all hover:opacity-90 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 ${loginType === 'admin' ? 'bg-indigo-600 shadow-indigo-600/20' :
               loginType === 'agent' ? 'bg-blue-600 shadow-blue-600/20' :
                 loginType === 'counselor' ? 'bg-purple-600 shadow-purple-600/20' :
-                  'bg-gradient-to-r from-teal-600 to-[#1EB3B1] shadow-teal-600/20'
+                  'bg-gradient-to-r from-[#1d6fce] to-[#17b8a6] shadow-cyan-600/20'
               }`}
           >
             {isLoading ? (

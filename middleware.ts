@@ -141,7 +141,8 @@ export const config = {
          * - api/* (NextAuth + all API routes)
          * - _next/static, _next/image
          * - favicon and other static files
+         * - logos (public static assets)
          */
-        "/((?!api|_next/static|_next/image|favicon.ico).*)",
+        "/((?!api|_next/static|_next/image|favicon.ico|logos).*)",
     ],
 };

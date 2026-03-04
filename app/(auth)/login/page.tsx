@@ -2,9 +2,10 @@ import { Suspense } from "react";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { LoginForm } from "@/components/auth/LoginForm";
 
-export default function LoginPage({ searchParams }: { searchParams: { [key: string]: string | string[] | undefined } }) {
-  const callbackUrl = typeof searchParams?.callbackUrl === 'string' ? searchParams.callbackUrl : "";
-  const typeParam = typeof searchParams?.type === 'string' ? searchParams.type : "";
+export default async function LoginPage({ searchParams }: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+  const resolvedParams = await searchParams;
+  const callbackUrl = typeof resolvedParams?.callbackUrl === 'string' ? resolvedParams.callbackUrl : "";
+  const typeParam = typeof resolvedParams?.type === 'string' ? resolvedParams.type : "";
 
   let loginType: "student" | "admin" | "agent" | "counselor" = "student";
 
