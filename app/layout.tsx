@@ -17,9 +17,14 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+import { DynamicFavicon } from "@/components/DynamicFavicon";
+
 export const metadata: Metadata = {
   title: "Inter CRM Admin",
   description: "Admin dashboard for Inter CRM",
+  icons: {
+    icon: "/logos/intered-circle.png",
+  },
 };
 
 export default function RootLayout({
@@ -33,6 +38,7 @@ export default function RootLayout({
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <AuthProvider>
             <QueryProvider>
+              <DynamicFavicon />
               {children}
               <Toaster closeButton />
             </QueryProvider>

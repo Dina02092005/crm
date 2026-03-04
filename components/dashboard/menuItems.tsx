@@ -36,7 +36,15 @@ export const menuItems: MenuItem[] = [
     },
     { label: "My Profile", icon: <FaUserCog />, href: "/profile", roles: ["STUDENT"] },
     { label: "My Documents", icon: <FaSitemap />, href: "/profile?tab=documents", roles: ["STUDENT"] },
-    { label: "Agents", icon: <FaHeadset />, href: "/agents", roles: ["ADMIN"] },
+    {
+        label: "Agents",
+        icon: <FaHeadset />,
+        roles: ["ADMIN"],
+        submenu: [
+            { label: "Manage Agents", href: "/agents" },
+            { label: "Registration Requests", href: "/agents/requests" },
+        ]
+    },
     { label: "Counselors", icon: <FaUserCog />, href: "/employees", roles: ["ADMIN", "AGENT"] },
     {
         label: "File Manager",

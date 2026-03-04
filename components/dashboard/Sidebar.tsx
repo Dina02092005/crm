@@ -116,7 +116,7 @@ export function Sidebar() {
                 {/* Logo - Sticky */}
                 <div className="px-4 py-4 flex justify-center shrink-0">
                     <Link href={`${rolePrefix}/dashboard`} className="flex items-center">
-                        {/* Collapsed icon — role-aware */}
+                        {/* Collapsed icon — role-aware (InterWise for agents, InterEd for others) */}
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                             src={isAgentRole ? "/logos/interwise-icon.png" : "/logos/intered-circle.png"}
@@ -125,11 +125,11 @@ export function Sidebar() {
                             height={40}
                             className={`shrink-0 object-contain transition-all duration-300 ${!isCollapsed ? 'xl:hidden' : 'xl:group-hover:hidden'} group-hover:hidden`}
                         />
-                        {/* Expanded: Full letter logo (same for all roles — InterEd brand) */}
+                        {/* Expanded: Full letter logo (role-aware) */}
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                            src="/logos/intered-logo.png"
-                            alt="InterEd"
+                            src={isAgentRole ? "/logos/InterWise Logo White.png" : "/logos/InterEd Color White Letter.png"}
+                            alt={isAgentRole ? "InterWise" : "InterEd"}
                             height={36}
                             className={`h-9 object-contain transition-all duration-300 hidden group-hover:block ${!isCollapsed ? 'xl:block' : ''}`}
                         />

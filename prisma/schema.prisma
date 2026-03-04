@@ -69,15 +69,23 @@ model Notification {
 }
 
 model AgentProfile {
-  id          String             @id @default(uuid())
-  userId      String             @unique
-  companyName String?
-  address     String?
-  phone       String?
-  commission  Float?
-  user        User               @relation(fields: [userId], references: [id], onDelete: Cascade)
-  counselors  CounselorProfile[]
+  id             String              @id @default(uuid())
+  userId         String              @unique
+  companyName    String?
+  address        String?
+  phone          String?
+  commission     Float?
+  approvalStatus AgentApprovalStatus @default(PENDING)
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  counselors     CounselorProfile[]
 }
+
+enum AgentApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 
 model CounselorProfile {
   id          String        @id @default(uuid())

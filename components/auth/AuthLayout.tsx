@@ -130,7 +130,7 @@ export function AuthLayout({ children, loginType = "student" }: { children: Reac
               // InterWise Logo for agent & counselor login
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src="/logos/interwise-logo.png"
+                src="/logos/InterWise Logo White.png"
                 alt="InterWise"
                 className="h-10 object-contain"
               />
@@ -138,7 +138,7 @@ export function AuthLayout({ children, loginType = "student" }: { children: Reac
               // InterEd Logo for admin & student login
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src="/logos/intered-logo.png"
+                src="/logos/InterEd Color White Letter.png"
                 alt="InterEd"
                 className="h-10 object-contain"
               />
@@ -181,8 +181,19 @@ export function AuthLayout({ children, loginType = "student" }: { children: Reac
       </div>
 
       {/* ─── RIGHT PANEL (Form) ─── */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-12 relative">
+      <div className="flex-1 flex flex-col items-center justify-center p-6 lg:p-12 relative bg-white">
         <div className="w-full max-w-[420px]">
+          {/* Mobile Logo Only (Show icon on mobile, hidden on LG) */}
+          <div className="lg:hidden flex justify-center mb-8">
+            <Link href="/">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={(loginType === "agent" || loginType === "counselor") ? "/logos/interwise-icon.png" : "/logos/intered-circle.png"}
+                alt={(loginType === "agent" || loginType === "counselor") ? "InterWise" : "InterEd"}
+                className="h-12 w-auto object-contain"
+              />
+            </Link>
+          </div>
 
           {/* Role Badge */}
           <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full border mb-6 text-[10px] font-bold uppercase tracking-widest ${loginType === 'admin' ? 'bg-indigo-100/50 border-indigo-200 text-indigo-800' :

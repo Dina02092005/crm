@@ -154,7 +154,8 @@ exports.Prisma.AgentProfileScalarFieldEnum = {
   companyName: 'companyName',
   address: 'address',
   phone: 'phone',
-  commission: 'commission'
+  commission: 'commission',
+  approvalStatus: 'approvalStatus'
 };
 
 exports.Prisma.CounselorProfileScalarFieldEnum = {
@@ -573,6 +574,12 @@ exports.NotificationType = exports.$Enums.NotificationType = {
   LEAD_CONVERTED: 'LEAD_CONVERTED',
   TASK_REMINDER: 'TASK_REMINDER',
   SYSTEM: 'SYSTEM'
+};
+
+exports.AgentApprovalStatus = exports.$Enums.AgentApprovalStatus = {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED'
 };
 
 exports.LeadStatus = exports.$Enums.LeadStatus = {

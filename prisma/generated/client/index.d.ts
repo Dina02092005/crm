@@ -198,6 +198,15 @@ export const NotificationType: {
 export type NotificationType = (typeof NotificationType)[keyof typeof NotificationType]
 
 
+export const AgentApprovalStatus: {
+  PENDING: 'PENDING',
+  APPROVED: 'APPROVED',
+  REJECTED: 'REJECTED'
+};
+
+export type AgentApprovalStatus = (typeof AgentApprovalStatus)[keyof typeof AgentApprovalStatus]
+
+
 export const LeadStatus: {
   NEW: 'NEW',
   UNDER_REVIEW: 'UNDER_REVIEW',
@@ -376,6 +385,10 @@ export const Role: typeof $Enums.Role
 export type NotificationType = $Enums.NotificationType
 
 export const NotificationType: typeof $Enums.NotificationType
+
+export type AgentApprovalStatus = $Enums.AgentApprovalStatus
+
+export const AgentApprovalStatus: typeof $Enums.AgentApprovalStatus
 
 export type LeadStatus = $Enums.LeadStatus
 
@@ -7094,6 +7107,7 @@ export namespace Prisma {
     address: string | null
     phone: string | null
     commission: number | null
+    approvalStatus: $Enums.AgentApprovalStatus | null
   }
 
   export type AgentProfileMaxAggregateOutputType = {
@@ -7103,6 +7117,7 @@ export namespace Prisma {
     address: string | null
     phone: string | null
     commission: number | null
+    approvalStatus: $Enums.AgentApprovalStatus | null
   }
 
   export type AgentProfileCountAggregateOutputType = {
@@ -7112,6 +7127,7 @@ export namespace Prisma {
     address: number
     phone: number
     commission: number
+    approvalStatus: number
     _all: number
   }
 
@@ -7131,6 +7147,7 @@ export namespace Prisma {
     address?: true
     phone?: true
     commission?: true
+    approvalStatus?: true
   }
 
   export type AgentProfileMaxAggregateInputType = {
@@ -7140,6 +7157,7 @@ export namespace Prisma {
     address?: true
     phone?: true
     commission?: true
+    approvalStatus?: true
   }
 
   export type AgentProfileCountAggregateInputType = {
@@ -7149,6 +7167,7 @@ export namespace Prisma {
     address?: true
     phone?: true
     commission?: true
+    approvalStatus?: true
     _all?: true
   }
 
@@ -7245,6 +7264,7 @@ export namespace Prisma {
     address: string | null
     phone: string | null
     commission: number | null
+    approvalStatus: $Enums.AgentApprovalStatus
     _count: AgentProfileCountAggregateOutputType | null
     _avg: AgentProfileAvgAggregateOutputType | null
     _sum: AgentProfileSumAggregateOutputType | null
@@ -7273,6 +7293,7 @@ export namespace Prisma {
     address?: boolean
     phone?: boolean
     commission?: boolean
+    approvalStatus?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
     counselors?: boolean | AgentProfile$counselorsArgs<ExtArgs>
     _count?: boolean | AgentProfileCountOutputTypeDefaultArgs<ExtArgs>
@@ -7285,6 +7306,7 @@ export namespace Prisma {
     address?: boolean
     phone?: boolean
     commission?: boolean
+    approvalStatus?: boolean
     user?: boolean | UserDefaultArgs<ExtArgs>
   }, ExtArgs["result"]["agentProfile"]>
 
@@ -7295,6 +7317,7 @@ export namespace Prisma {
     address?: boolean
     phone?: boolean
     commission?: boolean
+    approvalStatus?: boolean
   }
 
   export type AgentProfileInclude<ExtArgs extends $Extensions.InternalArgs = $Extensions.DefaultArgs> = {
@@ -7319,6 +7342,7 @@ export namespace Prisma {
       address: string | null
       phone: string | null
       commission: number | null
+      approvalStatus: $Enums.AgentApprovalStatus
     }, ExtArgs["result"]["agentProfile"]>
     composites: {}
   }
@@ -7720,6 +7744,7 @@ export namespace Prisma {
     readonly address: FieldRef<"AgentProfile", 'String'>
     readonly phone: FieldRef<"AgentProfile", 'String'>
     readonly commission: FieldRef<"AgentProfile", 'Float'>
+    readonly approvalStatus: FieldRef<"AgentProfile", 'AgentApprovalStatus'>
   }
     
 
@@ -37339,7 +37364,8 @@ export namespace Prisma {
     companyName: 'companyName',
     address: 'address',
     phone: 'phone',
-    commission: 'commission'
+    commission: 'commission',
+    approvalStatus: 'approvalStatus'
   };
 
   export type AgentProfileScalarFieldEnum = (typeof AgentProfileScalarFieldEnum)[keyof typeof AgentProfileScalarFieldEnum]
@@ -37927,6 +37953,20 @@ export namespace Prisma {
 
 
   /**
+   * Reference to a field of type 'AgentApprovalStatus'
+   */
+  export type EnumAgentApprovalStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AgentApprovalStatus'>
+    
+
+
+  /**
+   * Reference to a field of type 'AgentApprovalStatus[]'
+   */
+  export type ListEnumAgentApprovalStatusFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AgentApprovalStatus[]'>
+    
+
+
+  /**
    * Reference to a field of type 'Json'
    */
   export type JsonFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Json'>
@@ -38375,6 +38415,7 @@ export namespace Prisma {
     address?: StringNullableFilter<"AgentProfile"> | string | null
     phone?: StringNullableFilter<"AgentProfile"> | string | null
     commission?: FloatNullableFilter<"AgentProfile"> | number | null
+    approvalStatus?: EnumAgentApprovalStatusFilter<"AgentProfile"> | $Enums.AgentApprovalStatus
     user?: XOR<UserRelationFilter, UserWhereInput>
     counselors?: CounselorProfileListRelationFilter
   }
@@ -38386,6 +38427,7 @@ export namespace Prisma {
     address?: SortOrderInput | SortOrder
     phone?: SortOrderInput | SortOrder
     commission?: SortOrderInput | SortOrder
+    approvalStatus?: SortOrder
     user?: UserOrderByWithRelationInput
     counselors?: CounselorProfileOrderByRelationAggregateInput
   }
@@ -38400,6 +38442,7 @@ export namespace Prisma {
     address?: StringNullableFilter<"AgentProfile"> | string | null
     phone?: StringNullableFilter<"AgentProfile"> | string | null
     commission?: FloatNullableFilter<"AgentProfile"> | number | null
+    approvalStatus?: EnumAgentApprovalStatusFilter<"AgentProfile"> | $Enums.AgentApprovalStatus
     user?: XOR<UserRelationFilter, UserWhereInput>
     counselors?: CounselorProfileListRelationFilter
   }, "id" | "userId">
@@ -38411,6 +38454,7 @@ export namespace Prisma {
     address?: SortOrderInput | SortOrder
     phone?: SortOrderInput | SortOrder
     commission?: SortOrderInput | SortOrder
+    approvalStatus?: SortOrder
     _count?: AgentProfileCountOrderByAggregateInput
     _avg?: AgentProfileAvgOrderByAggregateInput
     _max?: AgentProfileMaxOrderByAggregateInput
@@ -38428,6 +38472,7 @@ export namespace Prisma {
     address?: StringNullableWithAggregatesFilter<"AgentProfile"> | string | null
     phone?: StringNullableWithAggregatesFilter<"AgentProfile"> | string | null
     commission?: FloatNullableWithAggregatesFilter<"AgentProfile"> | number | null
+    approvalStatus?: EnumAgentApprovalStatusWithAggregatesFilter<"AgentProfile"> | $Enums.AgentApprovalStatus
   }
 
   export type CounselorProfileWhereInput = {
@@ -41214,6 +41259,7 @@ export namespace Prisma {
     address?: string | null
     phone?: string | null
     commission?: number | null
+    approvalStatus?: $Enums.AgentApprovalStatus
     user: UserCreateNestedOneWithoutAgentProfileInput
     counselors?: CounselorProfileCreateNestedManyWithoutAgentInput
   }
@@ -41225,6 +41271,7 @@ export namespace Prisma {
     address?: string | null
     phone?: string | null
     commission?: number | null
+    approvalStatus?: $Enums.AgentApprovalStatus
     counselors?: CounselorProfileUncheckedCreateNestedManyWithoutAgentInput
   }
 
@@ -41234,6 +41281,7 @@ export namespace Prisma {
     address?: NullableStringFieldUpdateOperationsInput | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     commission?: NullableFloatFieldUpdateOperationsInput | number | null
+    approvalStatus?: EnumAgentApprovalStatusFieldUpdateOperationsInput | $Enums.AgentApprovalStatus
     user?: UserUpdateOneRequiredWithoutAgentProfileNestedInput
     counselors?: CounselorProfileUpdateManyWithoutAgentNestedInput
   }
@@ -41245,6 +41293,7 @@ export namespace Prisma {
     address?: NullableStringFieldUpdateOperationsInput | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     commission?: NullableFloatFieldUpdateOperationsInput | number | null
+    approvalStatus?: EnumAgentApprovalStatusFieldUpdateOperationsInput | $Enums.AgentApprovalStatus
     counselors?: CounselorProfileUncheckedUpdateManyWithoutAgentNestedInput
   }
 
@@ -41255,6 +41304,7 @@ export namespace Prisma {
     address?: string | null
     phone?: string | null
     commission?: number | null
+    approvalStatus?: $Enums.AgentApprovalStatus
   }
 
   export type AgentProfileUpdateManyMutationInput = {
@@ -41263,6 +41313,7 @@ export namespace Prisma {
     address?: NullableStringFieldUpdateOperationsInput | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     commission?: NullableFloatFieldUpdateOperationsInput | number | null
+    approvalStatus?: EnumAgentApprovalStatusFieldUpdateOperationsInput | $Enums.AgentApprovalStatus
   }
 
   export type AgentProfileUncheckedUpdateManyInput = {
@@ -41272,6 +41323,7 @@ export namespace Prisma {
     address?: NullableStringFieldUpdateOperationsInput | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     commission?: NullableFloatFieldUpdateOperationsInput | number | null
+    approvalStatus?: EnumAgentApprovalStatusFieldUpdateOperationsInput | $Enums.AgentApprovalStatus
   }
 
   export type CounselorProfileCreateInput = {
@@ -44400,6 +44452,13 @@ export namespace Prisma {
     not?: NestedFloatNullableFilter<$PrismaModel> | number | null
   }
 
+  export type EnumAgentApprovalStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.AgentApprovalStatus | EnumAgentApprovalStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.AgentApprovalStatus[] | ListEnumAgentApprovalStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AgentApprovalStatus[] | ListEnumAgentApprovalStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumAgentApprovalStatusFilter<$PrismaModel> | $Enums.AgentApprovalStatus
+  }
+
   export type CounselorProfileListRelationFilter = {
     every?: CounselorProfileWhereInput
     some?: CounselorProfileWhereInput
@@ -44417,6 +44476,7 @@ export namespace Prisma {
     address?: SortOrder
     phone?: SortOrder
     commission?: SortOrder
+    approvalStatus?: SortOrder
   }
 
   export type AgentProfileAvgOrderByAggregateInput = {
@@ -44430,6 +44490,7 @@ export namespace Prisma {
     address?: SortOrder
     phone?: SortOrder
     commission?: SortOrder
+    approvalStatus?: SortOrder
   }
 
   export type AgentProfileMinOrderByAggregateInput = {
@@ -44439,6 +44500,7 @@ export namespace Prisma {
     address?: SortOrder
     phone?: SortOrder
     commission?: SortOrder
+    approvalStatus?: SortOrder
   }
 
   export type AgentProfileSumOrderByAggregateInput = {
@@ -44459,6 +44521,16 @@ export namespace Prisma {
     _sum?: NestedFloatNullableFilter<$PrismaModel>
     _min?: NestedFloatNullableFilter<$PrismaModel>
     _max?: NestedFloatNullableFilter<$PrismaModel>
+  }
+
+  export type EnumAgentApprovalStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AgentApprovalStatus | EnumAgentApprovalStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.AgentApprovalStatus[] | ListEnumAgentApprovalStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AgentApprovalStatus[] | ListEnumAgentApprovalStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumAgentApprovalStatusWithAggregatesFilter<$PrismaModel> | $Enums.AgentApprovalStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumAgentApprovalStatusFilter<$PrismaModel>
+    _max?: NestedEnumAgentApprovalStatusFilter<$PrismaModel>
   }
 
   export type CounselorProfileCountOrderByAggregateInput = {
@@ -47299,6 +47371,10 @@ export namespace Prisma {
     divide?: number
   }
 
+  export type EnumAgentApprovalStatusFieldUpdateOperationsInput = {
+    set?: $Enums.AgentApprovalStatus
+  }
+
   export type UserUpdateOneRequiredWithoutAgentProfileNestedInput = {
     create?: XOR<UserCreateWithoutAgentProfileInput, UserUncheckedCreateWithoutAgentProfileInput>
     connectOrCreate?: UserCreateOrConnectWithoutAgentProfileInput
@@ -49744,6 +49820,13 @@ export namespace Prisma {
     not?: NestedFloatNullableFilter<$PrismaModel> | number | null
   }
 
+  export type NestedEnumAgentApprovalStatusFilter<$PrismaModel = never> = {
+    equals?: $Enums.AgentApprovalStatus | EnumAgentApprovalStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.AgentApprovalStatus[] | ListEnumAgentApprovalStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AgentApprovalStatus[] | ListEnumAgentApprovalStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumAgentApprovalStatusFilter<$PrismaModel> | $Enums.AgentApprovalStatus
+  }
+
   export type NestedFloatNullableWithAggregatesFilter<$PrismaModel = never> = {
     equals?: number | FloatFieldRefInput<$PrismaModel> | null
     in?: number[] | ListFloatFieldRefInput<$PrismaModel> | null
@@ -49758,6 +49841,16 @@ export namespace Prisma {
     _sum?: NestedFloatNullableFilter<$PrismaModel>
     _min?: NestedFloatNullableFilter<$PrismaModel>
     _max?: NestedFloatNullableFilter<$PrismaModel>
+  }
+
+  export type NestedEnumAgentApprovalStatusWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.AgentApprovalStatus | EnumAgentApprovalStatusFieldRefInput<$PrismaModel>
+    in?: $Enums.AgentApprovalStatus[] | ListEnumAgentApprovalStatusFieldRefInput<$PrismaModel>
+    notIn?: $Enums.AgentApprovalStatus[] | ListEnumAgentApprovalStatusFieldRefInput<$PrismaModel>
+    not?: NestedEnumAgentApprovalStatusWithAggregatesFilter<$PrismaModel> | $Enums.AgentApprovalStatus
+    _count?: NestedIntFilter<$PrismaModel>
+    _min?: NestedEnumAgentApprovalStatusFilter<$PrismaModel>
+    _max?: NestedEnumAgentApprovalStatusFilter<$PrismaModel>
   }
 
   export type NestedEnumLeadStatusFilter<$PrismaModel = never> = {
@@ -50035,6 +50128,7 @@ export namespace Prisma {
     address?: string | null
     phone?: string | null
     commission?: number | null
+    approvalStatus?: $Enums.AgentApprovalStatus
     counselors?: CounselorProfileCreateNestedManyWithoutAgentInput
   }
 
@@ -50044,6 +50138,7 @@ export namespace Prisma {
     address?: string | null
     phone?: string | null
     commission?: number | null
+    approvalStatus?: $Enums.AgentApprovalStatus
     counselors?: CounselorProfileUncheckedCreateNestedManyWithoutAgentInput
   }
 
@@ -51316,6 +51411,7 @@ export namespace Prisma {
     address?: NullableStringFieldUpdateOperationsInput | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     commission?: NullableFloatFieldUpdateOperationsInput | number | null
+    approvalStatus?: EnumAgentApprovalStatusFieldUpdateOperationsInput | $Enums.AgentApprovalStatus
     counselors?: CounselorProfileUpdateManyWithoutAgentNestedInput
   }
 
@@ -51325,6 +51421,7 @@ export namespace Prisma {
     address?: NullableStringFieldUpdateOperationsInput | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     commission?: NullableFloatFieldUpdateOperationsInput | number | null
+    approvalStatus?: EnumAgentApprovalStatusFieldUpdateOperationsInput | $Enums.AgentApprovalStatus
     counselors?: CounselorProfileUncheckedUpdateManyWithoutAgentNestedInput
   }
 
@@ -52632,6 +52729,7 @@ export namespace Prisma {
     address?: string | null
     phone?: string | null
     commission?: number | null
+    approvalStatus?: $Enums.AgentApprovalStatus
     user: UserCreateNestedOneWithoutAgentProfileInput
   }
 
@@ -52642,6 +52740,7 @@ export namespace Prisma {
     address?: string | null
     phone?: string | null
     commission?: number | null
+    approvalStatus?: $Enums.AgentApprovalStatus
   }
 
   export type AgentProfileCreateOrConnectWithoutCounselorsInput = {
@@ -52759,6 +52858,7 @@ export namespace Prisma {
     address?: NullableStringFieldUpdateOperationsInput | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     commission?: NullableFloatFieldUpdateOperationsInput | number | null
+    approvalStatus?: EnumAgentApprovalStatusFieldUpdateOperationsInput | $Enums.AgentApprovalStatus
     user?: UserUpdateOneRequiredWithoutAgentProfileNestedInput
   }
 
@@ -52769,6 +52869,7 @@ export namespace Prisma {
     address?: NullableStringFieldUpdateOperationsInput | string | null
     phone?: NullableStringFieldUpdateOperationsInput | string | null
     commission?: NullableFloatFieldUpdateOperationsInput | number | null
+    approvalStatus?: EnumAgentApprovalStatusFieldUpdateOperationsInput | $Enums.AgentApprovalStatus
   }
 
   export type UserUpsertWithoutCounselorProfileInput = {

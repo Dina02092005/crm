@@ -56,8 +56,25 @@ export async function POST(req: Request) {
                     data: {
                         userId: user.id,
                         phone: phone,
+                        approvalStatus: 'PENDING',
                     }
                 });
+
+                // Notify all admins of new agent registration request
+                const admins = await tx.user.findMany({
+                    where: { role: 'ADMIN', isActive: true },
+                    select: { id: true },
+                });
+                if (admins.length > 0) {
+                    await tx.notification.createMany({
+                        data: admins.map((admin) => ({
+                            userId: admin.id,
+                            title: 'New Agent Registration Request',
+                            message: `${name} (${email}) has registered as an agent and is awaiting approval.`,
+                            type: 'SYSTEM',
+                        })),
+                    });
+                }
             }
 
             return user;

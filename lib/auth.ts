@@ -68,6 +68,20 @@ export const authOptions: NextAuthOptions = {
                         throw new Error('Account is inactive. Please contact support.');
                     }
 
+                    // ── Agent approval check ──────────────────────────────────
+                    if (user.role === 'AGENT') {
+                        const agentProfile = await prisma.agentProfile.findUnique({
+                            where: { userId: user.id },
+                            select: { approvalStatus: true },
+                        });
+                        if (agentProfile?.approvalStatus === 'PENDING') {
+                            throw new Error('Your account is pending admin approval. You will be notified once approved.');
+                        }
+                        if (agentProfile?.approvalStatus === 'REJECTED') {
+                            throw new Error('Your registration was not approved. Please contact support.');
+                        }
+                    }
+
                     if (!user.emailVerified) {
                         throw new Error('Please verify your account via OTP before logging in.');
                     }

@@ -57,7 +57,12 @@ export function RegisterForm({
 
         try {
             const response = await axios.post("/api/auth/register", formData);
-            toast.success(response.data.message);
+            const r = formData.role.toLowerCase();
+            if (r === 'agent') {
+                toast.success("Registration successful! Your account is pending admin approval.");
+            } else {
+                toast.success(response.data.message || "Registration successful!");
+            }
             // Pass email, phone and role to verification page via search params
             const params = new URLSearchParams({
                 email: formData.email,
