@@ -14,10 +14,22 @@ import { Button } from "@/components/ui/button";
 import { useRolePath } from "@/hooks/use-role-path";
 import { useSession } from "next-auth/react";
 import { BulkUploadLeadsButton } from "@/components/dashboard/BulkUploadLeadsButton";
+import { useCountries, useCounselors } from "@/hooks/use-masters";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { FilterX } from "lucide-react";
 
 export default function LeadsPage() {
     const [search, setSearch] = useState("");
     const [status, setStatus] = useState("ALL");
+    const [assignedTo, setAssignedTo] = useState("ALL");
+    const [interestedCountry, setInterestedCountry] = useState("ALL");
+    const [highestQualification, setHighestQualification] = useState("ALL");
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
     const { data: session } = useSession() as any;
@@ -31,7 +43,13 @@ export default function LeadsPage() {
         limit,
         search: debouncedSearch,
         status,
+        assignedTo: assignedTo === "ALL" ? "" : assignedTo,
+        interestedCountry: interestedCountry === "ALL" ? "" : interestedCountry,
+        highestQualification: highestQualification === "ALL" ? "" : highestQualification,
     });
+
+    const { data: countries } = useCountries();
+    const { data: counselors } = useCounselors();
 
     const leads = data?.leads || [];
     const totalPages = data?.pagination.totalPages || 0;
@@ -40,7 +58,7 @@ export default function LeadsPage() {
     // Reset page when search or status changes
     useEffect(() => {
         setPage(1);
-    }, [debouncedSearch, status]);
+    }, [debouncedSearch, status, assignedTo, interestedCountry, highestQualification]);
 
 
     const { data: leadStats } = useLeadStats();
@@ -75,6 +93,66 @@ export default function LeadsPage() {
                                 </Button>
                             </Link>
                         </div>
+                    </div>
+
+                    {/* Advanced Filters */}
+                    <div className="flex flex-wrap items-center gap-3 mt-4 mb-2">
+                        <div className="w-full sm:w-[180px]">
+                            <Select value={assignedTo} onValueChange={setAssignedTo}>
+                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 border-0 focus:ring-0">
+                                    <SelectValue placeholder="Assigned To" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="ALL">All Counselors</SelectItem>
+                                    {counselors?.map((c: any) => (
+                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="w-full sm:w-[180px]">
+                            <Select value={interestedCountry} onValueChange={setInterestedCountry}>
+                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 border-0 focus:ring-0">
+                                    <SelectValue placeholder="Country" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="ALL">All Countries</SelectItem>
+                                    {countries?.map((c: any) => (
+                                        <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="w-full sm:w-[180px]">
+                            <Select value={highestQualification} onValueChange={setHighestQualification}>
+                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 border-0 focus:ring-0">
+                                    <SelectValue placeholder="Qualification" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="ALL">All Qualifications</SelectItem>
+                                    {["10th", "12th", "Bachelor", "Master", "PhD"].map((q) => (
+                                        <SelectItem key={q} value={q}>{q}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {(assignedTo !== "ALL" || interestedCountry !== "ALL" || highestQualification !== "ALL") && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                    setAssignedTo("ALL");
+                                    setInterestedCountry("ALL");
+                                    setHighestQualification("ALL");
+                                }}
+                                className="h-8 text-[11px] text-muted-foreground hover:text-destructive gap-1"
+                            >
+                                <FilterX className="h-3 w-3" /> Clear Filters
+                            </Button>
+                        )}
                     </div>
 
                     {/* Filter Pills - Integrated below search */}

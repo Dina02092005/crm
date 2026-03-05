@@ -97,10 +97,10 @@ export default function ChecklistPage() {
 
     const fetchCountries = async () => {
         try {
-            const res = await fetch("/api/master/countries");
+            const res = await fetch("/api/master/countries?limit=1000"); // Fetch all for dropdown
             if (res.ok) {
                 const data = await res.json();
-                setCountries(data);
+                setCountries(data.countries || []);
             }
         } catch (error) {
             console.error("Failed to fetch countries");
@@ -120,7 +120,7 @@ export default function ChecklistPage() {
             const res = await fetch(`/api/master/checklist?${params.toString()}`);
             if (res.ok) {
                 const data = await res.json();
-                setItems(data.items);
+                setItems(data.items || []);
                 setTotal(data.pagination.total);
                 setTotalPages(data.pagination.totalPages);
             }
@@ -271,7 +271,7 @@ export default function ChecklistPage() {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="all">All Countries</SelectItem>
-                            {countries.map(c => (
+                            {countries?.map(c => (
                                 <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                             ))}
                         </SelectContent>
@@ -342,7 +342,7 @@ export default function ChecklistPage() {
                                             </SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="all">All Countries</SelectItem>
-                                                {countries.map(c => (
+                                                {countries?.map(c => (
                                                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                                                 ))}
                                             </SelectContent>

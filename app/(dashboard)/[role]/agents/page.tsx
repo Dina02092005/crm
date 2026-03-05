@@ -1,28 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { EmployeesTable } from "@/components/dashboard/EmployeesTable";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { CreateEmployeeSheet } from "@/components/dashboard/CreateEmployeeSheet"; // We might want to customize this or pass a default role prop if supported
+import { CreateEmployeeSheet } from "@/components/dashboard/CreateEmployeeSheet";
 import { useEmployees, useDeleteEmployee, useToggleEmployeeStatus, useEmployeeStats } from "@/hooks/use-employees";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export default function AgentsPage() {
     const { data: session } = useSession() as any;
     const [search, setSearch] = useState("");
+    const debouncedSearch = useDebounce(search, 500);
     const [statusFilter, setStatusFilter] = useState("all");
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
 
-    // Query Hook - Fetch only AGENTs
-    const { data, isLoading } = useEmployees(statusFilter, page, limit, "AGENT");
+    // Reset page on filter change
+    useEffect(() => {
+        setPage(1);
+    }, [debouncedSearch, statusFilter]);
 
-    const employees = data?.agents || [];
+    // Query Hook - Fetch only AGENTs with server-side search
+    const { data, isLoading } = useEmployees(statusFilter, page, limit, "AGENT", debouncedSearch);
+
+    const agents = data?.agents || [];
     const pagination = data?.pagination || { page: 1, limit: 10, totalPages: 1, total: 0 };
 
     // Mutations
@@ -33,11 +40,6 @@ export default function AgentsPage() {
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [statusId, setStatusId] = useState<string | null>(null);
     const [currentStatus, setCurrentStatus] = useState<boolean>(false);
-
-    const filteredEmployees = employees.filter((emp: any) =>
-    (emp.name?.toLowerCase().includes(search.toLowerCase()) ||
-        emp.email?.toLowerCase().includes(search.toLowerCase()))
-    );
 
     const handleToggleStatus = (id: string, status: boolean) => {
         setStatusId(id);
@@ -88,21 +90,19 @@ export default function AgentsPage() {
     return (
         <div className="flex flex-col gap-2 p-3 sm:p-4">
             <div className="flex items-center justify-between mb-2 px-1">
-                <h1 className="text-xl font-bold tracking-tight">Agents Management</h1>
+                <h1 className="text-xl font-bold tracking-tight text-gray-900">Agents Management</h1>
             </div>
 
-            {/* Employees Table Card */}
-            <Card className="border-0 rounded-3xl overflow-hidden bg-card">
-                <CardContent className="p-4">
-                    {/* Integrated Search and Action Row */}
-                    <div className="flex flex-row items-center justify-between gap-4">
+            <Card className="border-0 rounded-3xl overflow-hidden bg-card shadow-sm border-gray-100">
+                <CardContent className="p-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
                         <div className="relative max-w-sm w-full">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                             <Input
-                                placeholder="Search agents..."
+                                placeholder="Search by name or email..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="pl-9 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-9 text-[13px] placeholder:text-muted-foreground/40 font-sans w-full"
+                                className="pl-10 h-11 rounded-xl border-gray-200 bg-gray-50/50 shadow-none focus:bg-white transition-all text-sm"
                             />
                         </div>
                         {session?.user?.role === "ADMIN" && (
@@ -114,42 +114,36 @@ export default function AgentsPage() {
                         )}
                     </div>
 
-                    {/* Filter Pills */}
-                    <div className="flex flex-wrap gap-2 mt-3 mb-4">
+                    <div className="flex flex-wrap gap-2 mb-6">
                         {[
-                            { id: "all", label: "Total", color: "text-red-500", bg: "bg-red-500/10", border: "" },
-                            { id: "active", label: "Active", color: "text-emerald-500", bg: "bg-emerald-500/10", border: "" },
-                            { id: "inactive", label: "Inactive", color: "text-gray-500", bg: "bg-gray-500/10", border: "" },
+                            { id: "all", label: "Total", color: "text-blue-600", bg: "bg-blue-50" },
+                            { id: "active", label: "Active", color: "text-emerald-600", bg: "bg-emerald-50" },
+                            { id: "inactive", label: "Inactive", color: "text-gray-600", bg: "bg-gray-50" },
                         ].map((f) => (
                             <button
                                 key={f.id}
                                 onClick={() => setStatusFilter(f.id)}
                                 className={`
-                                    px-3 py-1 rounded-lg flex items-center gap-2 transition-all
+                                    px-4 py-2 rounded-xl flex items-center gap-2 transition-all border font-bold text-xs
                                     ${statusFilter === f.id
-                                        ? `${f.bg} shadow-sm border-0`
-                                        : "bg-muted/50 hover:bg-muted text-muted-foreground"
+                                        ? `${f.bg} ${f.color} border-current shadow-sm`
+                                        : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
                                     }
                                 `}
                             >
-                                <div className="flex items-center gap-1.5">
-                                    <span className={`text-[10px] font-bold uppercase tracking-wider ${statusFilter === f.id ? f.color : "text-muted-foreground"}`}>
-                                        {f.label}
-                                    </span>
-                                </div>
+                                {f.label}
                             </button>
                         ))}
                     </div>
 
                     {isLoading ? (
-                        <div className="p-8 space-y-4">
-                            <Skeleton className="h-12 w-full rounded-xl" />
-                            <Skeleton className="h-12 w-full rounded-xl" />
-                            <Skeleton className="h-12 w-full rounded-xl" />
+                        <div className="py-20 flex flex-col items-center justify-center gap-3">
+                            <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                            <p className="text-sm text-gray-500 font-medium">Loading agents...</p>
                         </div>
                     ) : (
                         <EmployeesTable
-                            data={filteredEmployees}
+                            data={agents}
                             onUpdate={() => { }}
                             onDelete={handleDeleteEmployee}
                             onToggleStatus={handleToggleStatus}

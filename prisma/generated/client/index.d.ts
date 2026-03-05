@@ -296,7 +296,8 @@ export const AuditModule: {
   COURSES: 'COURSES',
   VISA: 'VISA',
   MASTERS: 'MASTERS',
-  DASHBOARD: 'DASHBOARD'
+  DASHBOARD: 'DASHBOARD',
+  REPORTS: 'REPORTS'
 };
 
 export type AuditModule = (typeof AuditModule)[keyof typeof AuditModule]

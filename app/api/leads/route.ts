@@ -16,6 +16,10 @@ export const GET = withPermission('LEADS', 'VIEW', async (req, { permission }) =
         const status = searchParams.get('status');
         const source = searchParams.get('source');
         const temperature = searchParams.get('temperature');
+        const assignedTo = searchParams.get('assignedTo');
+        const interestedCountry = searchParams.get('interestedCountry');
+        const highestQualification = searchParams.get('highestQualification');
+
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '10');
         const skip = (page - 1) * limit;
@@ -29,6 +33,8 @@ export const GET = withPermission('LEADS', 'VIEW', async (req, { permission }) =
         }
         if (source) where.source = source;
         if (temperature) where.temperature = temperature;
+        if (interestedCountry) where.interestedCountry = { contains: interestedCountry, mode: 'insensitive' };
+        if (highestQualification) where.highestQualification = { contains: highestQualification, mode: 'insensitive' };
 
         if (search) {
             where.OR = [
@@ -39,30 +45,44 @@ export const GET = withPermission('LEADS', 'VIEW', async (req, { permission }) =
         }
 
         // RBAC: Dynamic scope-based visibility
-        if (scope === 'OWN' || scope === 'ASSIGNED') {
-            const assignedToIds = [session.user.id];
+        if (scope === 'OWN' || scope === 'ASSIGNED' || assignedTo) {
+            let assignedToIds: string[] = [];
 
-            // For AGENT role, if they have OWN/ASSIGNED scope, arguably they should still see subordinates? 
-            // Or does OWN mean LITERALLY just them? In this system, Agents usually manage Counselors.
-            // Let's stick to the current logic for AGENT but triggered by scope.
-            if (session.user.role === 'AGENT') {
-                const agent = await prisma.agentProfile.findUnique({
-                    where: { userId: session.user.id }
-                });
-                if (agent) {
-                    const subordinates = await prisma.counselorProfile.findMany({
-                        where: { agentId: agent.id },
-                        select: { userId: true }
+            if (scope === 'OWN' || scope === 'ASSIGNED') {
+                assignedToIds = [session.user.id];
+
+                if (session.user.role === 'AGENT') {
+                    const agent = await prisma.agentProfile.findUnique({
+                        where: { userId: session.user.id }
                     });
-                    assignedToIds.push(...subordinates.map(s => s.userId));
+                    if (agent) {
+                        const subordinates = await prisma.counselorProfile.findMany({
+                            where: { agentId: agent.id },
+                            select: { userId: true }
+                        });
+                        assignedToIds.push(...subordinates.map(s => s.userId));
+                    }
                 }
+
+                // If user matched scope but also provided a specific assignedTo filter
+                if (assignedTo && !assignedToIds.includes(assignedTo)) {
+                    // Force zero results if they filter by someone they can't see
+                    where.id = "none";
+                } else if (assignedTo) {
+                    assignedToIds = [assignedTo];
+                }
+            } else if (assignedTo) {
+                // User has ALL scope but specifically filtered by assignedTo
+                assignedToIds = [assignedTo];
             }
 
-            where.assignments = {
-                some: {
-                    assignedTo: { in: assignedToIds }
-                }
-            };
+            if (where.id !== "none") {
+                where.assignments = {
+                    some: {
+                        assignedTo: { in: assignedToIds }
+                    }
+                };
+            }
         }
 
         const [leads, total] = await Promise.all([

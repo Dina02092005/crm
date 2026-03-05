@@ -659,7 +659,8 @@ exports.AuditModule = exports.$Enums.AuditModule = {
   COURSES: 'COURSES',
   VISA: 'VISA',
   MASTERS: 'MASTERS',
-  DASHBOARD: 'DASHBOARD'
+  DASHBOARD: 'DASHBOARD',
+  REPORTS: 'REPORTS'
 };
 
 exports.ChecklistType = exports.$Enums.ChecklistType = {

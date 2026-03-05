@@ -1,0 +1,56 @@
+﻿Seeding roles and permissions...
+node : TypeError: 
+Cannot read properties 
+of undefined (reading 
+'upsert')
+At line:1 char:1
++ node scripts/seed-rol
+es-permissions.js 2>&1 
+| Out-File -Encoding 
+utf8 ...
++ ~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo     
+         : NotSpecifi  
+  ed: (TypeError: Ca   
+ nn...ading 'upsert    
+'):String) [], Rem    
+oteException
+    + FullyQualifiedEr 
+   rorId : NativeComm  
+  andError
+ 
+    at main (D:\pr1\exa
+mple\scripts\seed-roles
+-permissions.js:60:44)
+    at 
+Object.<anonymous> (D:\
+pr1\example\scripts\see
+d-roles-permissions.js:
+109:1)
+    at Module._compile 
+(node:internal/modules/
+cjs/loader:1761:14)
+    at Object..js (node
+:internal/modules/cjs/l
+oader:1893:10)
+    at Module.load (nod
+e:internal/modules/cjs/
+loader:1481:32)
+    at Module._load (no
+de:internal/modules/cjs
+/loader:1300:12)
+    at TracingChannel.t
+raceSync (node:diagnost
+ics_channel:328:14)
+    at wrapModuleLoad (
+node:internal/modules/c
+js/loader:245:24)
+    at Module.executeUs
+erEntryPoint [as 
+runMain] (node:internal
+/modules/run_main:154:5
+)
+    at node:internal/ma
+in/run_main_module:33:4
+7

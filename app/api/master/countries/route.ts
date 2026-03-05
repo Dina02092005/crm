@@ -9,11 +9,41 @@ export async function GET(req: Request) {
         return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
+    const { searchParams } = new URL(req.url);
+    const search = searchParams.get('search') || '';
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '25');
+    const skip = (page - 1) * limit;
+
     try {
-        const countries = await prisma.country.findMany({
-            orderBy: { name: 'asc' }
+        const where = {
+            ...(search && {
+                OR: [
+                    { name: { contains: search, mode: 'insensitive' as const } },
+                    { code: { contains: search, mode: 'insensitive' as const } }
+                ]
+            })
+        };
+
+        const [countries, total] = await Promise.all([
+            prisma.country.findMany({
+                where,
+                skip,
+                take: limit,
+                orderBy: { name: 'asc' }
+            }),
+            prisma.country.count({ where })
+        ]);
+
+        return NextResponse.json({
+            countries,
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            }
         });
-        return NextResponse.json(countries);
     } catch (error) {
         console.error("Error fetching countries:", error);
         return NextResponse.json({ message: 'Internal Error' }, { status: 500 });

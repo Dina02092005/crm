@@ -29,14 +29,15 @@ interface Employee extends User {
     // any extra fields
 }
 
-export const useEmployees = (status: string = "all", page: number = 1, limit: number = 10, role?: string) => {
+export const useEmployees = (status: string = "all", page: number = 1, limit: number = 10, role?: string, search: string = "") => {
     return useQuery({
-        queryKey: ["employees", status, page, limit, role],
+        queryKey: ["employees", status, page, limit, role, search],
         queryFn: async () => {
             const params = new URLSearchParams({
                 status,
                 page: page.toString(),
                 limit: limit.toString(),
+                search,
             });
             if (role) {
                 params.append("role", role);

@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { usePermissions } from "@/hooks/use-permissions";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -23,7 +22,9 @@ import {
 } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2, Pencil } from "lucide-react";
+import { Loader2, Plus, Trash2, Pencil, Search, ExternalLink, Globe } from "lucide-react";
+import { useWebsites } from "@/hooks/use-masters";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface Website {
     id: string;
@@ -35,34 +36,27 @@ interface Website {
 
 export default function WebsitesPage() {
     const { can } = usePermissions();
-    const router = useRouter();
-    const [websites, setWebsites] = useState<Website[]>([]);
-    const [loading, setLoading] = useState(true);
+
+    // Filter & Pagination State
+    const [search, setSearch] = useState("");
+    const [page, setPage] = useState(1);
+    const [limit] = useState(25);
+    const debouncedSearch = useDebounce(search, 500);
+
+    const { data, isLoading, refetch } = useWebsites(page, limit, debouncedSearch);
+
+    const websites = data?.websites || [];
+    const pagination = data?.pagination || { total: 0, page: 1, limit: 25, totalPages: 1 };
+
+    // Modal State
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [editingWebsite, setEditingWebsite] = useState<Website | null>(null);
-    const [websiteName, setWebsiteName] = useState("");
-    const [websiteUrl, setWebsiteUrl] = useState("");
+    const [formData, setFormData] = useState({ name: "", url: "" });
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const fetchWebsites = async () => {
-        try {
-            const res = await fetch("/api/websites");
-            if (res.ok) {
-                const data = await res.json();
-                setWebsites(data);
-            } else {
-                toast.error("Failed to load websites");
-            }
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     useEffect(() => {
-        fetchWebsites();
-    }, []);
+        setPage(1);
+    }, [debouncedSearch]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -74,18 +68,18 @@ export default function WebsitesPage() {
             const res = await fetch(url, {
                 method,
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name: websiteName, url: websiteUrl }),
+                body: JSON.stringify(formData),
             });
 
             if (res.ok) {
                 toast.success(editingWebsite ? "Website updated" : "Website added");
-                setWebsiteName("");
-                setWebsiteUrl("");
+                setFormData({ name: "", url: "" });
                 setEditingWebsite(null);
                 setIsSheetOpen(false);
-                fetchWebsites();
+                refetch();
             } else {
-                toast.error(editingWebsite ? "Failed to update website" : "Failed to add website");
+                const error = await res.json();
+                toast.error(error.message || (editingWebsite ? "Failed to update" : "Failed to add"));
             }
         } catch (error) {
             toast.error("Error saving website");
@@ -94,22 +88,21 @@ export default function WebsitesPage() {
         }
     };
 
-    const handleEdit = (website: Website) => {
-        setEditingWebsite(website);
-        setWebsiteName(website.name);
-        setWebsiteUrl(website.url || "");
+    const handleEdit = (w: Website) => {
+        setEditingWebsite(w);
+        setFormData({ name: w.name, url: w.url || "" });
         setIsSheetOpen(true);
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this website? It might be linked to existing leads.")) return;
+    const handleDelete = async (id: string, name: string) => {
+        if (!confirm(`Are you sure you want to delete ${name}?`)) return;
         try {
             const res = await fetch(`/api/websites/${id}`, {
                 method: "DELETE",
             });
             if (res.ok) {
-                toast.success("Website deleted");
-                fetchWebsites();
+                toast.success("Deleted successfully");
+                refetch();
             } else {
                 toast.error("Failed to delete");
             }
@@ -122,53 +115,56 @@ export default function WebsitesPage() {
         setIsSheetOpen(open);
         if (!open) {
             setEditingWebsite(null);
-            setWebsiteName("");
-            setWebsiteUrl("");
+            setFormData({ name: "", url: "" });
         }
     };
 
-    if (loading) return <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>;
-
-
     return (
-        <div className="p-6 space-y-6">
-            <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold">Master Settings: Websites</h1>
+        <div className="p-6 space-y-6 bg-gray-50/30 min-h-full">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight text-gray-900">Website Management</h1>
+                    <p className="text-sm text-gray-500 mt-1">Manage official websites and sources for lead generation.</p>
+                </div>
                 {can("MASTERS", "CREATE") && (
                     <Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
                         <SheetTrigger asChild>
-                            <Button className="gap-2">
+                            <Button className="gap-2 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl shadow-md px-6 h-11">
                                 <Plus className="h-4 w-4" /> Add Website
                             </Button>
                         </SheetTrigger>
-                        <SheetContent>
-                            <SheetHeader>
-                                <SheetTitle>{editingWebsite ? "Edit Website" : "Add New Website"}</SheetTitle>
+                        <SheetContent className="sm:max-w-md">
+                            <SheetHeader className="pb-4">
+                                <SheetTitle className="text-xl font-bold">{editingWebsite ? "Edit Website" : "Add Website"}</SheetTitle>
                                 <SheetDescription>
-                                    {editingWebsite ? "Update the details of the website." : "Enter the details for the new website."}
+                                    Enter the details for the source website.
                                 </SheetDescription>
                             </SheetHeader>
-                            <form onSubmit={handleSubmit} className="space-y-4 pt-4">
+                            <form onSubmit={handleSubmit} className="space-y-6 py-4">
                                 <div className="space-y-2">
-                                    <Label>Website Name</Label>
+                                    <Label htmlFor="name" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Website Name</Label>
                                     <Input
-                                        value={websiteName}
-                                        onChange={(e) => setWebsiteName(e.target.value)}
-                                        placeholder="e.g. Website 1"
+                                        id="name"
+                                        value={formData.name}
+                                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                        placeholder="e.g. Official Study Portal"
                                         required
+                                        className="rounded-xl h-11 border-gray-200 bg-gray-50 focus:bg-white transition-all"
                                     />
                                 </div>
                                 <div className="space-y-2">
-                                    <Label>URL (Optional)</Label>
+                                    <Label htmlFor="url" className="text-xs font-bold text-gray-500 uppercase tracking-wider">Website URL</Label>
                                     <Input
-                                        value={websiteUrl}
-                                        onChange={(e) => setWebsiteUrl(e.target.value)}
+                                        id="url"
+                                        value={formData.url}
+                                        onChange={(e) => setFormData({ ...formData, url: e.target.value })}
                                         placeholder="https://example.com"
+                                        className="rounded-xl h-11 border-gray-200 bg-gray-50 focus:bg-white transition-all"
                                     />
                                 </div>
-                                <Button type="submit" className="w-full" disabled={isSubmitting}>
+                                <Button type="submit" className="w-full h-11 font-bold rounded-xl bg-primary hover:bg-primary/90 text-white shadow-md transition-all active:scale-[0.98]" disabled={isSubmitting}>
                                     {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    {editingWebsite ? "Update" : "Create"}
+                                    {editingWebsite ? "Update Website" : "Create Website"}
                                 </Button>
                             </form>
                         </SheetContent>
@@ -176,41 +172,80 @@ export default function WebsitesPage() {
                 )}
             </div>
 
-            <div className="bg-card rounded-xl border shadow-sm">
+            {/* Filters */}
+            <div className="flex items-center gap-4">
+                <div className="relative flex-1 max-w-sm">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <Input
+                        placeholder="Search by name or URL..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="pl-9 rounded-xl border-gray-200 bg-white shadow-sm h-11"
+                    />
+                </div>
+            </div>
+
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
                 <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Name</TableHead>
-                            <TableHead>URL</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
+                    <TableHeader className="bg-gray-50">
+                        <TableRow className="border-gray-200">
+                            <TableHead className="w-[50px] font-bold py-4 px-6 text-[10px] uppercase tracking-widest text-gray-500">#</TableHead>
+                            <TableHead className="font-bold py-4 text-[10px] uppercase tracking-widest text-gray-500">Website Info</TableHead>
+                            <TableHead className="font-bold py-4 text-[10px] uppercase tracking-widest text-gray-500">Status</TableHead>
+                            <TableHead className="font-bold py-4 text-right px-6 text-[10px] uppercase tracking-widest text-gray-500">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {websites.length === 0 ? (
+                        {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                                    No websites found. Add one to get started.
+                                <TableCell colSpan={4} className="h-48 text-center text-gray-400">
+                                    <div className="flex flex-col items-center justify-center gap-2">
+                                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                        <span className="font-medium">Loading websites...</span>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        ) : websites.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={4} className="h-48 text-center text-gray-400 italic">
+                                    No websites found.
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            websites.map((site) => (
-                                <TableRow key={site.id}>
-                                    <TableCell className="font-medium">{site.name}</TableCell>
-                                    <TableCell>{site.url || "-"}</TableCell>
-                                    <TableCell>
-                                        <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${site.isActive ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-700"}`}>
-                                            {site.isActive ? "Active" : "Inactive"}
+                            websites.map((w: any, idx: number) => (
+                                <TableRow key={w.id} className="border-gray-100 hover:bg-gray-50/50 transition-colors">
+                                    <TableCell className="font-medium py-4 px-6 text-xs text-gray-400">
+                                        {(page - 1) * limit + idx + 1}
+                                    </TableCell>
+                                    <TableCell className="py-4">
+                                        <div className="flex flex-col gap-0.5">
+                                            <span className="font-bold text-gray-900 text-sm">{w.name}</span>
+                                            {w.url && (
+                                                <a
+                                                    href={w.url.startsWith('http') ? w.url : `https://${w.url}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="flex items-center gap-1 text-xs text-primary hover:underline w-fit"
+                                                >
+                                                    {w.url}
+                                                    <ExternalLink className="h-3 w-3" />
+                                                </a>
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="py-4 text-[10px] font-bold uppercase tracking-widest">
+                                        <span className={`inline-flex items-center px-2.5 py-1 rounded-full ${w.isActive ? "bg-green-50 text-green-700 border border-green-100" : "bg-gray-100 text-gray-500"}`}>
+                                            {w.isActive ? "Active" : "Inactive"}
                                         </span>
                                     </TableCell>
-                                    <TableCell className="text-right text-muted-foreground">
-                                        <div className="flex justify-end gap-2">
+                                    <TableCell className="text-right py-4 px-6">
+                                        <div className="flex justify-end gap-1">
                                             {can("MASTERS", "EDIT") && (
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    onClick={() => handleEdit(site)}
-                                                    className="hover:bg-primary/10 hover:text-primary"
+                                                    onClick={() => handleEdit(w)}
+                                                    className="h-9 w-9 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-all"
                                                 >
                                                     <Pencil className="h-4 w-4" />
                                                 </Button>
@@ -219,8 +254,8 @@ export default function WebsitesPage() {
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
-                                                    onClick={() => handleDelete(site.id)}
-                                                    className="hover:bg-destructive/10 hover:text-destructive"
+                                                    onClick={() => handleDelete(w.id, w.name)}
+                                                    className="h-9 w-9 rounded-xl hover:bg-red-50 hover:text-red-600 transition-all"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
@@ -232,6 +267,35 @@ export default function WebsitesPage() {
                         )}
                     </TableBody>
                 </Table>
+
+                {/* Pagination */}
+                {pagination.totalPages > 1 && (
+                    <div className="flex items-center justify-between px-6 py-4 border-t border-gray-100 bg-gray-50/30">
+                        <p className="text-xs text-gray-500 font-medium">
+                            Showing <span className="text-gray-900 font-bold">{(page - 1) * limit + 1}</span> to <span className="text-gray-900 font-bold">{Math.min(page * limit, pagination.total)}</span> of <span className="text-gray-900 font-bold">{pagination.total}</span> entries
+                        </p>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={page <= 1}
+                                onClick={() => setPage(page - 1)}
+                                className="rounded-xl px-4 border-gray-200 h-9 font-bold text-gray-600"
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={page >= pagination.totalPages}
+                                onClick={() => setPage(page + 1)}
+                                className="rounded-xl px-4 border-gray-200 h-9 font-bold text-gray-600"
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -42,6 +42,8 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useUniversities } from "@/hooks/use-masters";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface University {
     id: string;
@@ -52,11 +54,6 @@ interface University {
     imageUrl: string | null;
 }
 
-interface Country {
-    id: string;
-    name: string;
-}
-
 export default function UniversityDetailPage() {
     const router = useRouter();
     const params = useParams();
@@ -65,11 +62,17 @@ export default function UniversityDetailPage() {
     const role = params.role as string;
     const canEdit = ["ADMIN", "MANAGER"].includes(session?.user?.role || "");
 
-    const [universities, setUniversities] = useState<University[]>([]);
-    const [country, setCountry] = useState<Country | null>(null);
-    const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
-    const [pagination, setPagination] = useState({ page: 1, limit: 25, total: 0, pages: 1 });
+    const [page, setPage] = useState(1);
+    const [limit] = useState(25);
+    const [countryName, setCountryName] = useState("");
+
+    const debouncedSearch = useDebounce(search, 500);
+
+    const { data, isLoading, refetch } = useUniversities(countryId, page, limit, debouncedSearch);
+
+    const universities = data?.universities || [];
+    const pagination = data?.pagination || { page: 1, limit: 25, total: 0, totalPages: 1 };
 
     // Modal states
     const [isAddEditOpen, setIsAddEditOpen] = useState(false);
@@ -84,37 +87,22 @@ export default function UniversityDetailPage() {
     });
     const [submitting, setSubmitting] = useState(false);
 
-    const fetchUniversities = useCallback(async () => {
-        try {
-            setLoading(true);
-            const [uniRes, countryRes] = await Promise.all([
-                axios.get(`/api/master/universities`, {
-                    params: {
-                        countryId,
-                        search,
-                        page: pagination.page,
-                        limit: pagination.limit
-                    }
-                }),
-                axios.get(`/api/master/countries-with-university-count`) // To get country name
-            ]);
-
-            setUniversities(uniRes.data.universities);
-            setPagination(uniRes.data.pagination);
-
-            const currentCountry = countryRes.data.find((c: any) => c.id === countryId);
-            setCountry(currentCountry);
-        } catch (error) {
-            console.error("Failed to fetch data:", error);
-            toast.error("Failed to load universities");
-        } finally {
-            setLoading(false);
-        }
-    }, [countryId, search, pagination.page, pagination.limit]);
+    useEffect(() => {
+        const fetchCountry = async () => {
+            try {
+                const res = await axios.get("/api/master/countries-with-university-count");
+                const currentCountry = res.data.countries?.find((c: any) => c.id === countryId);
+                if (currentCountry) setCountryName(currentCountry.name);
+            } catch (err) {
+                console.error("Failed to fetch country name:", err);
+            }
+        };
+        if (countryId) fetchCountry();
+    }, [countryId]);
 
     useEffect(() => {
-        fetchUniversities();
-    }, [fetchUniversities]);
+        setPage(1);
+    }, [debouncedSearch]);
 
     const handleOpenAdd = () => {
         setSelectedUni(null);
@@ -153,7 +141,7 @@ export default function UniversityDetailPage() {
                 toast.success("University added successfully");
             }
             setIsAddEditOpen(false);
-            fetchUniversities();
+            refetch();
         } catch (error) {
             console.error("Failed to save university:", error);
             toast.error("Failed to save university");
@@ -169,7 +157,7 @@ export default function UniversityDetailPage() {
             await axios.delete(`/api/master/universities/${selectedUni.id}`);
             toast.success("University deleted successfully");
             setIsDeleteOpen(false);
-            fetchUniversities();
+            refetch();
         } catch (error) {
             console.error("Failed to delete university:", error);
             toast.error("Failed to delete university");
@@ -195,10 +183,10 @@ export default function UniversityDetailPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">
-                            {country?.name || "Loading..."}
+                            {countryName || "Loading..."}
                         </h1>
                         <p className="text-sm text-muted-foreground mt-1">
-                            Masters &gt; Universities &gt; {country?.name}
+                            Masters &gt; Universities &gt; {countryName}
                         </p>
                     </div>
                     {canEdit && (
@@ -217,17 +205,14 @@ export default function UniversityDetailPage() {
                     <Input
                         placeholder="Search university name..."
                         value={search}
-                        onChange={(e) => {
-                            setSearch(e.target.value);
-                            setPagination(prev => ({ ...prev, page: 1 }));
-                        }}
+                        onChange={(e) => setSearch(e.target.value)}
                         className="pl-9"
                     />
                 </div>
             </div>
 
             {/* Table */}
-            <div className="border rounded-xl bg-card overflow-hidden">
+            <div className="border rounded-xl bg-card overflow-hidden shadow-sm">
                 <Table>
                     <TableHeader className="bg-muted/50">
                         <TableRow>
@@ -239,7 +224,7 @@ export default function UniversityDetailPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {loading ? (
+                        {isLoading ? (
                             <TableRow>
                                 <TableCell colSpan={5} className="h-48 text-center">
                                     <div className="flex flex-col items-center justify-center gap-2">
@@ -251,14 +236,14 @@ export default function UniversityDetailPage() {
                         ) : universities.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={5} className="h-48 text-center text-muted-foreground">
-                                    No universities found in {country?.name}.
+                                    No universities found in {countryName}.
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            universities.map((uni, idx) => (
+                            universities.map((uni: any, idx: number) => (
                                 <TableRow key={uni.id} className="hover:bg-muted/30 transition-colors">
                                     <TableCell className="font-medium text-muted-foreground">
-                                        {(pagination.page - 1) * pagination.limit + idx + 1}
+                                        {(page - 1) * limit + idx + 1}
                                     </TableCell>
                                     <TableCell className="font-semibold">{uni.name}</TableCell>
                                     <TableCell>
@@ -307,29 +292,31 @@ export default function UniversityDetailPage() {
                 </Table>
 
                 {/* Pagination Stats */}
-                <div className="flex items-center justify-between px-4 py-4 border-t bg-muted/20">
-                    <p className="text-sm text-muted-foreground">
-                        Showing {Math.min((pagination.page - 1) * pagination.limit + 1, pagination.total)} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} entries
-                    </p>
-                    <div className="flex gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={pagination.page <= 1}
-                            onClick={() => setPagination(p => ({ ...p, page: p.page - 1 }))}
-                        >
-                            Previous
-                        </Button>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={pagination.page >= pagination.pages}
-                            onClick={() => setPagination(p => ({ ...p, page: p.page + 1 }))}
-                        >
-                            Next
-                        </Button>
+                {pagination.totalPages > 1 && (
+                    <div className="flex items-center justify-between px-4 py-4 border-t bg-muted/20">
+                        <p className="text-sm text-muted-foreground">
+                            Showing {(page - 1) * limit + 1} to {Math.min(page * limit, pagination.total)} of {pagination.total} entries
+                        </p>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={page <= 1}
+                                onClick={() => setPage(page - 1)}
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={page >= pagination.totalPages}
+                                onClick={() => setPage(page + 1)}
+                            >
+                                Next
+                            </Button>
+                        </div>
                     </div>
-                </div>
+                )}
             </div>
 
             {/* Add/Edit Modal */}
@@ -338,7 +325,7 @@ export default function UniversityDetailPage() {
                     <DialogHeader>
                         <DialogTitle>{selectedUni ? "Edit University" : "Add New University"}</DialogTitle>
                         <DialogDescription>
-                            Enter the university details below for {country?.name}.
+                            Enter the university details below for {countryName}.
                         </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={handleSubmit} className="space-y-4 py-4">

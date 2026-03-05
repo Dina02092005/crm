@@ -9,6 +9,7 @@ import {
     FaClock,
     FaSync,
     FaStickyNote,
+    FaSignal,
 } from "react-icons/fa";
 
 export interface MenuItem {
@@ -27,6 +28,7 @@ export const menuItems: MenuItem[] = [
     { label: "Students", icon: <FaUsers />, href: "/students", roles: ["ADMIN", "MANAGER", "AGENT", "COUNSELOR", "SALES_REP", "SUPPORT_AGENT"] },
     { label: "Applications", icon: <FaFolderOpen />, href: "/applications", roles: ["ADMIN", "MANAGER", "AGENT", "COUNSELOR", "SALES_REP", "SUPPORT_AGENT", "STUDENT"] },
     { label: "Visa Applications", icon: <FaSitemap />, href: "/visa-applications", roles: ["ADMIN", "MANAGER", "AGENT", "COUNSELOR", "STUDENT"] },
+    { label: "Reports", icon: <FaSignal />, href: "/reports", roles: ["ADMIN", "MANAGER", "SUPER_ADMIN"] },
     {
         label: "Defer / Enrolled",
         icon: <FaSync />,
