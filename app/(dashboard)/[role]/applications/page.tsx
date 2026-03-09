@@ -227,7 +227,7 @@ function ApplicationsPageContent({ role }: { role: string }) {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="ALL">All Countries</SelectItem>
-                                    {countries?.map((c: any) => (
+                                    {countries?.countries?.map((c: any) => (
                                         <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                                     ))}
                                 </SelectContent>
@@ -241,7 +241,7 @@ function ApplicationsPageContent({ role }: { role: string }) {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="ALL">All Universities</SelectItem>
-                                    {universities?.map((u: any) => (
+                                    {universities?.universities?.map((u: any) => (
                                         <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
                                     ))}
                                 </SelectContent>

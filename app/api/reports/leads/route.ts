@@ -23,6 +23,7 @@ export async function GET(req: Request) {
     const country = searchParams.get('country');
     const status = searchParams.get('status');
     const temperature = searchParams.get('temperature');
+    const interest = searchParams.get('interest');
     const search = searchParams.get('search') || '';
 
     try {
@@ -39,6 +40,7 @@ export async function GET(req: Request) {
         if (country) where.interestedCountry = country;
         if (status) where.status = status;
         if (temperature) where.temperature = temperature;
+        if (interest) where.interest = interest;
 
         if (agentId || counselorId) {
             where.assignments = {
@@ -88,6 +90,7 @@ export async function GET(req: Request) {
                 agent,
                 counselor,
                 status: l.status,
+                interest: l.interest,
                 createdAt: l.createdAt
             };
         });

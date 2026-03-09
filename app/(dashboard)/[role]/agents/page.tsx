@@ -29,7 +29,7 @@ export default function AgentsPage() {
     // Query Hook - Fetch only AGENTs with server-side search
     const { data, isLoading } = useEmployees(statusFilter, page, limit, "AGENT", debouncedSearch);
 
-    const agents = data?.agents || [];
+    const agents = data?.employees || [];
     const pagination = data?.pagination || { page: 1, limit: 10, totalPages: 1, total: 0 };
 
     // Mutations

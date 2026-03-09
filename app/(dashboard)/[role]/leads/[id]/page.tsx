@@ -721,6 +721,7 @@ export default function LeadDetailPage() {
                                 <CardContent className="p-4">
                                     <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
                                         {[
+                                            { label: "Lead Interest", value: lead.interest },
                                             { label: "Highest Qualification", value: lead.highestQualification },
                                             { label: "Interested Course", value: lead.interestedCourse },
                                             { label: "Interested Country", value: lead.interestedCountry },

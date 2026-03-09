@@ -4,21 +4,12 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 
+import { withPermission } from '@/lib/permissions';
+
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: NextRequest) {
+export const GET = withPermission('COUNSELORS', 'VIEW', async (req, { permission }) => {
     try {
-        const session = await getServerSession(authOptions) as any;
-        if (!session) {
-            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-        }
-
-        // Admins see all, Agents see their own counselors
-        const userRole = session.user.role;
-        if (userRole !== 'ADMIN' && userRole !== 'AGENT') {
-            return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
-        }
-
         const { searchParams } = new URL(req.url);
         const search = searchParams.get("search") || "";
         const status = searchParams.get("status") || "active";
@@ -26,12 +17,13 @@ export async function GET(req: NextRequest) {
         const limit = parseInt(searchParams.get("limit") || "10");
         const skip = (page - 1) * limit;
 
+        const userRole = permission.user.role;
         const where: any = { role: 'COUNSELOR' };
 
         if (userRole === 'AGENT') {
             where.counselorProfile = {
                 agent: {
-                    userId: session.user.id
+                    userId: permission.user.id
                 }
             };
         }
@@ -89,33 +81,28 @@ export async function GET(req: NextRequest) {
         ]);
 
         return NextResponse.json({
-            counselors,
+            employees: counselors,
             pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
         });
     } catch (error) {
         console.error('Fetch counselors error:', error);
         return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
     }
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withPermission('COUNSELORS', 'CREATE', async (req, { permission }) => {
     try {
-        const session = await getServerSession(authOptions) as any;
-        if (!session || (session.user.role !== 'ADMIN' && session.user.role !== 'AGENT')) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
         const body = await req.json();
         const { name, email, password, phone, department, designation, salary, joiningDate, agentId, roleId } = body;
 
         // If an Agent is creating, the counselor is automatically linked to them
         let effectiveAgentId = agentId;
-        if (session.user.role === 'AGENT') {
+        if (permission.user.role === 'AGENT') {
             const agentProfile = await prisma.agentProfile.findUnique({
-                where: { userId: session.user.id }
+                where: { userId: permission.user.id }
             });
             if (!agentProfile) {
-                console.error(`Agent profile not found for userId: ${session.user.id}`);
+                console.error(`Agent profile not found for userId: ${permission.user.id}`);
                 return NextResponse.json({ error: "Your Agent profile was not found. Please contact support." }, { status: 400 });
             }
             effectiveAgentId = agentProfile.id;
@@ -157,4 +144,4 @@ export async function POST(req: NextRequest) {
         console.error('Create counselor error:', error);
         return NextResponse.json({ error: error.message || "Failed to create counselor" }, { status: 500 });
     }
-}
+});

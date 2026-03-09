@@ -30,6 +30,10 @@ export default function LeadsPage() {
     const [assignedTo, setAssignedTo] = useState("ALL");
     const [interestedCountry, setInterestedCountry] = useState("ALL");
     const [highestQualification, setHighestQualification] = useState("ALL");
+    const [interest, setInterest] = useState("ALL");
+    const [source, setSource] = useState("ALL");
+    const [fromDate, setFromDate] = useState<string>("");
+    const [toDate, setToDate] = useState<string>("");
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
     const { data: session } = useSession() as any;
@@ -46,6 +50,10 @@ export default function LeadsPage() {
         assignedTo: assignedTo === "ALL" ? "" : assignedTo,
         interestedCountry: interestedCountry === "ALL" ? "" : interestedCountry,
         highestQualification: highestQualification === "ALL" ? "" : highestQualification,
+        interest: interest === "ALL" ? "" : interest,
+        source: source === "ALL" ? "" : source,
+        from: fromDate,
+        to: toDate,
     });
 
     const { data: countries } = useCountries();
@@ -58,7 +66,7 @@ export default function LeadsPage() {
     // Reset page when search or status changes
     useEffect(() => {
         setPage(1);
-    }, [debouncedSearch, status, assignedTo, interestedCountry, highestQualification]);
+    }, [debouncedSearch, status, assignedTo, interestedCountry, highestQualification, interest, source, fromDate, toDate]);
 
 
     const { data: leadStats } = useLeadStats();
@@ -71,7 +79,6 @@ export default function LeadsPage() {
 
     return (
         <div className="flex flex-col gap-3 p-3 sm:p-4">
-
             <Card className="border-0 rounded-3xl overflow-hidden bg-card">
                 <CardContent className="p-4">
                     {/* Integrated Search and Action Row */}
@@ -96,10 +103,10 @@ export default function LeadsPage() {
                     </div>
 
                     {/* Advanced Filters */}
-                    <div className="flex flex-wrap items-center gap-3 mt-4 mb-2">
-                        <div className="w-full sm:w-[180px]">
+                    <div className="flex flex-wrap items-center gap-2 mt-4 mb-2">
+                        <div className="w-full sm:w-[150px]">
                             <Select value={assignedTo} onValueChange={setAssignedTo}>
-                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 border-0 focus:ring-0">
+                                <SelectTrigger className="h-9 text-[11px] rounded-xl bg-muted/50 border-0 focus:ring-0">
                                     <SelectValue placeholder="Assigned To" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -111,35 +118,69 @@ export default function LeadsPage() {
                             </Select>
                         </div>
 
-                        <div className="w-full sm:w-[180px]">
+                        <div className="w-full sm:w-[150px]">
                             <Select value={interestedCountry} onValueChange={setInterestedCountry}>
-                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 border-0 focus:ring-0">
+                                <SelectTrigger className="h-9 text-[11px] rounded-xl bg-muted/50 border-0 focus:ring-0">
                                     <SelectValue placeholder="Country" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="ALL">All Countries</SelectItem>
-                                    {countries?.map((c: any) => (
+                                    {countries?.countries?.map((c: any) => (
                                         <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                         </div>
 
-                        <div className="w-full sm:w-[180px]">
-                            <Select value={highestQualification} onValueChange={setHighestQualification}>
-                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 border-0 focus:ring-0">
-                                    <SelectValue placeholder="Qualification" />
+                        <div className="w-full sm:w-[150px]">
+                            <Select value={interest} onValueChange={setInterest}>
+                                <SelectTrigger className="h-9 text-[11px] rounded-xl bg-muted/50 border-0 focus:ring-0">
+                                    <SelectValue placeholder="Interest" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="ALL">All Qualifications</SelectItem>
-                                    {["10th", "12th", "Bachelor", "Master", "PhD"].map((q) => (
-                                        <SelectItem key={q} value={q}>{q}</SelectItem>
+                                    <SelectItem value="ALL">All Interests</SelectItem>
+                                    <SelectItem value="STUDY_ABROAD">Study Abroad</SelectItem>
+                                    <SelectItem value="SKILL_DEVELOPMENT">Skill Development</SelectItem>
+                                    <SelectItem value="LOAN">Loan</SelectItem>
+                                    <SelectItem value="MBBS">MBBS</SelectItem>
+                                    <SelectItem value="OTHER">Other</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="w-full sm:w-[150px]">
+                            <Select value={source} onValueChange={setSource}>
+                                <SelectTrigger className="h-9 text-[11px] rounded-xl bg-muted/50 border-0 focus:ring-0">
+                                    <SelectValue placeholder="Source" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="ALL">All Sources</SelectItem>
+                                    {["Google", "Facebook", "Instagram", "WhatsApp", "Referral", "Other"].map((s) => (
+                                        <SelectItem key={s} value={s}>{s}</SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                         </div>
 
-                        {(assignedTo !== "ALL" || interestedCountry !== "ALL" || highestQualification !== "ALL") && (
+                        <div className="w-full sm:w-[140px]">
+                            <Input
+                                type="date"
+                                value={fromDate}
+                                onChange={(e) => setFromDate(e.target.value)}
+                                className="h-9 text-[11px] rounded-xl bg-muted/50 border-0 focus:ring-0"
+                            />
+                        </div>
+
+                        <div className="w-full sm:w-[140px]">
+                            <Input
+                                type="date"
+                                value={toDate}
+                                onChange={(e) => setToDate(e.target.value)}
+                                className="h-9 text-[11px] rounded-xl bg-muted/50 border-0 focus:ring-0"
+                            />
+                        </div>
+
+                        {(assignedTo !== "ALL" || interestedCountry !== "ALL" || highestQualification !== "ALL" || interest !== "ALL" || source !== "ALL" || fromDate || toDate) && (
                             <Button
                                 variant="ghost"
                                 size="sm"
@@ -147,24 +188,28 @@ export default function LeadsPage() {
                                     setAssignedTo("ALL");
                                     setInterestedCountry("ALL");
                                     setHighestQualification("ALL");
+                                    setInterest("ALL");
+                                    setSource("ALL");
+                                    setFromDate("");
+                                    setToDate("");
                                 }}
                                 className="h-8 text-[11px] text-muted-foreground hover:text-destructive gap-1"
                             >
-                                <FilterX className="h-3 w-3" /> Clear Filters
+                                <FilterX className="h-3 w-3" /> Clear
                             </Button>
                         )}
                     </div>
 
-                    {/* Filter Pills - Integrated below search */}
+                    {/* Filter Pills */}
                     <div className="flex flex-wrap gap-2 mt-3 mb-4">
                         {[
-                            { id: "ALL", label: "All", color: "text-primary", bg: "bg-primary/10", border: "" },
-                            { id: "NEW", label: "New", color: "text-primary", bg: "bg-primary/10", border: "" },
-                            { id: "ASSIGNED", label: "Assigned", color: "text-blue-500", bg: "bg-blue-500/10", border: "" },
-                            { id: "IN_PROGRESS", label: "In Progress", color: "text-indigo-500", bg: "bg-indigo-500/10", border: "" },
-                            { id: "FOLLOW_UP", label: "Follow Up", color: "text-orange-500", bg: "bg-orange-500/10", border: "" },
-                            { id: "CONVERTED", label: "Converted", color: "text-emerald-500", bg: "bg-emerald-500/10", border: "" },
-                            { id: "LOST", label: "Lost", color: "text-gray-500", bg: "bg-gray-500/10", border: "" },
+                            { id: "ALL", label: "All", color: "text-primary", bg: "bg-primary/10" },
+                            { id: "NEW", label: "New", color: "text-primary", bg: "bg-primary/10" },
+                            { id: "ASSIGNED", label: "Assigned", color: "text-blue-500", bg: "bg-blue-500/10" },
+                            { id: "IN_PROGRESS", label: "In Progress", color: "text-indigo-500", bg: "bg-indigo-500/10" },
+                            { id: "FOLLOW_UP", label: "Follow Up", color: "text-orange-500", bg: "bg-orange-500/10" },
+                            { id: "CONVERTED", label: "Converted", color: "text-emerald-500", bg: "bg-emerald-500/10" },
+                            { id: "LOST", label: "Lost", color: "text-gray-500", bg: "bg-gray-500/10" },
                         ].map((f) => (
                             <button
                                 key={f.id}

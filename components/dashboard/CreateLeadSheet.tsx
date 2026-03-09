@@ -56,6 +56,7 @@ const formSchema = z.object({
     status: z.nativeEnum(LeadStatus).default(LeadStatus.NEW),
     remark: z.string().optional().or(z.literal("")),
     imageUrl: z.string().nullable().optional(),
+    interest: z.string().optional().or(z.literal("")),
     followUp: z.object({
         date: z.string().optional().or(z.literal("")),
         time: z.string().optional().or(z.literal("")),
@@ -82,7 +83,7 @@ export function CreateLeadSheet({ onLeadCreated }: { onLeadCreated: () => void }
         const fetchWebsites = async () => {
             try {
                 const res = await axios.get("/api/websites");
-                setWebsites(res.data);
+                setWebsites(res.data.websites || []);
             } catch (error) {
                 console.error("Failed to load websites", error);
             }
@@ -90,7 +91,7 @@ export function CreateLeadSheet({ onLeadCreated }: { onLeadCreated: () => void }
         const fetchCountries = async () => {
             try {
                 const res = await axios.get("/api/master/countries");
-                setCountries(res.data);
+                setCountries(res.data.countries || []);
             } catch (error) {
                 console.error("Failed to load countries", error);
             }
@@ -122,6 +123,7 @@ export function CreateLeadSheet({ onLeadCreated }: { onLeadCreated: () => void }
             status: LeadStatus.NEW,
             remark: "",
             imageUrl: null,
+            interest: "",
             followUp: { date: "", time: "", remark: "", type: "CALL" },
             appointment: { date: "", time: "", remark: "", title: "Initial Consultation" },
         } as FormData,
@@ -132,7 +134,6 @@ export function CreateLeadSheet({ onLeadCreated }: { onLeadCreated: () => void }
         },
         onSubmit: async ({ value }) => {
             try {
-                // Pre-process dates for nested creation
                 const payload = {
                     ...value,
                     followUp: (value.followUp?.date && value.followUp?.time) ? {
@@ -266,34 +267,51 @@ export function CreateLeadSheet({ onLeadCreated }: { onLeadCreated: () => void }
 
                             <TabsContent value="academic" className="space-y-4">
                                 <div className="grid grid-cols-2 gap-4">
+                                    <form.Field name="interest" children={(field) => (
+                                        <div className="space-y-2">
+                                            <Label htmlFor="interest">Lead Interest</Label>
+                                            <Select value={field.state.value} onValueChange={field.handleChange}>
+                                                <SelectTrigger className="rounded-xl">
+                                                    <SelectValue placeholder="Select interest" />
+                                                </SelectTrigger>
+                                                <SelectContent className="rounded-xl">
+                                                    <SelectItem value="STUDY_ABROAD">Study Abroad</SelectItem>
+                                                    <SelectItem value="SKILL_DEVELOPMENT">Skill Development</SelectItem>
+                                                    <SelectItem value="LOAN">Loan</SelectItem>
+                                                    <SelectItem value="MBBS">MBBS</SelectItem>
+                                                    <SelectItem value="OTHER">Other</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                    )} />
                                     <form.Field name="highestQualification" children={(field) => (
                                         <div className="space-y-2">
                                             <Label htmlFor="highestQualification">Highest Qualification</Label>
                                             <Input id="highestQualification" placeholder="e.g. B.Tech" value={field.state.value} onBlur={field.handleBlur} onChange={(e) => field.handleChange(e.target.value)} className="rounded-xl" />
                                         </div>
                                     )} />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
                                     <form.Field name="interestedCourse" children={(field) => (
                                         <div className="space-y-2">
                                             <Label htmlFor="interestedCourse">Interested Course</Label>
                                             <Input id="interestedCourse" placeholder="e.g. MBA" value={field.state.value} onBlur={field.handleBlur} onChange={(e) => field.handleChange(e.target.value)} className="rounded-xl" />
                                         </div>
                                     )} />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
                                     <form.Field name="testName" children={(field) => (
                                         <div className="space-y-2">
                                             <Label htmlFor="testName">Entrance Test</Label>
                                             <Input id="testName" placeholder="e.g. IELTS" value={field.state.value} onBlur={field.handleBlur} onChange={(e) => field.handleChange(e.target.value)} className="rounded-xl" />
                                         </div>
                                     )} />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
                                     <form.Field name="testScore" children={(field) => (
                                         <div className="space-y-2">
                                             <Label htmlFor="testScore">Score</Label>
                                             <Input id="testScore" placeholder="7.5" value={field.state.value} onBlur={field.handleBlur} onChange={(e) => field.handleChange(e.target.value)} className="rounded-xl" />
                                         </div>
                                     )} />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
                                     <form.Field name="interestedCountry" children={(field) => (
                                         <div className="space-y-2">
                                             <Label htmlFor="interestedCountry">Interested Country</Label>
@@ -309,14 +327,14 @@ export function CreateLeadSheet({ onLeadCreated }: { onLeadCreated: () => void }
                                             </Select>
                                         </div>
                                     )} />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
                                     <form.Field name="intake" children={(field) => (
                                         <div className="space-y-2">
                                             <Label htmlFor="intake">Intake</Label>
                                             <Input id="intake" placeholder="Sep 2024" value={field.state.value} onBlur={field.handleBlur} onChange={(e) => field.handleChange(e.target.value)} className="rounded-xl" />
                                         </div>
                                     )} />
-                                </div>
-                                <div className="grid grid-cols-2 gap-4">
                                     <form.Field name="source" children={(field) => (
                                         <div className="space-y-2">
                                             <Label htmlFor="source">Source *</Label>
@@ -330,10 +348,12 @@ export function CreateLeadSheet({ onLeadCreated }: { onLeadCreated: () => void }
                                             </Select>
                                         </div>
                                     )} />
+                                </div>
+                                <div className="grid grid-cols-2 gap-4">
                                     <form.Field name="status" children={(field) => (
                                         <div className="space-y-2">
                                             <Label htmlFor="status">Initial Status</Label>
-                                            <Select value={field.state.value} onValueChange={field.handleChange}>
+                                            <Select value={field.state.value} onValueChange={(v) => field.handleChange(v as any)}>
                                                 <SelectTrigger className="rounded-xl">
                                                     <SelectValue placeholder="Select status" />
                                                 </SelectTrigger>
@@ -424,16 +444,19 @@ export function CreateLeadSheet({ onLeadCreated }: { onLeadCreated: () => void }
                             <Button type="button" variant="outline" className="rounded-xl h-11 px-6">Cancel</Button>
                         </SheetClose>
                         <form.Subscribe
-                            selector={(state) => [state.canSubmit, state.isSubmitting]}
-                            children={([canSubmit, isSubmitting]) => (
-                                <Button
-                                    type="submit"
-                                    className="rounded-xl h-11 px-8 font-bold"
-                                    disabled={createLeadMutation.isPending || !canSubmit}
-                                >
-                                    {createLeadMutation.isPending ? "Creating..." : "Save Lead"}
-                                </Button>
-                            )}
+                            selector={(state: any) => [state.canSubmit, state.isSubmitting]}
+                            children={(state: any) => {
+                                const [canSubmit, isSubmitting] = state;
+                                return (
+                                    <Button
+                                        type="submit"
+                                        className="rounded-xl h-11 px-8 font-bold"
+                                        disabled={createLeadMutation.isPending || !canSubmit}
+                                    >
+                                        {createLeadMutation.isPending ? "Creating..." : "Save Lead"}
+                                    </Button>
+                                );
+                            }}
                         />
                     </SheetFooter>
                 </form>

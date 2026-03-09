@@ -80,6 +80,7 @@ const formSchema = z.object({
     applyLevel: z.string().optional().or(z.literal("")),
     source: z.string().min(1, "Source is required"),
     status: z.nativeEnum(LeadStatus).default(LeadStatus.NEW),
+    interest: z.string().optional().or(z.literal("")),
     remark: z.string().optional().or(z.literal("")),
     passportNo: z.string().optional().or(z.literal("")),
     passportIssueDate: z.string().optional().or(z.literal("")),
@@ -148,7 +149,7 @@ export default function AddStudentPage() {
         const fetchWebsites = async () => {
             try {
                 const res = await axios.get("/api/websites");
-                setWebsites(res.data);
+                setWebsites(res.data.websites || []);
             } catch (error) {
                 console.error("Failed to load websites", error);
             }
@@ -177,6 +178,7 @@ export default function AddStudentPage() {
             applyLevel: "",
             source: "",
             status: LeadStatus.NEW,
+            interest: "",
             remark: "",
             passportNo: "",
             passportIssueDate: "",
@@ -398,6 +400,23 @@ export default function AddStudentPage() {
                                                         <SelectItem value="NEW">New Enquiry</SelectItem>
                                                         <SelectItem value="ASSIGNED">Assigned</SelectItem>
                                                         <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        )} />
+                                        <form.Field name="interest" children={(field) => (
+                                            <div className="space-y-1">
+                                                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-tight">Interest</Label>
+                                                <Select value={field.state.value} onValueChange={(val) => field.handleChange(val as any)}>
+                                                    <SelectTrigger className={iconicInputClass}>
+                                                        <SelectValue placeholder="Select Interest" />
+                                                    </SelectTrigger>
+                                                    <SelectContent className="rounded-xl">
+                                                        <SelectItem value="STUDY_ABROAD">Study Abroad</SelectItem>
+                                                        <SelectItem value="SKILL_DEVELOPMENT">Skill Development</SelectItem>
+                                                        <SelectItem value="LOAN">Loan</SelectItem>
+                                                        <SelectItem value="MBBS">MBBS</SelectItem>
+                                                        <SelectItem value="OTHER">Other</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </div>

@@ -86,34 +86,36 @@ export function EmployeesTable({ data, onUpdate, onDelete, onToggleStatus, pagin
                 </Badge>
             ),
         },
-        {
-            id: "department",
-            header: "Department",
-            cell: ({ row }) => (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Briefcase className="h-3.5 w-3.5" />
-                    {row.original.agentProfile?.companyName || row.original.counselorProfile?.department || row.original.employeeProfile?.department || "N/A"}
-                </div>
-            ),
-        },
-        {
-            id: "leads",
-            header: "Leads",
-            cell: ({ row }) => (
-                <p className="text-sm text-foreground">
-                    {row.original._count?.assignedLeads || 0}
-                </p>
-            ),
-        },
-        {
-            id: "converted",
-            header: "Converted",
-            cell: ({ row }) => (
-                <p className="text-sm text-foreground">
-                    {row.original._count?.onboardedStudents || row.original._count?.onboardedCustomers || 0}
-                </p>
-            ),
-        },
+        ...(title !== "Counselor" ? [
+            {
+                id: "department",
+                header: "Department",
+                cell: ({ row }: any) => (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Briefcase className="h-3.5 w-3.5" />
+                        {row.original.agentProfile?.companyName || row.original.counselorProfile?.department || row.original.employeeProfile?.department || "N/A"}
+                    </div>
+                ),
+            },
+            {
+                id: "leads",
+                header: "Leads",
+                cell: ({ row }: any) => (
+                    <p className="text-sm text-foreground">
+                        {row.original._count?.assignedLeads || 0}
+                    </p>
+                ),
+            },
+            {
+                id: "converted",
+                header: "Converted",
+                cell: ({ row }: any) => (
+                    <p className="text-sm text-foreground">
+                        {row.original._count?.onboardedStudents || row.original._count?.onboardedCustomers || 0}
+                    </p>
+                ),
+            },
+        ] : []),
         {
             accessorKey: "isActive",
             header: "Status",

@@ -1,8 +1,8 @@
-import { PrismaClient } from '../prisma/generated/client'
+import { PrismaClient } from '../prisma/generated/client_v2'
 
 
 const prismaClientSingleton = () => {
-  console.log("[PRISMA] Creating new PrismaClient instance...");
+  console.log("[PRISMA] Creating new PrismaClient instance from client_v2...");
   return new PrismaClient()
 }
 
@@ -13,7 +13,7 @@ declare global {
 const prisma = globalThis.prisma ?? prismaClientSingleton()
 
 export { prisma }
-export * from '../prisma/generated/client'
+export * from '../prisma/generated/client_v2'
 export default prisma
 
 

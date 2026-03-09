@@ -158,7 +158,7 @@ export default function StudentsPage() {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="ALL">All Countries</SelectItem>
-                                    {countries?.map((c: any) => (
+                                    {countries?.countries?.map((c: any) => (
                                         <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
                                     ))}
                                 </SelectContent>

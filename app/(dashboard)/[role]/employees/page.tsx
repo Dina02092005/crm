@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { CreateCounsellorSheet } from "@/components/dashboard/CreateCounsellorSheet";
 import { EmployeesTable } from "@/components/dashboard/EmployeesTable";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { CreateEmployeeSheet } from "@/components/dashboard/CreateEmployeeSheet";
@@ -29,7 +30,7 @@ export default function CounselorsPage() {
     }, [debouncedSearch, statusFilter]);
 
     // Query Hook
-    const { data, isLoading } = useEmployees(statusFilter, page, limit, "COUNSELOR", debouncedSearch);
+    const { data, isLoading, refetch } = useEmployees(statusFilter, page, limit, "COUNSELOR", debouncedSearch);
 
     const employees = data?.employees || [];
     const pagination = data?.pagination || { page: 1, limit: 10, totalPages: 1, total: 0 };
@@ -115,9 +116,14 @@ export default function CounselorsPage() {
                                 className="pl-10 h-11 rounded-xl border-gray-200 bg-gray-50/50 shadow-none focus:bg-white transition-all text-sm"
                             />
                         </div>
-                        {(session?.user?.role === "ADMIN" || session?.user?.role === "AGENT") && (
+                        {session?.user?.role === "ADMIN" && (
+                            <CreateCounsellorSheet
+                                onCounsellorCreated={refetch}
+                            />
+                        )}
+                        {session?.user?.role === "AGENT" && (
                             <CreateEmployeeSheet
-                                onEmployeeCreated={() => { }}
+                                onEmployeeCreated={refetch}
                                 defaultRole="COUNSELOR"
                                 title="Counselor"
                             />
@@ -157,7 +163,7 @@ export default function CounselorsPage() {
                     ) : (
                         <EmployeesTable
                             data={employees}
-                            onUpdate={() => { }}
+                            onUpdate={refetch}
                             onDelete={handleDeleteEmployee}
                             onToggleStatus={handleToggleStatus}
                             title="Counselor"

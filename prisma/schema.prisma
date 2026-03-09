@@ -1,6 +1,6 @@
 generator client {
   provider      = "prisma-client-js"
-  output        = "./generated/client"
+  output        = "./generated/client_v2"
   binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
@@ -41,6 +41,7 @@ model User {
   tasks                   LeadTask[]
   notifications           Notification[]
   onboardedStudents       Student[]
+  createdLeads            Lead[]                  @relation("LeadCreator")
   studentProfile          Student?                @relation("StudentUser")
   studentDocuments        StudentDocument[]       @relation("StudentDocumentUploader")
   assignedApplications    UniversityApplication[] @relation("ApplicationAssignedTo")
@@ -139,6 +140,7 @@ model Lead {
   interestedCountry    String?
   intake               String?
   applyLevel           String?
+  interest             LeadInterest?
   message              String?
   source               String
   data                 Json?
@@ -147,8 +149,10 @@ model Lead {
   remark               String?
   createdAt            DateTime         @default(now())
   updatedAt            DateTime         @updatedAt
+  deletedAt            DateTime?
   imageUrl             String?
   userId               String?          @unique
+  createdById          String?
   passportNo           String?
   passportIssueDate    DateTime?
   passportExpiryDate   DateTime?
@@ -157,6 +161,7 @@ model Lead {
   appointments         Appointment[]
   followUps            FollowUp[]
   user                 User?            @relation("LeadUser", fields: [userId], references: [id])
+  createdBy            User?            @relation("LeadCreator", fields: [createdById], references: [id])
   activities           LeadActivity[]
   assignments          LeadAssignment[]
   documents            LeadDocument[]
@@ -170,6 +175,40 @@ model Lead {
   @@index([temperature])
   @@index([firstName])
   @@index([lastName])
+  @@index([createdById])
+  @@index([deletedAt])
+}
+
+enum LeadInterest {
+  STUDY_ABROAD
+  SKILL_DEVELOPMENT
+  LOAN
+  MBBS
+  OTHER
+}
+
+model ApplyLevel {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ApplicationStatusMaster {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model VisaStatusMaster {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model FollowUp {
@@ -603,6 +642,7 @@ enum ApplicationStatus {
 }
 
 enum Role {
+  SUPER_ADMIN
   ADMIN
   MANAGER
   EMPLOYEE
@@ -744,17 +784,29 @@ model UserRole {
   @@map("user_roles")
 }
 
-model RolePermission {
-  id        String   @id @default(uuid())
-  roleId    String
-  module    String
-  actions   String[] // e.g. ["VIEW", "CREATE", "EDIT", "DELETE"]
-  scope     String   @default("ALL") // ALL, OWN, ASSIGNED
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  role      UserRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+model Permission {
+  id              String           @id @default(uuid())
+  name            String           @unique // e.g. "VIEW_LEADS"
+  module          String // e.g. "LEADS"
+  action          String // e.g. "VIEW"
+  rolePermissions RolePermission[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
 
-  @@unique([roleId, module])
+  @@map("permissions")
+}
+
+model RolePermission {
+  id           String     @id @default(uuid())
+  roleId       String
+  permissionId String
+  scope        String     @default("ALL") // ALL, OWN, ASSIGNED
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  role         UserRole   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, permissionId])
   @@map("role_permissions")
 }
 

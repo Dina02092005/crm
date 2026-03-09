@@ -6,7 +6,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { ChevronDown, ChevronRight, ChevronLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { menuItems } from "./menuItems";
+import { menuItems, MenuItem } from "./menuItems";
+import { usePermission } from "@/hooks/use-permission";
 
 export function Sidebar() {
     const pathname = usePathname();
@@ -14,6 +15,7 @@ export function Sidebar() {
     const searchParams = useSearchParams();
     const currentStatus = searchParams.get("status");
     const { data: session, status } = useSession() as any;
+    const { can } = usePermission();
     const [expandedMenu, setExpandedMenu] = useState<string | null>(null);
     const [isCollapsed, setIsCollapsed] = useState(false);
 
@@ -44,12 +46,35 @@ export function Sidebar() {
     // Prefix a path with the role namespace — returns "#" if session not ready
     const prefixHref = (href: string) => rolePrefix ? `${rolePrefix}${href}` : "#";
 
-    // Filter menu items based on user role
+    // Filter menu items based on user role and permissions
     const filteredMenuItems = menuItems.filter((item) => {
-        if (!item.roles) return true;
-        if (!session?.user?.role) return false;
-        return item.roles.includes(session.user.role);
-    });
+        // 1. Permission Check (Primary RBAC filter)
+        if (item.permission) {
+            if (!can(item.permission.action, item.permission.module)) {
+                return false;
+            }
+        } else if (item.roles && !item.roles.includes(session?.user?.role) && session?.user?.role !== 'SUPER_ADMIN') {
+            // 2. Fallback to Role Check only if no specific permission is tied to the route
+            // Super admins always bypass role checks if there are no explicit permission requirements
+            return false;
+        }
+
+        return true;
+    }).map(item => {
+        // Also filter submenus
+        if (item.submenu) {
+            return {
+                ...item,
+                submenu: item.submenu.filter(sub => {
+                    if (sub.permission) {
+                        return can(sub.permission.action, sub.permission.module);
+                    }
+                    return true;
+                })
+            };
+        }
+        return item;
+    }).filter(item => !item.submenu || item.submenu.length > 0 || item.href);
 
     // Auto-expand parent menu on initial load if current path matches a submenu item
     useEffect(() => {
