@@ -11,7 +11,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Plus, Pencil, Trash2, Globe } from "lucide-react";
+import { Plus, Pencil, Trash2, Globe, Search, Loader2 } from "lucide-react";
 import {
     Sheet,
     SheetContent,
@@ -23,6 +23,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { useCountries } from "@/hooks/use-masters";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface Country {
     id: string;
@@ -33,34 +35,28 @@ interface Country {
 
 export default function CountriesPage() {
     const { can } = usePermissions();
-    const [countries, setCountries] = useState<Country[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isSheetOpen, setIsSheetOpen] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Filter & Pagination State
+    const [search, setSearch] = useState("");
+    const [page, setPage] = useState(1);
+    const [limit] = useState(25);
+    const debouncedSearch = useDebounce(search, 500);
+
+    const { data, isLoading, refetch } = useCountries(page, limit, debouncedSearch);
+
+    const countries = data?.countries || [];
+    const pagination = data?.pagination || { total: 0, page: 1, limit: 25, totalPages: 1 };
 
     // Form states
+    const [isSheetOpen, setIsSheetOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [name, setName] = useState("");
     const [code, setCode] = useState("");
     const [editingCountry, setEditingCountry] = useState<Country | null>(null);
 
-    const fetchCountries = async () => {
-        setIsLoading(true);
-        try {
-            const res = await fetch("/api/master/countries");
-            if (res.ok) {
-                const data = await res.json();
-                setCountries(data);
-            }
-        } catch (error) {
-            toast.error("Failed to fetch countries");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     useEffect(() => {
-        fetchCountries();
-    }, []);
+        setPage(1);
+    }, [debouncedSearch]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -81,7 +77,7 @@ export default function CountriesPage() {
                 setCode("");
                 setEditingCountry(null);
                 setIsSheetOpen(false);
-                fetchCountries();
+                refetch();
             } else {
                 const error = await res.json();
                 toast.error(error.message || (editingCountry ? "Failed to update" : "Failed to add"));
@@ -110,7 +106,7 @@ export default function CountriesPage() {
 
             if (res.ok) {
                 toast.success("Country deleted");
-                fetchCountries();
+                refetch();
             } else {
                 toast.error("Failed to delete country");
             }
@@ -120,8 +116,12 @@ export default function CountriesPage() {
     };
 
     return (
-        <div className="flex flex-col gap-6">
-            <div className="flex justify-end items-center">
+        <div className="flex flex-col gap-6 p-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight text-foreground">Master Settings: Countries</h1>
+                    <p className="text-sm text-muted-foreground mt-1">Manage countries available across the platform.</p>
+                </div>
                 {can("MASTERS", "CREATE") && (
                     <Sheet open={isSheetOpen} onOpenChange={(open) => {
                         setIsSheetOpen(open);
@@ -132,7 +132,7 @@ export default function CountriesPage() {
                         }
                     }}>
                         <SheetTrigger asChild>
-                            <Button className="bg-primary hover:bg-primary/90 text-white rounded-xl h-10 px-5 text-sm font-bold shadow-sm flex items-center gap-2">
+                            <Button className="bg-primary hover:bg-primary/90 text-white rounded-xl h-11 px-6 font-bold shadow-md flex items-center gap-2">
                                 <Plus className="h-4 w-4" /> Add Country
                             </Button>
                         </SheetTrigger>
@@ -154,7 +154,7 @@ export default function CountriesPage() {
                                         onChange={(e) => setName(e.target.value)}
                                         placeholder="e.g. United Kingdom"
                                         required
-                                        className="rounded-xl border-border bg-background focus:ring-primary/20 h-10"
+                                        className="rounded-xl border-border bg-background focus:ring-primary/20 h-11"
                                     />
                                 </div>
                                 <div className="space-y-2">
@@ -164,11 +164,12 @@ export default function CountriesPage() {
                                         value={code}
                                         onChange={(e) => setCode(e.target.value)}
                                         placeholder="e.g. UK or GBR"
-                                        className="rounded-xl border-border bg-background focus:ring-primary/20 h-10"
+                                        className="rounded-xl border-border bg-background focus:ring-primary/20 h-11"
                                     />
                                 </div>
-                                <Button type="submit" disabled={isSubmitting} className="w-full bg-primary hover:bg-primary/90 text-white rounded-xl h-11 font-bold transition-all shadow-md">
-                                    {isSubmitting ? "Processing..." : (editingCountry ? "Update Country" : "Save Country")}
+                                <Button type="submit" disabled={isSubmitting} className="w-full bg-primary hover:bg-primary/90 text-white rounded-xl h-11 font-bold transition-all shadow-md mt-6">
+                                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    {editingCountry ? "Update Country" : "Save Country"}
                                 </Button>
                             </form>
                         </SheetContent>
@@ -176,10 +177,24 @@ export default function CountriesPage() {
                 )}
             </div>
 
+            {/* Search Bar */}
+            <div className="flex items-center gap-4">
+                <div className="relative flex-1 max-w-sm">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                        placeholder="Search country..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="pl-9 rounded-xl border-border/50 bg-card shadow-sm h-11"
+                    />
+                </div>
+            </div>
+
             <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
                 <Table>
                     <TableHeader className="bg-muted/50">
                         <TableRow className="border-border hover:bg-transparent">
+                            <TableHead className="w-[50px] font-bold text-xs uppercase tracking-widest py-4 px-6 text-muted-foreground">#</TableHead>
                             <TableHead className="font-bold text-xs uppercase tracking-widest py-4 px-6 text-muted-foreground">Name</TableHead>
                             <TableHead className="font-bold text-xs uppercase tracking-widest py-4 px-6 text-muted-foreground">Code</TableHead>
                             <TableHead className="font-bold text-xs uppercase tracking-widest py-4 px-6 text-muted-foreground">Status</TableHead>
@@ -189,28 +204,36 @@ export default function CountriesPage() {
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={4} className="text-center py-12 text-muted-foreground italic">
-                                    Loading countries...
+                                <TableCell colSpan={5} className="h-48 text-center text-muted-foreground">
+                                    <div className="flex flex-col items-center justify-center gap-2">
+                                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                        <span>Loading countries...</span>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ) : countries.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={4} className="text-center py-12 text-muted-foreground italic">
+                                <TableCell colSpan={5} className="h-48 text-center text-muted-foreground italic">
                                     No countries found. Add one to get started.
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            countries.map((c) => (
+                            countries.map((c: any, idx: number) => (
                                 <TableRow key={c.id} className="border-border/40 hover:bg-primary/[0.02] transition-colors">
+                                    <TableCell className="font-medium py-4 px-6 text-xs text-muted-foreground">
+                                        {(page - 1) * limit + idx + 1}
+                                    </TableCell>
                                     <TableCell className="font-semibold py-4 px-6 text-sm">
-                                        <div className="flex items-center gap-2">
-                                            <Globe className="h-4 w-4 text-muted-foreground/60" />
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                                                <Globe className="h-4 w-4" />
+                                            </div>
                                             {c.name}
                                         </div>
                                     </TableCell>
-                                    <TableCell className="py-4 px-6 text-sm text-muted-foreground font-medium uppercase">{c.code || "-"}</TableCell>
+                                    <TableCell className="py-4 px-6 text-sm text-muted-foreground font-mono uppercase tracking-tighter bg-muted/20 w-fit rounded-lg">{c.code || "-"}</TableCell>
                                     <TableCell className="py-4 text-xs font-medium uppercase tracking-widest">
-                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full ${c.isActive ? "bg-emerald-100 text-emerald-700 font-bold" : "bg-gray-100 text-gray-500 font-medium"}`}>
+                                        <span className={`inline-flex items-center px-3 py-1 rounded-full ${c.isActive ? "bg-emerald-100 text-emerald-700 font-bold border border-emerald-200" : "bg-gray-100 text-gray-500 font-medium border border-gray-200"}`}>
                                             {c.isActive ? "Active" : "Inactive"}
                                         </span>
                                     </TableCell>
@@ -221,7 +244,7 @@ export default function CountriesPage() {
                                                     variant="ghost"
                                                     size="icon"
                                                     onClick={() => handleEdit(c)}
-                                                    className="h-8 w-8 rounded-lg hover:bg-primary/10 hover:text-primary transition-all"
+                                                    className="h-9 w-9 rounded-xl hover:bg-primary/10 hover:text-primary transition-all"
                                                 >
                                                     <Pencil className="h-4 w-4" />
                                                 </Button>
@@ -231,7 +254,7 @@ export default function CountriesPage() {
                                                     variant="ghost"
                                                     size="icon"
                                                     onClick={() => handleDelete(c.id)}
-                                                    className="h-8 w-8 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-all"
+                                                    className="h-9 w-9 rounded-xl hover:bg-destructive/10 hover:text-destructive transition-all"
                                                 >
                                                     <Trash2 className="h-4 w-4" />
                                                 </Button>
@@ -243,6 +266,35 @@ export default function CountriesPage() {
                         )}
                     </TableBody>
                 </Table>
+
+                {/* Pagination */}
+                {pagination.totalPages > 1 && (
+                    <div className="flex items-center justify-between px-6 py-4 border-t bg-muted/20">
+                        <p className="text-sm text-muted-foreground font-medium">
+                            Showing <span className="text-foreground">{(page - 1) * limit + 1}</span> to <span className="text-foreground">{Math.min(page * limit, pagination.total)}</span> of <span className="text-foreground">{pagination.total}</span> countries
+                        </p>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={page <= 1}
+                                onClick={() => setPage(page - 1)}
+                                className="rounded-xl px-4 border-border shadow-sm"
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={page >= pagination.totalPages}
+                                onClick={() => setPage(page + 1)}
+                                className="rounded-xl px-4 border-border shadow-sm"
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

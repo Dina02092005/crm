@@ -1,4 +1,4 @@
-import { PrismaClient, Role, LeadStatus, LeadTemperature, LeadActivityType, TaskStatus, DocumentType, NotificationType } from './generated/client';
+import { PrismaClient, Role, LeadStatus, LeadTemperature, LeadActivityType, TaskStatus, DocumentType, NotificationType } from './generated/client_v2';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();

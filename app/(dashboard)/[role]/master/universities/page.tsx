@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
-import axios from "axios";
 import {
     Table,
     TableBody,
@@ -13,58 +12,36 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Search, Globe, ChevronRight, Loader2, ListTree } from "lucide-react";
+import { Search, Globe, ChevronRight, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-
-interface CountryWithCount {
-    id: string;
-    name: string;
-    code: string | null;
-    universityCount: number;
-}
+import { useCountriesWithUniversityCount } from "@/hooks/use-masters";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export default function UniversitiesCountryListPage() {
     const router = useRouter();
     const params = useParams();
     const role = params.role as string;
 
-    const [countries, setCountries] = useState<CountryWithCount[]>([]);
-    const [loading, setLoading] = useState(true);
     const [search, setSearch] = useState("");
+    const [page, setPage] = useState(1);
+    const [limit] = useState(25);
+
+    const debouncedSearch = useDebounce(search, 500);
+
+    const { data, isLoading } = useCountriesWithUniversityCount(page, limit, debouncedSearch);
+
+    const countries = data?.countries || [];
+    const pagination = data?.pagination || { page: 1, limit: 25, total: 0, totalPages: 1 };
 
     useEffect(() => {
-        const fetchCountries = async () => {
-            try {
-                const response = await axios.get("/api/master/countries-with-university-count");
-                setCountries(response.data);
-            } catch (error) {
-                console.error("Failed to fetch countries:", error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchCountries();
-    }, []);
-
-    const filteredCountries = useMemo(() => {
-        return countries.filter(c =>
-            c.name.toLowerCase().includes(search.toLowerCase())
-        );
-    }, [countries, search]);
-
-    if (loading) {
-        return (
-            <div className="flex h-[400px] items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-        );
-    }
+        setPage(1);
+    }, [debouncedSearch]);
 
     return (
         <div className="space-y-6">
             <div className="flex flex-col gap-2">
-                <h1 className="text-3xl font-bold tracking-tight">Masters &gt; Universities</h1>
-                <p className="text-muted-foreground">Select a country to manage its universities.</p>
+                <h1 className="text-2xl font-bold tracking-tight">Masters &gt; Universities</h1>
+                <p className="text-sm text-muted-foreground">Select a country to manage its universities.</p>
             </div>
 
             <div className="relative max-w-sm">
@@ -77,7 +54,7 @@ export default function UniversitiesCountryListPage() {
                 />
             </div>
 
-            <div className="border rounded-xl bg-card overflow-hidden">
+            <div className="border rounded-xl bg-card overflow-hidden shadow-sm">
                 <Table>
                     <TableHeader className="bg-muted/50">
                         <TableRow>
@@ -89,7 +66,16 @@ export default function UniversitiesCountryListPage() {
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {filteredCountries.length === 0 ? (
+                        {isLoading ? (
+                            <TableRow>
+                                <TableCell colSpan={5} className="h-48 text-center">
+                                    <div className="flex flex-col items-center justify-center gap-2">
+                                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                        <span>Loading countries...</span>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        ) : countries.length === 0 ? (
                             <TableRow>
                                 <TableCell colSpan={5} className="h-48 text-center text-muted-foreground">
                                     <div className="flex flex-col items-center justify-center gap-2">
@@ -99,14 +85,14 @@ export default function UniversitiesCountryListPage() {
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            filteredCountries.map((country, idx) => (
+                            countries.map((country: any, idx: number) => (
                                 <TableRow
                                     key={country.id}
                                     className="hover:bg-muted/30 transition-colors cursor-pointer group"
                                     onClick={() => router.push(`/${role}/master/universities/${country.id}`)}
                                 >
                                     <TableCell className="font-medium text-muted-foreground">
-                                        {idx + 1}
+                                        {(page - 1) * limit + idx + 1}
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-3">
@@ -141,6 +127,32 @@ export default function UniversitiesCountryListPage() {
                         )}
                     </TableBody>
                 </Table>
+
+                {pagination.totalPages > 1 && (
+                    <div className="flex items-center justify-between px-4 py-4 border-t bg-muted/20">
+                        <p className="text-sm text-muted-foreground">
+                            Showing {(page - 1) * limit + 1} to {Math.min(page * limit, pagination.total)} of {pagination.total} countries
+                        </p>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={page <= 1}
+                                onClick={() => setPage(page - 1)}
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={page >= pagination.totalPages}
+                                onClick={() => setPage(page + 1)}
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

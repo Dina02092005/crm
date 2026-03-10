@@ -13,6 +13,11 @@ export const GET = withPermission('STUDENTS', 'VIEW', async (req, { permission }
 
         const { searchParams } = new URL(req.url);
         const search = searchParams.get("search") || "";
+        const status = searchParams.get("status");
+        const onboardedBy = searchParams.get("onboardedBy");
+        const interestedCountry = searchParams.get("interestedCountry");
+        const intake = searchParams.get("intake");
+
         const page = parseInt(searchParams.get("page") || "1");
         const limit = parseInt(searchParams.get("limit") || "10");
         const skip = (page - 1) * limit;
@@ -24,24 +29,49 @@ export const GET = withPermission('STUDENTS', 'VIEW', async (req, { permission }
         };
         const userRole = (session as any).user.role;
 
-        // RBAC: Dynamic scope-based visibility
-        if (scope === 'OWN' || scope === 'ASSIGNED') {
-            const onboardedByIds = [session.user.id];
+        // RBAC & Explicit filtering
+        if (scope === 'OWN' || scope === 'ASSIGNED' || onboardedBy) {
+            let onboardedByIds: string[] = [];
 
-            if (session.user.role === 'AGENT') {
-                const agent = await prisma.agentProfile.findUnique({
-                    where: { userId: session.user.id }
-                });
-                if (agent) {
-                    const subordinates = await prisma.counselorProfile.findMany({
-                        where: { agentId: agent.id },
-                        select: { userId: true }
+            if (scope === 'OWN' || scope === 'ASSIGNED') {
+                onboardedByIds = [session.user.id];
+
+                if (session.user.role === 'AGENT') {
+                    const agent = await prisma.agentProfile.findUnique({
+                        where: { userId: session.user.id }
                     });
-                    onboardedByIds.push(...subordinates.map(s => s.userId));
+                    if (agent) {
+                        const subordinates = await prisma.counselorProfile.findMany({
+                            where: { agentId: agent.id },
+                            select: { userId: true }
+                        });
+                        onboardedByIds.push(...subordinates.map(s => s.userId));
+                    }
                 }
+
+                if (onboardedBy && !onboardedByIds.includes(onboardedBy)) {
+                    where.id = "none";
+                } else if (onboardedBy) {
+                    onboardedByIds = [onboardedBy];
+                }
+            } else if (onboardedBy) {
+                onboardedByIds = [onboardedBy];
             }
 
-            where.onboardedBy = { in: onboardedByIds };
+            if (where.id !== "none") {
+                where.onboardedBy = { in: onboardedByIds };
+            }
+        }
+
+        if (status && status !== 'ALL') {
+            where.status = status;
+        }
+
+        if (interestedCountry || intake) {
+            where.lead = {
+                ...(interestedCountry && { interestedCountry: { contains: interestedCountry, mode: 'insensitive' } }),
+                ...(intake && { intake: { contains: intake, mode: 'insensitive' } })
+            };
         }
 
         const includeConverted = searchParams.get("includeConverted") === "true";
@@ -118,6 +148,7 @@ export const POST = withPermission('STUDENTS', 'CREATE', async (req, { permissio
         }
 
         const body = await req.json();
+        console.log("POST /api/students body:", JSON.stringify(body, null, 2));
         const {
             firstName, lastName, email, phone, alternateNo,
             dateOfBirth, gender, nationality, maritalStatus,
@@ -134,8 +165,14 @@ export const POST = withPermission('STUDENTS', 'CREATE', async (req, { permissio
         const name = body.name || `${firstName || ""} ${lastName || ""}`.trim() || phone;
 
         if (!name || !phone) {
-            return NextResponse.json({ error: "Name and phone are required" }, { status: 400 });
+            return NextResponse.json({ error: "Name and phone are required", message: "Name and phone are required" }, { status: 400 });
         }
+
+        const safeDate = (d: any) => {
+            if (!d) return null;
+            const date = new Date(d);
+            return isNaN(date.getTime()) ? null : date;
+        };
 
         // Generate a dummy password: Student@${last4}
         const last4 = phone.replace(/\D/g, "").slice(-4) || "0000";
@@ -152,8 +189,9 @@ export const POST = withPermission('STUDENTS', 'CREATE', async (req, { permissio
         // Ensure the email is not already taken
         const existingUser = await prisma.user.findUnique({ where: { email: loginEmail } });
         if (existingUser) {
+            const errorMsg = `A user with email ${loginEmail} already exists. Please provide a unique email.`;
             return NextResponse.json(
-                { error: `A user with email ${loginEmail} already exists. Please provide a unique email.` },
+                { error: errorMsg, message: errorMsg },
                 { status: 400 }
             );
         }
@@ -181,9 +219,9 @@ export const POST = withPermission('STUDENTS', 'CREATE', async (req, { permissio
                     email: loginEmail,
                     phone,
                     alternateNo,
-                    dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
-                    gender,
-                    nationality,
+                    dateOfBirth: safeDate(dateOfBirth),
+                    gender: gender || null,
+                    nationality: nationality || null,
                     maritalStatus,
                     address,
                     highestQualification,
@@ -198,9 +236,9 @@ export const POST = withPermission('STUDENTS', 'CREATE', async (req, { permissio
                     remark,
                     imageUrl,
                     userId: newUser.id,
-                    passportNo,
-                    passportIssueDate: passportIssueDate ? new Date(passportIssueDate) : null,
-                    passportExpiryDate: passportExpiryDate ? new Date(passportExpiryDate) : null,
+                    passportNo: passportNo || null,
+                    passportIssueDate: safeDate(passportIssueDate),
+                    passportExpiryDate: safeDate(passportExpiryDate),
                     academicDetails: (academicDetails && Array.isArray(academicDetails)) ? {
                         create: academicDetails.filter((d: any) => d.qualification).map((detail: any) => ({
                             qualification: detail.qualification,
@@ -236,9 +274,9 @@ export const POST = withPermission('STUDENTS', 'CREATE', async (req, { permissio
                     onboardedBy: session.user.id,
                     imageUrl,
                     studentUserId: newUser.id,
-                    passportNo,
-                    passportIssueDate: passportIssueDate ? new Date(passportIssueDate) : null,
-                    passportExpiryDate: passportExpiryDate ? new Date(passportExpiryDate) : null,
+                    passportNo: passportNo || null,
+                    passportIssueDate: safeDate(passportIssueDate),
+                    passportExpiryDate: safeDate(passportExpiryDate),
                 },
                 include: {
                     user: { select: { name: true, email: true } },

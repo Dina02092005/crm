@@ -4,13 +4,10 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { PERMISSION_MODULES } from "@/lib/permissions";
 
-export async function GET(req: NextRequest) {
-    try {
-        const session = await getServerSession(authOptions);
-        if (!session?.user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+import { withPermission } from "@/lib/permissions";
 
+export const GET = withPermission('ROLES', 'VIEW', async (req) => {
+    try {
         const roles = await prisma.userRole.findMany({
             include: {
                 _count: {
@@ -25,15 +22,10 @@ export async function GET(req: NextRequest) {
         console.error("Error fetching roles:", error);
         return NextResponse.json({ error: "Failed to fetch roles" }, { status: 500 });
     }
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withPermission('ROLES', 'CREATE', async (req) => {
     try {
-        const session = await getServerSession(authOptions) as any;
-        if (!session?.user || session.user.role !== "ADMIN") {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
         const body = await req.json();
         const { name, description } = body;
 
@@ -41,22 +33,23 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Name is required" }, { status: 400 });
         }
 
-        // Create role with default permissions (empty actions for all modules)
-        const role = await prisma.userRole.create({
-            data: {
-                name,
-                description,
-                permissions: {
-                    create: PERMISSION_MODULES.map(module => ({
-                        module,
-                        actions: [],
-                        scope: "OWN"
-                    }))
+        // Fetch all system permissions to initialize the role
+        const allPermissions = await prisma.permission.findMany();
+
+        // Create role and assign empty permissions for now (or default VIEW)
+        const role = await prisma.$transaction(async (tx) => {
+            const newRole = await tx.userRole.create({
+                data: {
+                    name,
+                    description,
+                    isSystem: false,
+                    isActive: true
                 }
-            },
-            include: {
-                permissions: true
-            }
+            });
+
+            // By default, new roles might have no permissions, or we can add VIEW for all
+            // For now, let's keep it empty and let the admin configure it
+            return newRole;
         });
 
         return NextResponse.json(role);
@@ -67,4 +60,4 @@ export async function POST(req: NextRequest) {
         }
         return NextResponse.json({ error: "Failed to create role" }, { status: 500 });
     }
-}
+});

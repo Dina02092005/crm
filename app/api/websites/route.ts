@@ -9,11 +9,41 @@ export async function GET(req: Request) {
         return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
+    const { searchParams } = new URL(req.url);
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '25');
+    const search = searchParams.get('search') || '';
+    const skip = (page - 1) * limit;
+
     try {
-        const websites = await prisma.website.findMany({
-            orderBy: { createdAt: 'desc' }
+        const where = {
+            ...(search && {
+                OR: [
+                    { name: { contains: search, mode: 'insensitive' as const } },
+                    { url: { contains: search, mode: 'insensitive' as const } }
+                ]
+            })
+        };
+
+        const [websites, total] = await Promise.all([
+            prisma.website.findMany({
+                where,
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take: limit
+            }),
+            prisma.website.count({ where })
+        ]);
+
+        return NextResponse.json({
+            websites,
+            pagination: {
+                total,
+                page,
+                limit,
+                totalPages: Math.ceil(total / limit)
+            }
         });
-        return NextResponse.json(websites);
     } catch (error) {
         console.error("Error fetching websites:", error);
         return NextResponse.json({ message: 'Internal Error' }, { status: 500 });
@@ -21,8 +51,8 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== 'ADMIN') {
+    const session = await getServerSession(authOptions) as any;
+    if (!session || !['ADMIN', 'MANAGER'].includes(session.user.role)) {
         return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 

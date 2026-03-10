@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import { AdminAnalyticsDashboard } from "@/components/dashboard/AdminAnalyticsDashboard";
 import { AgentDashboard } from "@/components/dashboard/AgentDashboard";
 import { CounselorDashboard } from "@/components/dashboard/CounselorDashboard";
+import { StudentDashboard } from "@/components/dashboard/StudentDashboard";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { RecentLeadsTable } from "@/components/dashboard/RecentLeadsTable";
 import { MapPin, Users, TrendingUp, Briefcase, UserCheck } from "lucide-react";
@@ -173,12 +174,6 @@ export default function DashboardPage() {
     const router = useRouter();
     const { data: profile } = useProfile();
 
-    useEffect(() => {
-        if (role === "STUDENT" && profile?.studentProfile?.id) {
-            router.replace(prefixPath(`/students/${profile.studentProfile.id}`));
-        }
-    }, [role, profile, prefixPath, router]);
-
     if (role === "ADMIN") {
         return (
             <div className="px-2 py-1">
@@ -205,13 +200,11 @@ export default function DashboardPage() {
 
     if (role === "STUDENT") {
         return (
-            <div className="p-8 flex flex-col items-center justify-center min-h-[400px] space-y-4">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                <p className="text-muted-foreground font-medium">Redirecting to your profile...</p>
+            <div className="px-2 py-1">
+                <StudentDashboard />
             </div>
         );
     }
 
     return <StandardDashboard />;
 }
-

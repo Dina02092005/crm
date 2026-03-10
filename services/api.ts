@@ -1,8 +1,13 @@
 import api from '../lib/axios';
 import { Student, Employee, ApiResponse } from '../types/api';
 
-export const getStudents = async (page = 1, limit = 10, search = ""): Promise<{ students: Student[], pagination: any }> => {
-    return api.get(`/students?page=${page}&limit=${limit}&search=${search}`);
+export const getStudents = async (page = 1, limit = 10, search = "", status = "", onboardedBy = "", interestedCountry = "", intake = ""): Promise<{ students: Student[], pagination: any }> => {
+    let url = `/students?page=${page}&limit=${limit}&search=${search}`;
+    if (status) url += `&status=${status}`;
+    if (onboardedBy) url += `&onboardedBy=${onboardedBy}`;
+    if (interestedCountry) url += `&interestedCountry=${interestedCountry}`;
+    if (intake) url += `&intake=${intake}`;
+    return api.get(url);
 };
 
 export const createStudent = async (data: Partial<Student>): Promise<Student> => {
@@ -34,10 +39,13 @@ export const deleteEmployee = async (id: string): Promise<void> => {
 };
 
 // Applications
-export const getApplications = async (page = 1, limit = 10, search = '', studentId?: string, status?: string | null): Promise<{ applications: any[], pagination: any }> => {
+export const getApplications = async (page = 1, limit = 10, search = '', studentId?: string, status?: string | null, universityId?: string, countryId?: string, assignedToId?: string): Promise<{ applications: any[], pagination: any }> => {
     let url = `/applications?page=${page}&limit=${limit}&search=${search}`;
     if (studentId) url += `&studentId=${studentId}`;
     if (status) url += `&status=${status}`;
+    if (universityId) url += `&universityId=${universityId}`;
+    if (countryId) url += `&countryId=${countryId}`;
+    if (assignedToId) url += `&assignedToId=${assignedToId}`;
     return api.get(url);
 };
 

@@ -80,6 +80,7 @@ const formSchema = z.object({
     applyLevel: z.string().optional().or(z.literal("")),
     source: z.string().min(1, "Source is required"),
     status: z.nativeEnum(LeadStatus).default(LeadStatus.NEW),
+    interest: z.string().optional().or(z.literal("")),
     remark: z.string().optional().or(z.literal("")),
     followUp: z.object({
         date: z.string().optional().or(z.literal("")),
@@ -119,7 +120,7 @@ export default function AddLeadPage() {
         const fetchWebsites = async () => {
             try {
                 const res = await axios.get("/api/websites");
-                setWebsites(res.data);
+                setWebsites(res.data.websites || []);
             } catch (error) {
                 console.error("Failed to load websites", error);
             }
@@ -127,7 +128,7 @@ export default function AddLeadPage() {
         const fetchQualifications = async () => {
             try {
                 const res = await axios.get("/api/master/qualifications");
-                setQualifications(res.data);
+                setQualifications(res.data.qualifications || []);
             } catch (error) {
                 console.error("Failed to load qualifications", error);
             }
@@ -135,7 +136,7 @@ export default function AddLeadPage() {
         const fetchCountries = async () => {
             try {
                 const res = await axios.get("/api/master/countries");
-                setCountries(res.data);
+                setCountries(res.data.countries || []);
             } catch (error) {
                 console.error("Failed to load countries", error);
             }
@@ -166,6 +167,7 @@ export default function AddLeadPage() {
             applyLevel: "",
             source: "",
             status: LeadStatus.NEW,
+            interest: "",
             remark: "",
             followUp: { date: "", time: "", remark: "" },
             appointment: { date: "", time: "", title: "", remark: "" },
@@ -354,7 +356,7 @@ export default function AddLeadPage() {
                                                 </div>
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {qualifications.map(q => <SelectItem key={q.id} value={q.name}>{q.name}</SelectItem>)}
+                                                {(Array.isArray(qualifications) ? qualifications : []).map(q => <SelectItem key={q.id} value={q.name}>{q.name}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -393,7 +395,7 @@ export default function AddLeadPage() {
                                                 </div>
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {countries.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                                                {(Array.isArray(countries) ? countries : []).map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
                                     </div>
@@ -435,7 +437,7 @@ export default function AddLeadPage() {
                                                 </div>
                                             </SelectTrigger>
                                             <SelectContent>
-                                                {websites.map(w => <SelectItem key={w.id} value={w.name}>{w.name}</SelectItem>)}
+                                                {(Array.isArray(websites) ? websites : []).map(w => <SelectItem key={w.id} value={w.name}>{w.name}</SelectItem>)}
                                             </SelectContent>
                                         </Select>
                                         <ErrorMessage field={field} />
@@ -456,6 +458,26 @@ export default function AddLeadPage() {
                                                 <SelectItem value="ASSIGNED">Assigned</SelectItem>
                                                 <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
                                                 <SelectItem value="FOLLOW_UP">Follow Up</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )} />
+                                <form.Field name="interest" children={(field) => (
+                                    <div className="space-y-1">
+                                        <Label className="text-xs font-bold text-muted-foreground uppercase tracking-tight">Interest</Label>
+                                        <Select value={field.state.value} onValueChange={field.handleChange}>
+                                            <SelectTrigger className={iconicInputClass}>
+                                                <div className="flex items-center gap-2">
+                                                    <Plus className="h-4 w-4 text-muted-foreground" />
+                                                    <SelectValue placeholder="Select Interest" />
+                                                </div>
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="STUDY_ABROAD">Study Abroad</SelectItem>
+                                                <SelectItem value="SKILL_DEVELOPMENT">Skill Development</SelectItem>
+                                                <SelectItem value="LOAN">Loan</SelectItem>
+                                                <SelectItem value="MBBS">MBBS</SelectItem>
+                                                <SelectItem value="OTHER">Other</SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </div>

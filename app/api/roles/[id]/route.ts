@@ -3,22 +3,18 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-export async function GET(
-    req: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
-) {
-    try {
-        const session = await getServerSession(authOptions);
-        if (!session?.user) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+import { PERMISSION_MODULES, withPermission } from "@/lib/permissions";
 
+export const GET = withPermission('ROLES', 'VIEW', async (req, { params }) => {
+    try {
         const { id } = await params;
         const role = await prisma.userRole.findUnique({
             where: { id },
             include: {
                 permissions: {
-                    orderBy: { module: "asc" }
+                    include: {
+                        permission: true
+                    }
                 }
             }
         });
@@ -27,23 +23,38 @@ export async function GET(
             return NextResponse.json({ error: "Role not found" }, { status: 404 });
         }
 
-        return NextResponse.json(role);
+        // Transform RolePermission records into a grouped module-based structure for the frontend
+        const groupedPermissions: Record<string, any> = {};
+
+        role.permissions.forEach(rp => {
+            const mod = rp.permission.module;
+            if (!groupedPermissions[mod]) {
+                groupedPermissions[mod] = {
+                    module: mod,
+                    actions: [],
+                    scope: rp.scope
+                };
+            }
+            groupedPermissions[mod].actions.push(rp.permission.action);
+        });
+
+        // Ensure all system modules are present (even with empty actions)
+        const finalPermissions = PERMISSION_MODULES.map(module => {
+            return groupedPermissions[module] || { module, actions: [], scope: "OWN" };
+        });
+
+        return NextResponse.json({
+            ...role,
+            permissions: finalPermissions
+        });
     } catch (error) {
         console.error("Error fetching role:", error);
         return NextResponse.json({ error: "Failed to fetch role" }, { status: 500 });
     }
-}
+});
 
-export async function PATCH(
-    req: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
-) {
+export const PATCH = withPermission('ROLES', 'EDIT', async (req, { params }) => {
     try {
-        const session = await getServerSession(authOptions) as any;
-        if (!session?.user || session.user.role !== "ADMIN") {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
         const { id } = await params;
         const body = await req.json();
         const { name, description, isActive, permissions } = body;
@@ -53,36 +64,64 @@ export async function PATCH(
             return NextResponse.json({ error: "Role not found" }, { status: 404 });
         }
 
-        // Prevent deactivating system roles if critical
-        if (role.isSystem && isActive === false) {
-            // Optional: allow but warn, or block
-        }
-
         // Update role and its permissions
-        const updatedRole = await prisma.userRole.update({
-            where: { id },
-            data: {
-                name,
-                description,
-                isActive,
-                permissions: permissions ? {
-                    upsert: permissions.map((p: any) => ({
-                        where: { roleId_module: { roleId: id, module: p.module } },
-                        update: {
-                            actions: p.actions,
-                            scope: p.scope
-                        },
-                        create: {
-                            module: p.module,
-                            actions: p.actions,
-                            scope: p.scope
+        const updatedRole = await prisma.$transaction(async (tx) => {
+            // 1. Update basic info
+            await tx.userRole.update({
+                where: { id },
+                data: {
+                    name,
+                    description,
+                    isActive
+                }
+            });
+
+            // 2. If permissions are provided, sync them
+            if (permissions && Array.isArray(permissions)) {
+                // First, delete old permissions for this role
+                await tx.rolePermission.deleteMany({
+                    where: { roleId: id }
+                });
+
+                // Fetch all existing permissions to match them in-memory
+                const allSystemPermissions = await tx.permission.findMany();
+                const permissionsDataToInsert: any[] = [];
+
+                // Match and prepare
+                for (const p of permissions) {
+                    if (!p.actions || p.actions.length === 0) continue;
+
+                    for (const action of p.actions) {
+                        const permRecord = allSystemPermissions.find(
+                            sp => sp.module === p.module && sp.action === action
+                        );
+
+                        if (permRecord) {
+                            permissionsDataToInsert.push({
+                                roleId: id,
+                                permissionId: permRecord.id,
+                                scope: p.scope || "OWN"
+                            });
                         }
-                    }))
-                } : undefined
-            },
-            include: {
-                permissions: true
+                    }
+                }
+
+                // Bulk insert
+                if (permissionsDataToInsert.length > 0) {
+                    await tx.rolePermission.createMany({
+                        data: permissionsDataToInsert
+                    });
+                }
             }
+
+            return tx.userRole.findUnique({
+                where: { id },
+                include: {
+                    permissions: {
+                        include: { permission: true }
+                    }
+                }
+            });
         });
 
         return NextResponse.json(updatedRole);
@@ -90,18 +129,10 @@ export async function PATCH(
         console.error("Error updating role:", error);
         return NextResponse.json({ error: "Failed to update role" }, { status: 500 });
     }
-}
+});
 
-export async function DELETE(
-    req: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
-) {
+export const DELETE = withPermission('ROLES', 'DELETE', async (req, { params }) => {
     try {
-        const session = await getServerSession(authOptions) as any;
-        if (!session?.user || session.user.role !== "ADMIN") {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
         const { id } = await params;
         const role = await prisma.userRole.findUnique({
             where: { id },
@@ -127,4 +158,4 @@ export async function DELETE(
         console.error("Error deleting role:", error);
         return NextResponse.json({ error: "Failed to delete role" }, { status: 500 });
     }
-}
+});

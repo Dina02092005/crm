@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { withPermission } from '@/lib/permissions';
+import { startOfDay, endOfDay, parseISO } from 'date-fns';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,19 +17,37 @@ export const GET = withPermission('LEADS', 'VIEW', async (req, { permission }) =
         const status = searchParams.get('status');
         const source = searchParams.get('source');
         const temperature = searchParams.get('temperature');
+        const assignedTo = searchParams.get('assignedTo');
+        const interestedCountry = searchParams.get('interestedCountry');
+        const highestQualification = searchParams.get('highestQualification');
+        const from = searchParams.get('from');
+        const to = searchParams.get('to');
+        const interest = searchParams.get('interest');
+
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '10');
         const skip = (page - 1) * limit;
 
-        const where: any = {};
+        const where: any = { deletedAt: null };
         if (status && status !== 'ALL') {
             where.status = status;
         } else {
             // By default, exclude CONVERTED leads from the "All" view to keep active list clean
             where.status = { not: 'CONVERTED' };
         }
-        if (source) where.source = source;
-        if (temperature) where.temperature = temperature;
+
+        if (source && source !== 'ALL') where.source = source;
+        if (temperature && temperature !== 'ALL') where.temperature = temperature;
+        if (interestedCountry && interestedCountry !== 'ALL') where.interestedCountry = { contains: interestedCountry, mode: 'insensitive' };
+        if (highestQualification && highestQualification !== 'ALL') where.highestQualification = { contains: highestQualification, mode: 'insensitive' };
+        if (interest && interest !== 'ALL') where.interest = interest;
+
+        if (from && to && from !== "" && to !== "") {
+            where.createdAt = {
+                gte: startOfDay(parseISO(from)),
+                lte: endOfDay(parseISO(to))
+            };
+        }
 
         if (search) {
             where.OR = [
@@ -39,30 +58,60 @@ export const GET = withPermission('LEADS', 'VIEW', async (req, { permission }) =
         }
 
         // RBAC: Dynamic scope-based visibility
-        if (scope === 'OWN' || scope === 'ASSIGNED') {
-            const assignedToIds = [session.user.id];
+        const isFilteringSpecificCounselor = assignedTo && assignedTo !== 'ALL' && assignedTo !== '';
 
-            // For AGENT role, if they have OWN/ASSIGNED scope, arguably they should still see subordinates? 
-            // Or does OWN mean LITERALLY just them? In this system, Agents usually manage Counselors.
-            // Let's stick to the current logic for AGENT but triggered by scope.
-            if (session.user.role === 'AGENT') {
-                const agent = await prisma.agentProfile.findUnique({
-                    where: { userId: session.user.id }
-                });
-                if (agent) {
-                    const subordinates = await prisma.counselorProfile.findMany({
-                        where: { agentId: agent.id },
-                        select: { userId: true }
+        if (scope === 'OWN' || scope === 'ASSIGNED' || isFilteringSpecificCounselor) {
+            let assignedToIds: string[] = [];
+
+            if (scope === 'OWN' || scope === 'ASSIGNED') {
+                assignedToIds = [session.user.id];
+
+                if (session.user.role === 'AGENT') {
+                    const agent = await prisma.agentProfile.findUnique({
+                        where: { userId: session.user.id }
                     });
-                    assignedToIds.push(...subordinates.map(s => s.userId));
+                    if (agent) {
+                        const subordinates = await prisma.counselorProfile.findMany({
+                            where: { agentId: agent.id },
+                            select: { userId: true }
+                        });
+                        assignedToIds.push(...subordinates.map(s => s.userId));
+                    }
                 }
+
+                // If user matched scope but also provided a specific assignedTo filter
+                if (isFilteringSpecificCounselor && !assignedToIds.includes(assignedTo!)) {
+                    // Force zero results if they filter by someone they can't see
+                    where.id = "none";
+                } else if (isFilteringSpecificCounselor) {
+                    assignedToIds = [assignedTo!];
+                }
+            } else if (isFilteringSpecificCounselor) {
+                // User has ALL scope but specifically filtered by assignedTo
+                assignedToIds = [assignedTo!];
             }
 
-            where.assignments = {
-                some: {
-                    assignedTo: { in: assignedToIds }
+            if (where.id !== "none" && assignedToIds.length > 0) {
+                const rbacOr = {
+                    OR: [
+                        { createdById: { in: assignedToIds } },
+                        { assignments: { some: { assignedTo: { in: assignedToIds } } } }
+                    ]
+                };
+
+                if (where.OR) {
+                    where.AND = [
+                        ...(where.AND || []),
+                        { OR: where.OR },
+                        rbacOr
+                    ];
+                    delete where.OR;
+                } else if (where.AND) {
+                    where.AND.push(rbacOr);
+                } else {
+                    where.OR = rbacOr.OR;
                 }
-            };
+            }
         }
 
         const [leads, total] = await Promise.all([
@@ -101,201 +150,38 @@ export const GET = withPermission('LEADS', 'VIEW', async (req, { permission }) =
 
 export const POST = withPermission('LEADS', 'CREATE', async (req, { permission }) => {
     try {
-        const { user: sessionUser } = permission;
-        const session = { user: sessionUser };
+        const body = await req.json();
 
-        const data = await req.json();
-        const {
-            firstName, lastName, email, phone, alternateNo,
-            dateOfBirth, gender, nationality, maritalStatus,
-            address, highestQualification, interestedCourse,
-            testName, testScore, interestedCountry, intake,
-            applyLevel, source, remark, message, imageUrl,
-            followUp, appointment,
-            passportNo, passportIssueDate, passportExpiryDate,
-            academicDetails, workExperience, proficiencyExams
-        } = data;
+        // -- Null-coerce optional enum + date fields -------------------------
+        // These must be null (not "") so Prisma/DB doesn't reject enum/date constraints
+        if (!body.interest || body.interest === "") body.interest = null;
+        if (!body.dateOfBirth || body.dateOfBirth === "") body.dateOfBirth = null;
+        if (!body.email || body.email === "") body.email = null;
 
-        // name is still required in the schema for now, let's derive it
-        const name = data.name || `${firstName || ""} ${lastName || ""}`.trim() || phone;
-
-        if (!name || !phone || !source) {
-            return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
+        // -- Build name from firstName + lastName if not supplied explicitly --
+        if (!body.name || body.name === "") {
+            const name = [body.firstName, body.lastName]
+                .map((s: string) => s?.trim())
+                .filter(Boolean)
+                .join(" ");
+            body.name = name || "Unknown Lead";
         }
 
-        // Check for duplicate lead (by phone OR email)
-        const existingLead = await prisma.lead.findFirst({
-            where: {
-                OR: [
-                    { phone: phone },
-                    ...(email ? [{ email: email }] : []),
-                ],
+        const lead = await prisma.lead.create({
+            data: {
+                ...body,
+                createdById: permission.user.id,
+                status: body.status || 'NEW',
+                temperature: body.temperature || 'COLD',
             },
         });
 
-        if (existingLead) {
-            return NextResponse.json({
-                message: 'A lead with this phone number or email already exists.'
-            }, { status: 400 });
-        }
-
-        // Generate random password
-        const password = Math.random().toString(36).slice(-8);
-        const passwordHash = await import('bcryptjs').then(bcrypt => bcrypt.hash(password, 10));
-
-        // Create User (Student) and Lead in a transaction
-        const result = await prisma.$transaction(async (tx) => {
-            // 1. Create User
-            let user;
-            // Only create user if email is provided, otherwise we can't create a login
-            if (email) {
-                // Check if user exists (could be a re-entry)
-                const existingUser = await tx.user.findUnique({ where: { email } });
-                if (existingUser) {
-                    if (existingUser.role !== 'STUDENT') {
-                        throw new Error('Email already registered with a different role.');
-                    }
-                    user = existingUser;
-                } else {
-                    user = await tx.user.create({
-                        data: {
-                            name,
-                            email,
-                            passwordHash,
-                            role: 'STUDENT',
-                            isActive: true,
-                            emailVerified: new Date(),
-                            imageUrl,
-                        }
-                    });
-                }
-            }
-
-            // 2. Create Lead
-            const lead = await tx.lead.create({
-                data: {
-                    name,
-                    firstName,
-                    lastName,
-                    email,
-                    phone,
-                    alternateNo,
-                    dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
-                    gender,
-                    nationality,
-                    maritalStatus,
-                    address,
-                    highestQualification,
-                    interestedCourse,
-                    testName,
-                    testScore,
-                    interestedCountry,
-                    intake,
-                    applyLevel,
-                    message,
-                    source,
-                    remark,
-                    imageUrl,
-                    passportNo,
-                    passportIssueDate: passportIssueDate ? new Date(passportIssueDate) : null,
-                    passportExpiryDate: passportExpiryDate ? new Date(passportExpiryDate) : null,
-                    userId: user?.id || null, // Link to User if created
-                    // Nested creation for FollowUp and Appointment
-                    followUps: (followUp && followUp.nextFollowUpAt) ? {
-                        create: {
-                            nextFollowUpAt: new Date(followUp.nextFollowUpAt),
-                            remark: followUp.remark,
-                            userId: session.user.id,
-                            type: followUp.type || 'CALL',
-                            status: 'PENDING'
-                        }
-                    } : undefined,
-                    appointments: (appointment && appointment.startTime) ? {
-                        create: {
-                            startTime: new Date(appointment.startTime),
-                            endTime: appointment.endTime ? new Date(appointment.endTime) : new Date(new Date(appointment.startTime).getTime() + 60 * 60 * 1000),
-                            title: appointment.title || 'Initial Consultation',
-                            description: appointment.remark,
-                            userId: session.user.id,
-                            status: 'SCHEDULED'
-                        }
-                    } : undefined,
-                    academicDetails: (academicDetails && Array.isArray(academicDetails)) ? {
-                        create: academicDetails.map((detail: any) => ({
-                            qualification: detail.qualification,
-                            stream: detail.stream,
-                            institution: detail.institution,
-                            percentage: detail.percentage,
-                            backlogs: detail.backlogs,
-                            passingYear: detail.passingYear
-                        }))
-                    } : undefined,
-                    workExperience: (workExperience && Array.isArray(workExperience)) ? {
-                        create: workExperience.map((exp: any) => ({
-                            companyName: exp.companyName,
-                            position: exp.position,
-                            startDate: exp.startDate,
-                            endDate: exp.endDate,
-                            totalExperience: exp.totalExperience
-                        }))
-                    } : undefined,
-                    proficiencyExams: proficiencyExams ? proficiencyExams : undefined,
-                    // If Creator is Employee/Agent/Counselor, automatically assign to them
-                    ...((session.user.role === 'EMPLOYEE' || session.user.role === 'AGENT' || session.user.role === 'COUNSELOR' || session.user.role === 'SALES_REP') ? {
-                        assignments: {
-                            create: {
-                                assignedTo: session.user.id,
-                                assignedBy: session.user.id, // Self-assigned
-                            }
-                        },
-                        status: 'ASSIGNED' as any // Auto-update status
-                    } : {})
-                },
-            });
-
-            return { lead, user, password };
-        });
-
-        const { lead, user, password: generatedPassword } = result;
-
-        // Send Email if user was created
-        if (user && email) {
-            const { sendEmail } = await import('@/lib/email');
-            try {
-                await sendEmail({
-                    to: email,
-                    subject: 'Welcome to Inter CRM - Your Student Account',
-                    html: `
-                        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                            <h2 style="color: #6d28d9;">Welcome to Inter CRM!</h2>
-                            <p>Hello ${name},</p>
-                            <p>Your student account has been successfully created. You can now login to the portal using the following credentials:</p>
-                            <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                                <p style="margin: 5px 0;"><strong>Login URL:</strong> <a href="${process.env.NEXT_PUBLIC_APP_URL}/login">${process.env.NEXT_PUBLIC_APP_URL}/login</a></p>
-                                <p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p>
-                                <p style="margin: 5px 0;"><strong>Password:</strong> ${generatedPassword}</p>
-                            </div>
-                            <p>Please login and change your password immediately for security.</p>
-                            <p>Best regards,<br>The Inter CRM Team</p>
-                        </div>
-                    `,
-                });
-            } catch (emailError) {
-                console.error("Failed to send welcome email:", emailError);
-            }
-        }
-
-        // Notify Admins
-        const { notifyAdmins } = await import('@/lib/notifications');
-        await notifyAdmins(
-            'New Lead Created',
-            `A new lead has been created: ${name} (${phone}) from ${source}.`,
-            'LEAD_CREATED'
-        );
-
         return NextResponse.json(lead, { status: 201 });
     } catch (error: any) {
-        console.error('Create lead error:', error);
-        return NextResponse.json({ message: error.message || 'Internal server error' }, { status: 500 });
+        console.error('Create lead error details:', error);
+        return NextResponse.json({
+            message: 'Failed to create lead',
+            error: error.message
+        }, { status: 500 });
     }
 });

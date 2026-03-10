@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense, use } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, FileSpreadsheet, Trash2, UserPlus, Mail, MessageSquare } from "lucide-react";
+import { Search, FileSpreadsheet, Trash2, UserPlus, Mail, MessageSquare, Plus, FilterX } from "lucide-react";
 import { toast } from "sonner";
 import { ApplicationsTable } from "@/components/dashboard/ApplicationsTable";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -15,8 +15,16 @@ import { useRolePath } from "@/hooks/use-role-path";
 import { Badge } from "@/components/ui/badge";
 import axios from "axios";
 import { Application } from "@/types/api";
+import { useCountries, useCounselors, useUniversities } from "@/hooks/use-masters";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
 
-// New Modals
+// Modals
 import { ApplicationHistoryModal } from "@/components/applications/ApplicationHistoryModal";
 import { ApplicationNotesModal } from "@/components/applications/ApplicationNotesModal";
 import { AssignApplicationsModal } from "@/components/applications/AssignApplicationsModal";
@@ -25,17 +33,28 @@ import { WhatsappMessageModal } from "@/components/applications/WhatsappMessageM
 import { StudentApplicationsModal } from "@/components/applications/StudentApplicationsModal";
 import { OfferLetterModal } from "@/components/applications/OfferLetterModal";
 import { ApplicationCommentsModal } from "@/components/applications/ApplicationCommentsModal";
+import { StudentApplicationsView } from "@/components/applications/StudentApplicationsView";
 
-import { Suspense } from "react";
-
-function ApplicationsPageContent() {
+function ApplicationsPageContent({ role }: { role: string }) {
     const searchParams = useSearchParams();
     const urlStatus = searchParams.get("status");
+
+    if (role === "student") {
+        return (
+            <div className="p-3 sm:p-4 bg-slate-50/50 min-h-screen">
+                <StudentApplicationsView />
+            </div>
+        );
+    }
 
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
     const [status, setStatus] = useState<string | null>(urlStatus);
+    const [countryId, setCountryId] = useState("ALL");
+    const [universityId, setUniversityId] = useState("ALL");
+    const [assignedToId, setAssignedToId] = useState("ALL");
+
     const router = useRouter();
     const { prefixPath } = useRolePath();
 
@@ -46,7 +65,21 @@ function ApplicationsPageContent() {
 
     const debouncedSearch = useDebounce(search, 500);
 
-    const { data, isLoading, refetch } = useApplications(page, limit, debouncedSearch, status);
+    const { data, isLoading, refetch } = useApplications(
+        page,
+        limit,
+        debouncedSearch,
+        status,
+        undefined,
+        universityId === "ALL" ? undefined : universityId,
+        countryId === "ALL" ? undefined : countryId,
+        assignedToId === "ALL" ? undefined : assignedToId
+    );
+
+    const { data: countries } = useCountries();
+    const { data: universities } = useUniversities(countryId === "ALL" ? undefined : countryId);
+    const { data: counselors } = useCounselors();
+
     const deleteMutation = useDeleteApplication();
     const bulkDeleteMutation = useBulkDeleteApplications();
 
@@ -67,7 +100,7 @@ function ApplicationsPageContent() {
     // Reset page on search/filter changes
     useEffect(() => {
         setPage(1);
-    }, [debouncedSearch, status]);
+    }, [debouncedSearch, status, countryId, universityId, assignedToId]);
 
     const applications = data?.applications || [];
     const pagination = data?.pagination || { page: 1, limit: 10, totalPages: 1, total: 0 };
@@ -112,15 +145,11 @@ function ApplicationsPageContent() {
         setStatus(newStatus === "ALL" ? null : newStatus);
     };
 
-    if (isLoading && page === 1) {
-        return <div className="p-10 animate-pulse bg-muted/20 h-screen rounded-3xl" />;
-    }
-
     return (
         <div className="flex flex-col gap-3 p-3 sm:p-4 bg-slate-50/50 min-h-screen">
             <Card className="border-0 rounded-3xl overflow-hidden bg-card">
                 <CardContent className="p-4">
-                    {/* Integrated Header Row */}
+                    {/* Header Row */}
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
                         <div className="relative max-w-sm w-full">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground/40" />
@@ -189,6 +218,67 @@ function ApplicationsPageContent() {
                         </div>
                     </div>
 
+                    {/* Advanced Filters */}
+                    <div className="flex flex-wrap items-center gap-3 mb-6">
+                        <div className="w-full sm:w-[180px]">
+                            <Select value={countryId} onValueChange={(val) => { setCountryId(val); setUniversityId("ALL"); }}>
+                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 border-0 focus:ring-0">
+                                    <SelectValue placeholder="Country" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="ALL">All Countries</SelectItem>
+                                    {countries?.countries?.map((c: any) => (
+                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="w-full sm:w-[180px]">
+                            <Select value={universityId} onValueChange={setUniversityId}>
+                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 border-0 focus:ring-0">
+                                    <SelectValue placeholder="University" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="ALL">All Universities</SelectItem>
+                                    {universities?.universities?.map((u: any) => (
+                                        <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="w-full sm:w-[180px]">
+                            <Select value={assignedToId} onValueChange={setAssignedToId}>
+                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 border-0 focus:ring-0">
+                                    <SelectValue placeholder="Assigned To" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="ALL">All Counselors</SelectItem>
+                                    {counselors?.map((c: any) => (
+                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {(status || countryId !== "ALL" || universityId !== "ALL" || assignedToId !== "ALL") && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                    setStatus(null);
+                                    setCountryId("ALL");
+                                    setUniversityId("ALL");
+                                    setAssignedToId("ALL");
+                                }}
+                                className="h-8 text-[11px] text-muted-foreground hover:text-destructive gap-1"
+                            >
+                                <FilterX className="h-3 w-3" /> Clear Filters
+                            </Button>
+                        )}
+                    </div>
+
                     {/* Filter Pills */}
                     <div className="flex flex-wrap gap-2 mb-6">
                         {[
@@ -218,7 +308,7 @@ function ApplicationsPageContent() {
                         ))}
                     </div>
 
-                    {isLoading ? (
+                    {isLoading && page === 1 ? (
                         <div className="space-y-4 p-4">
                             <div className="h-10 bg-slate-50 animate-pulse rounded-xl w-full" />
                             <div className="h-40 bg-slate-50 animate-pulse rounded-xl w-full" />
@@ -327,10 +417,11 @@ function ApplicationsPageContent() {
     );
 }
 
-export default function ApplicationsPage() {
+export default function ApplicationsPage({ params }: { params: Promise<{ role: string }> }) {
+    const { role } = use(params);
     return (
         <Suspense fallback={<div className="p-10 animate-pulse bg-muted/20 h-screen rounded-2xl" />}>
-            <ApplicationsPageContent />
+            <ApplicationsPageContent role={role} />
         </Suspense>
     );
 }

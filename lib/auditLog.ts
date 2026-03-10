@@ -12,7 +12,7 @@ export const AuditLogService = {
         metadata
     }: {
         userId: string;
-        action: "CREATED" | "UPDATED" | "DELETED" | "VIEW";
+        action: "CREATED" | "UPDATED" | "DELETED" | "VIEW" | "EXPORT";
         module: string;
         entity: string;
         entityId: string;

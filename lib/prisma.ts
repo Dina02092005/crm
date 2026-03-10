@@ -1,4 +1,4 @@
-import { PrismaClient } from '../prisma/generated/client'
+import { PrismaClient } from '../prisma/generated/client_v2'
 
 
 const prismaClientSingleton = () => {
@@ -19,7 +19,11 @@ declare global {
 const prisma = globalThis.prisma ?? prismaClientSingleton()
 
 export { prisma }
-export * from '../prisma/generated/client'
+export * from '../prisma/generated/client_v2'
 export default prisma
 
-if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma
+
+if (process.env.NODE_ENV !== 'production') {
+  globalThis.prisma = prisma;
+  console.log("[PRISMA] Reusing existing PrismaClient from globalThis");
+}

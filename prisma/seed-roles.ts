@@ -1,100 +1,127 @@
-import { PrismaClient } from "./generated/client";
+import { PrismaClient } from './generated/client_v2';
 
 const prisma = new PrismaClient();
 
-const PERMISSION_MODULES = [
-    "LEADS", "STUDENTS", "APPLICATIONS", "VISA", "MASTERS", "ROLES"
-];
-
-const ALL_ACTIONS = ["VIEW", "CREATE", "EDIT", "DELETE", "DOWNLOAD", "APPROVE"];
-const VIEW_ONLY = ["VIEW"];
-const AGENT_ACTIONS = ["VIEW", "CREATE", "EDIT"];
-
-const SYSTEM_ROLES = [
-    {
-        name: "Super Admin",
-        description: "Full unrestricted access to all modules and settings.",
-        isSystem: true,
-        defaultScope: "ALL",
-        defaultActions: ALL_ACTIONS,
-    },
-    {
-        name: "Admin",
-        description: "Manages all CRM data, users, and settings.",
-        isSystem: true,
-        defaultScope: "ALL",
-        defaultActions: ALL_ACTIONS,
-    },
-    {
-        name: "Agent",
-        description: "Manages own assigned students and applications.",
-        isSystem: true,
-        defaultScope: "ASSIGNED",
-        defaultActions: AGENT_ACTIONS,
-    },
-    {
-        name: "Counselor",
-        description: "Views and edits records assigned to them.",
-        isSystem: true,
-        defaultScope: "ASSIGNED",
-        defaultActions: AGENT_ACTIONS,
-    },
-    {
-        name: "Student",
-        description: "Views only their own profile and application status.",
-        isSystem: true,
-        defaultScope: "OWN",
-        defaultActions: VIEW_ONLY,
-    },
-];
-
 async function main() {
-    console.log("Seeding system roles...");
+    console.log('Starting Roles & Permissions seeding...');
 
-    for (const roleData of SYSTEM_ROLES) {
-        const role = await prisma.userRole.upsert({
-            where: { name: roleData.name },
-            update: {
-                description: roleData.description,
-                isSystem: true,
-                isActive: true,
-            },
-            create: {
-                name: roleData.name,
-                description: roleData.description,
-                isSystem: true,
-                isActive: true,
-            },
-        });
+    const modules = [
+        "LEADS", "STUDENTS", "APPLICATIONS", "VISA", "AGENTS",
+        "COUNSELORS", "REPORTS", "MASTER", "FILE_MANAGER",
+        "ROLES", "NOTES", "FOLLOW_UPS"
+    ];
 
-        // Upsert permissions for each module
-        for (const module of PERMISSION_MODULES) {
-            await prisma.rolePermission.upsert({
-                where: { roleId_module: { roleId: role.id, module } },
-                update: {
-                    actions: roleData.defaultActions,
-                    scope: roleData.defaultScope,
-                },
-                create: {
-                    roleId: role.id,
-                    module,
-                    actions: roleData.defaultActions,
-                    scope: roleData.defaultScope,
-                },
+    const actions = ["VIEW", "CREATE", "EDIT", "DELETE", "ASSIGN"];
+
+    // 1. Create all Permissions
+    console.log('Creating permissions...');
+    const permissions: any = {};
+    for (const module of modules) {
+        for (const action of actions) {
+            const name = `${action}_${module}`;
+            const perm = await prisma.permission.upsert({
+                where: { name },
+                update: { module, action },
+                create: { name, module, action }
             });
+            permissions[name] = perm.id;
         }
-
-        console.log(`✓ Seeded role: ${roleData.name}`);
     }
 
-    console.log("✅ Done seeding system roles.");
+    // 2. Clear existing role permissions to start fresh (Optional but safer for seeding)
+    // await prisma.rolePermission.deleteMany({});
+
+    // 3. Define Roles and their Permissions
+    const rolesData = [
+        {
+            name: 'SUPER_ADMIN',
+            description: 'Full system access with all permissions.',
+            isSystem: true,
+            permissions: Object.keys(permissions) // Everything
+        },
+        {
+            name: 'ADMIN',
+            description: 'Administrative access to most modules.',
+            isSystem: true,
+            permissions: [
+                ...actions.flatMap(a => [
+                    `${a}_LEADS`, `${a}_STUDENTS`, `${a}_APPLICATIONS`,
+                    `${a}_VISA`, `${a}_AGENTS`, `${a}_COUNSELORS`,
+                    `${a}_REPORTS`, `${a}_MASTER`, `${a}_FILE_MANAGER`
+                ])
+            ]
+        },
+        {
+            name: 'COUNSELOR',
+            description: 'Counselor access for managing assigned leads and students.',
+            isSystem: true,
+            permissions: [
+                "VIEW_LEADS", "CREATE_LEADS", "EDIT_LEADS",
+                "VIEW_STUDENTS", "CREATE_STUDENTS", "EDIT_STUDENTS",
+                "VIEW_APPLICATIONS", "CREATE_APPLICATIONS", "EDIT_APPLICATIONS",
+                "VIEW_NOTES", "CREATE_NOTES", "EDIT_NOTES",
+                "VIEW_FOLLOW_UPS", "CREATE_FOLLOW_UPS", "EDIT_FOLLOW_UPS"
+            ]
+        },
+        {
+            name: 'AGENT',
+            description: 'Agent access for lead creation and tracking.',
+            isSystem: true,
+            permissions: [
+                "CREATE_LEADS", "VIEW_LEADS", "EDIT_LEADS"
+            ]
+        },
+        {
+            name: 'STUDENT',
+            description: 'Student access for tracking their own applications.',
+            isSystem: true,
+            permissions: [
+                "VIEW_APPLICATIONS", "VIEW_VISA"
+            ]
+        }
+    ];
+
+    console.log('Creating roles and assigning permissions...');
+    for (const roleData of rolesData) {
+        const { permissions: rolePermNames, ...roleInfo } = roleData;
+
+        const role = await prisma.userRole.upsert({
+            where: { name: roleInfo.name },
+            update: { description: roleInfo.description, isSystem: roleInfo.isSystem },
+            create: roleInfo
+        });
+
+        // Assign permissions to role
+        for (const permName of rolePermNames) {
+            const permissionId = permissions[permName];
+            if (permissionId) {
+                await prisma.rolePermission.upsert({
+                    where: {
+                        roleId_permissionId: {
+                            roleId: role.id,
+                            permissionId: permissionId
+                        }
+                    },
+                    update: {},
+                    create: {
+                        roleId: role.id,
+                        permissionId: permissionId,
+                        scope: roleInfo.name === 'SUPER_ADMIN' || roleInfo.name === 'ADMIN' ? 'ALL' : 'ASSIGNED'
+                    }
+                });
+            }
+        }
+    }
+
+    console.log('Roles & Permissions seeding completed!');
 }
 
 main()
-    .catch((e) => {
-        console.error(e);
-        process.exit(1);
-    })
-    .finally(async () => {
+    .then(async () => {
         await prisma.$disconnect();
+    })
+    .catch(async (e) => {
+        console.error(e);
+        await prisma.$disconnect();
+        process.exit(1);
     });

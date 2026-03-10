@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
 import {
     getStudents, createStudent, updateStudent, deleteStudent,
     getEmployees, createEmployee, updateEmployee, deleteEmployee,
@@ -9,11 +10,21 @@ import {
 import { toast } from 'sonner';
 
 // Students
-export const useStudents = (page = 1, limit = 10, search = "") => {
+export const useStudents = (page = 1, limit = 10, search = "", status = "", onboardedBy = "", interestedCountry = "", intake = "") => {
     return useQuery({
-        queryKey: ['students', page, limit, search],
+        queryKey: ['students', page, limit, search, status, onboardedBy, interestedCountry, intake],
         queryFn: async () => {
-            return await getStudents(page, limit, search);
+            const params = new URLSearchParams();
+            params.append("page", page.toString());
+            params.append("limit", limit.toString());
+            if (search) params.append("search", search);
+            if (status && status !== 'ALL') params.append("status", status);
+            if (onboardedBy) params.append("onboardedBy", onboardedBy);
+            if (interestedCountry) params.append("interestedCountry", interestedCountry);
+            if (intake) params.append("intake", intake);
+
+            const { data } = await axios.get(`/api/students?${params.toString()}`);
+            return data;
         },
     });
 };
@@ -92,11 +103,11 @@ export const useDeleteEmployee = () => {
 };
 
 // Applications
-export const useApplications = (page = 1, limit = 10, search = '', status: string | null = null, studentId?: string) => {
+export const useApplications = (page = 1, limit = 10, search = '', status: string | null = null, studentId?: string, universityId?: string, countryId?: string, assignedToId?: string) => {
     return useQuery({
-        queryKey: ['applications', page, limit, search, status, studentId],
+        queryKey: ['applications', page, limit, search, status, studentId, universityId, countryId, assignedToId],
         queryFn: async () => {
-            return await getApplications(page, limit, search, studentId, status);
+            return await getApplications(page, limit, search, studentId, status, universityId, countryId, assignedToId);
         },
     });
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, use, Suspense } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search, Plane, Filter, SlidersHorizontal } from "lucide-react";
@@ -14,8 +14,9 @@ import { ApplicationHistoryModal } from "@/components/applications/ApplicationHi
 import { ApplicationNotesModal } from "@/components/applications/ApplicationNotesModal";
 import { OfferLetterModal } from "@/components/applications/OfferLetterModal";
 import { ApplicationCommentsModal } from "@/components/applications/ApplicationCommentsModal";
+import { StudentVisaView } from "@/components/visa/StudentVisaView";
 
-export default function VisaApplicationsPage() {
+function VisaApplicationsPageContent({ role }: { role: string }) {
     const [search, setSearch] = useState("");
     const [status, setStatus] = useState("ALL");
     const [page, setPage] = useState(1);
@@ -30,7 +31,7 @@ export default function VisaApplicationsPage() {
     const [offerLetterApp, setOfferLetterApp] = useState<any>(null);
     const [commentsApp, setCommentsApp] = useState<any>(null);
 
-    const { data, isLoading, refetch } = useVisaApplications(undefined, page, limit, debouncedSearch, status);
+    const { data, isLoading, refetch } = useVisaApplications(role === "student" ? "STUDENT" : undefined, page, limit, debouncedSearch, status);
     const deleteMutation = useDeleteVisaApplication();
 
     const visaApplications = data?.visaApplications || [];
@@ -49,6 +50,14 @@ export default function VisaApplicationsPage() {
             console.error(error);
         }
     };
+
+    if (role === "student") {
+        return (
+            <div className="p-3 sm:p-4 bg-slate-50/50 min-h-screen">
+                <StudentVisaView />
+            </div>
+        );
+    }
 
     if (isLoading && page === 1) {
         return <div className="p-10 animate-pulse bg-muted/20 h-screen rounded-3xl" />;
@@ -109,35 +118,28 @@ export default function VisaApplicationsPage() {
                         ))}
                     </div>
 
-                    {isLoading ? (
-                        <div className="space-y-4 p-4">
-                            <div className="h-10 bg-slate-50 animate-pulse rounded-xl w-full" />
-                            <div className="h-40 bg-slate-50 animate-pulse rounded-xl w-full" />
-                        </div>
-                    ) : (
-                        <VisaApplicationsTable
-                            data={visaApplications}
-                            onUpdate={refetch}
-                            onDelete={handleDelete}
-                            selectedIds={selectedIds}
-                            onSelectionChange={setSelectedIds}
-                            onOpenHistory={(app) => setHistoryApp(app)}
-                            onOpenComments={(app) => setCommentsApp(app)}
-                            onOpenOfferLetters={(app) => setOfferLetterApp(app)}
-                            onOpenNotes={(app) => setNotesApp(app)}
-                            pagination={{
-                                page: pagination.page,
-                                totalPages: pagination.totalPages,
-                                pageSize: limit,
-                                onPageChange: setPage,
-                                onPageSizeChange: setLimit
-                            }}
-                        />
-                    )}
+                    <VisaApplicationsTable
+                        data={visaApplications}
+                        onUpdate={refetch}
+                        onDelete={handleDelete}
+                        selectedIds={selectedIds}
+                        onSelectionChange={setSelectedIds}
+                        onOpenHistory={(app) => setHistoryApp(app)}
+                        onOpenComments={(app) => setCommentsApp(app)}
+                        onOpenOfferLetters={(app) => setOfferLetterApp(app)}
+                        onOpenNotes={(app) => setNotesApp(app)}
+                        pagination={{
+                            page: pagination.page,
+                            totalPages: pagination.totalPages,
+                            pageSize: limit,
+                            onPageChange: setPage,
+                            onPageSizeChange: setLimit
+                        }}
+                    />
                 </CardContent>
             </Card>
 
-            {/* Modals - using existing components from applications folder */}
+            {/* Modals */}
             <ApplicationHistoryModal
                 isOpen={!!historyApp}
                 onClose={() => setHistoryApp(null)}
@@ -166,5 +168,14 @@ export default function VisaApplicationsPage() {
                 onUpdate={refetch}
             />
         </div>
+    );
+}
+
+export default function VisaApplicationsPage({ params }: { params: Promise<{ role: string }> }) {
+    const { role } = use(params);
+    return (
+        <Suspense fallback={<div className="p-10 animate-pulse bg-muted/20 h-screen rounded-3xl" />}>
+            <VisaApplicationsPageContent role={role} />
+        </Suspense>
     );
 }

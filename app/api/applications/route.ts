@@ -30,6 +30,7 @@ export const GET = withPermission('APPLICATIONS', 'VIEW', async (req, { permissi
         const applyLevel = searchParams.get("applyLevel");
         const dateFrom = searchParams.get("dateFrom");
         const dateTo = searchParams.get("dateTo");
+        const universityId = searchParams.get("universityId");
         const studentIdString = searchParams.get("studentId");
 
         const userRole = session.user.role as string;
@@ -99,6 +100,7 @@ export const GET = withPermission('APPLICATIONS', 'VIEW', async (req, { permissi
             appWhere.status = { notIn: ["READY_FOR_VISA", "DEFERRED", "ENROLLED"] };
         }
         if (countryId) appWhere.countryId = countryId;
+        if (universityId) appWhere.universityId = universityId;
         if (assignedToId) appWhere.assignedToId = assignedToId;
         if (assignedById) appWhere.assignedById = assignedById;
         if (intake) appWhere.intake = { contains: intake, mode: "insensitive" };

@@ -167,20 +167,36 @@ export const authOptions: NextAuthOptions = {
             if (user) {
                 token.userId = user.id;
                 token.role = user.role;
-                // Add any other fields you need in the token initially
             }
 
-            // Optional: Re-fetch user data if you need to keep it perfectly in sync with DB
-            // But if P6001 is happening here, we can skip it or wrap it
-            if (!token.role && token.email) {
+            // Fetch permissions from database the first time or if role changed
+            if (token.userId && !token.permissions) {
                 try {
                     const dbUser = await prisma.user.findUnique({
-                        where: { email: token.email },
+                        where: { id: token.userId as string },
+                        include: {
+                            roleProfile: {
+                                include: {
+                                    permissions: {
+                                        include: {
+                                            permission: true
+                                        }
+                                    }
+                                }
+                            }
+                        }
                     });
+
                     if (dbUser) {
-                        token.userId = dbUser.id;
                         token.role = dbUser.role;
                         token.imageUrl = dbUser.imageUrl;
+
+                        // Extract permission names (e.g., "VIEW_LEADS")
+                        if (dbUser.role === 'SUPER_ADMIN' || dbUser.role === 'ADMIN') {
+                            token.permissions = ['ALL']; // Special token for full access
+                        } else {
+                            token.permissions = dbUser.roleProfile?.permissions.map(rp => rp.permission.name) || [];
+                        }
                     }
                 } catch (error) {
                     console.error('NextAuth JWT Callback Error:', error);
@@ -197,6 +213,7 @@ export const authOptions: NextAuthOptions = {
                     id: token.userId as string,
                     role: token.role as string,
                     imageUrl: token.imageUrl as string | null,
+                    permissions: token.permissions as string[],
                 },
             };
         },
