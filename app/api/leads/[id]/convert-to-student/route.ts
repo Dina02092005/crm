@@ -134,7 +134,15 @@ export async function POST(
             }
 
             if (student) {
-                console.error(">>> CONVERSION API: Student record already exists. Updating.");
+                let resolvedAgentId = bodyAgentId === "" || bodyAgentId === "__none__" ? null : bodyAgentId;
+                let resolvedCounselorId = bodyCounselorId === "" || bodyCounselorId === "__none__" ? null : bodyCounselorId;
+
+                if (session.user.role === "AGENT") {
+                    resolvedAgentId = session.user.id;
+                } else if (session.user.role === "COUNSELOR") {
+                    resolvedCounselorId = session.user.id;
+                }
+
                 student = await tx.student.update({
                     where: { id: student.id },
                     data: {
@@ -145,11 +153,22 @@ export async function POST(
                         passportNo: passportNo || lead.passportNo || undefined,
                         passportIssueDate: parseDate(passportIssueDate) || parseDate(lead.passportIssueDate) || undefined,
                         passportExpiryDate: parseDate(passportExpiryDate) || parseDate(lead.passportExpiryDate) || undefined,
-                        ...(bodyAgentId ? { agentId: bodyAgentId } : {}),
-                        ...(bodyCounselorId ? { counselorId: bodyCounselorId } : {}),
+                        agentId: resolvedAgentId || undefined,
+                        counselorId: resolvedCounselorId || undefined,
                     }
                 });
             } else {
+                // Determine standard assignments (fallback to session user or keep existing if omitted)
+                let resolvedAgentId = bodyAgentId === "" || bodyAgentId === "__none__" ? null : bodyAgentId;
+                let resolvedCounselorId = bodyCounselorId === "" || bodyCounselorId === "__none__" ? null : bodyCounselorId;
+
+                // Auto-assignment behavior: if an AGENT or COUNSELOR converts a lead, they assign themselves automatically.
+                if (session.user.role === "AGENT") {
+                    resolvedAgentId = session.user.id;
+                } else if (session.user.role === "COUNSELOR") {
+                    resolvedCounselorId = session.user.id;
+                }
+
                 // Create New Student
                 student = await tx.student.create({
                     data: {
@@ -164,8 +183,8 @@ export async function POST(
                         passportNo: passportNo || lead.passportNo,
                         passportIssueDate: parseDate(passportIssueDate) || parseDate(lead.passportIssueDate),
                         passportExpiryDate: parseDate(passportExpiryDate) || parseDate(lead.passportExpiryDate),
-                        ...(bodyAgentId ? { agentId: bodyAgentId } : {}),
-                        ...(bodyCounselorId ? { counselorId: bodyCounselorId } : {}),
+                        agentId: resolvedAgentId || undefined,
+                        counselorId: resolvedCounselorId || undefined,
                     }
                 });
             }

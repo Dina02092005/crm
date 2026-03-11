@@ -110,11 +110,11 @@ export function AddUniversityApplicationForm({
         setLoadingMasters(true);
         try {
             const [countriesRes, associatesRes] = await Promise.all([
-                axios.get("/api/master/countries"),
-                axios.get("/api/master/associates")
+                axios.get("/api/master/countries?limit=1000"),
+                axios.get("/api/master/associates?limit=1000")
             ]);
-            setCountries(countriesRes.data || []);
-            setAssociates(associatesRes.data || []);
+            setCountries(countriesRes.data?.countries || (Array.isArray(countriesRes.data) ? countriesRes.data : []));
+            setAssociates(associatesRes.data?.associates || (Array.isArray(associatesRes.data) ? associatesRes.data : []));
         } catch (error) {
             console.error("Failed to load master data", error);
             toast.error("Failed to load dropdown data");
@@ -323,18 +323,18 @@ export function AddUniversityApplicationForm({
                                 </Select>
                             </div>
 
-                            <div className="p-5 rounded-2xl bg-amber-50 border border-amber-100 space-y-4">
-                                <h4 className="text-[11px] font-black text-amber-600 flex items-center gap-2 uppercase tracking-widest">
+                            <div className="p-5 rounded-3xl bg-primary/5 border border-primary/10 space-y-4">
+                                <h4 className="text-[11px] font-black text-primary flex items-center gap-2 uppercase tracking-widest">
                                     <User className="h-3.5 w-3.5" /> Assignment
                                 </h4>
                                 <div className="space-y-3">
                                     <div className="space-y-1.5">
                                         <Label className="text-[9px] font-black uppercase text-muted-foreground ml-1">Select Agent</Label>
                                         <Select value={globalAgentId} onValueChange={handleGlobalAgentChange}>
-                                            <SelectTrigger className="h-10 rounded-xl bg-white border-none shadow-sm text-xs font-bold">
+                                            <SelectTrigger className="h-10 rounded-xl bg-white border-none shadow-sm text-xs font-bold ring-offset-background focus:ring-2 focus:ring-primary/20">
                                                 <SelectValue placeholder="Select Agent" />
                                             </SelectTrigger>
-                                            <SelectContent className="rounded-xl">
+                                            <SelectContent className="rounded-xl border-none shadow-xl">
                                                 {agents.map(a => (
                                                     <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
                                                 ))}
@@ -348,10 +348,10 @@ export function AddUniversityApplicationForm({
                                             onValueChange={(val) => setGlobalCounselorId(val)}
                                             disabled={!globalAgentId || counselors.length === 0}
                                         >
-                                            <SelectTrigger className="h-10 rounded-xl bg-white border-none shadow-sm text-xs font-bold">
+                                            <SelectTrigger className="h-10 rounded-xl bg-white border-none shadow-sm text-xs font-bold ring-offset-background focus:ring-2 focus:ring-primary/20">
                                                 <SelectValue placeholder={!globalAgentId ? "Select agent first" : counselors.length === 0 ? "No counselors" : "Select Counselor"} />
                                             </SelectTrigger>
-                                            <SelectContent className="rounded-xl">
+                                            <SelectContent className="rounded-xl border-none shadow-xl">
                                                 {counselors.map(c => (
                                                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                                                 ))}
@@ -361,14 +361,14 @@ export function AddUniversityApplicationForm({
                                 </div>
                             </div>
 
-                            <div className="p-5 rounded-2xl bg-primary/5 border border-primary/10 space-y-4">
-                                <h4 className="text-[11px] font-black text-primary flex items-center gap-2 uppercase tracking-widest">
+                            <div className="p-5 rounded-3xl bg-muted/30 border border-muted/20 space-y-4">
+                                <h4 className="text-[11px] font-black text-muted-foreground/60 flex items-center gap-2 uppercase tracking-widest">
                                     <Search className="h-3.5 w-3.5" /> Quick Guidelines
                                 </h4>
                                 <ul className="text-[12px] text-muted-foreground/80 space-y-3 font-medium">
-                                    <li className="flex gap-2"><div className="w-1 h-1 rounded-full bg-primary mt-1.5 shrink-0" /> Multi-country applications supported.</li>
-                                    <li className="flex gap-2"><div className="w-1 h-1 rounded-full bg-primary mt-1.5 shrink-0" /> Add multiple universities per country.</li>
-                                    <li className="flex gap-2"><div className="w-1 h-1 rounded-full bg-primary mt-1.5 shrink-0" /> Assign specific experts to each row.</li>
+                                    <li className="flex gap-2"><div className="w-1 h-1 rounded-full bg-primary/40 mt-1.5 shrink-0" /> Multi-country applications supported.</li>
+                                    <li className="flex gap-2"><div className="w-1 h-1 rounded-full bg-primary/40 mt-1.5 shrink-0" /> Add multiple universities per country.</li>
+                                    <li className="flex gap-2"><div className="w-1 h-1 rounded-full bg-primary/40 mt-1.5 shrink-0" /> Assign specific experts to each row.</li>
                                 </ul>
                             </div>
                         </CardContent>

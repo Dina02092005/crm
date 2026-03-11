@@ -99,6 +99,8 @@ export async function PATCH(
                 ...(email !== undefined && { email }),
                 ...(phone && { phone }),
                 ...(status && { status }),
+                ...(body.agentId !== undefined && { agentId: body.agentId === "" || body.agentId === "__none__" ? null : body.agentId }),
+                ...(body.counselorId !== undefined && { counselorId: body.counselorId === "" || body.counselorId === "__none__" ? null : body.counselorId }),
             },
             include: {
                 user: {

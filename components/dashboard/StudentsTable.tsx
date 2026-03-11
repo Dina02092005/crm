@@ -1,30 +1,53 @@
 "use client";
 
 import {
-    useReactTable,
-    getCoreRowModel,
-    ColumnDef,
-    flexRender,
-} from "@tanstack/react-table";
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
+} from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Eye, Pencil, Trash2, Phone, Mail, Calendar, ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { 
+    MoreHorizontal, 
+    Eye, 
+    Pencil, 
+    Trash2, 
+    Phone, 
+    Mail, 
+    Calendar, 
+    ChevronLeft, 
+    ChevronRight, 
+    Plus, 
+    UserCheck,
+    Globe,
+    Users
+} from "lucide-react";
+import { 
+    DropdownMenu, 
+    DropdownMenuContent, 
+    DropdownMenuItem, 
+    DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { 
+    Select, 
+    SelectContent, 
+    SelectItem, 
+    SelectTrigger, 
+    SelectValue 
+} from "@/components/ui/select";
+import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useRolePath } from "@/hooks/use-role-path";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { Student } from "@/types/api";
 import { useUpdateStudent } from "@/hooks/useApi";
-import { toast } from "sonner";
-// import { AddUniversityApplicationModal } from "../student/AddUniversityApplicationModal";
+import { AssignStudentSheet } from "./AssignStudentSheet";
 
 interface StudentsTableProps {
     data: Student[];
@@ -40,317 +63,275 @@ interface StudentsTableProps {
 }
 
 export function StudentsTable({ data, onUpdate, onDelete, pagination }: StudentsTableProps) {
-    // const [editSheetOpen, setEditSheetOpen] = useState(false);
-    // const [editingStudent, setEditingStudent] = useState<Student | undefined>(undefined);
-    const updateMutation = useUpdateStudent();
-    // const [addAppModalOpen, setAddAppModalOpen] = useState(false);
-    // const [selectedStudent, setSelectedStudent] = useState<any>(null);
-
-    const columns: ColumnDef<any>[] = [
-        {
-            accessorKey: "name",
-            header: "Student",
-            cell: ({ row }) => (
-                <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-cyan-50 text-cyan-600 flex items-center justify-center font-bold">
-                        {row.original.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                        <p className="font-bold text-foreground">{row.original.name}</p>
-                        {row.original.lead?.source && (
-                            <Badge variant="outline" className="text-[10px] mt-1">
-                                {row.original.lead.source}
-                            </Badge>
-                        )}
-                    </div>
-                </div>
-            ),
-        },
-        {
-            id: "contact",
-            header: "Contact",
-            cell: ({ row }) => (
-                <div className="space-y-1">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Phone className="h-3.5 w-3.5" />
-                        {row.original.phone}
-                    </div>
-                    {row.original.email && (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                            <Mail className="h-3.5 w-3.5" />
-                            {row.original.email}
-                        </div>
-                    )}
-                </div>
-            ),
-        },
-        {
-            accessorKey: "country",
-            header: "Country",
-            cell: ({ row }) => (
-                <p className="text-sm font-medium">{row.original.lead?.interestedCountry || "N/A"}</p>
-            ),
-        },
-        {
-            accessorKey: "onboardedBy",
-            header: "Onboarded By",
-            cell: ({ row }) => (
-                <p className="text-sm text-foreground">{row.original.user?.name || "N/A"}</p>
-            ),
-        },
-        {
-            accessorKey: "status",
-            header: "Status",
-            cell: ({ row }) => {
-                const status = row.original.status || "NEW";
-                const studentId = row.original.id;
-
-                const statuses = [
-                    { value: "NEW", label: "New" },
-                    { value: "UNDER_REVIEW", label: "Under Review" },
-                    { value: "COUNSELLING_SCHEDULED", label: "Counselling Scheduled" },
-                    { value: "COUNSELLING_COMPLETED", label: "Counselling Completed" },
-                    { value: "DOCUMENT_PENDING", label: "Document Pending" },
-                    { value: "DOCUMENT_VERIFIED", label: "Document Verified" },
-                    { value: "INTERESTED", label: "Interested" },
-                    { value: "NOT_INTERESTED", label: "Not Interested" },
-                    { value: "NOT_ELIGIBLE", label: "Not Eligible" },
-                    { value: "ON_HOLD", label: "On Hold" },
-                ];
-
-                const handleStatusChange = async (newStatus: string) => {
-                    if (newStatus === status) return;
-                    try {
-                        await updateMutation.mutateAsync({
-                            id: studentId,
-                            data: { status: newStatus }
-                        });
-                        onUpdate();
-                    } catch (error) {
-                        // Error is handled by mutation's onSuccess/onError if configured, 
-                        // but here we ensure consistency.
-                    }
-                };
-
-                return (
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                            <Badge className={`
-                                cursor-pointer
-                                ${status === "NEW" ? "bg-blue-100 text-blue-700 hover:bg-blue-200" :
-                                    status === "UNDER_REVIEW" ? "bg-amber-100 text-amber-700 hover:bg-amber-200" :
-                                        status === "COUNSELLING_SCHEDULED" ? "bg-purple-100 text-purple-700 hover:bg-purple-200" :
-                                            status === "COUNSELLING_COMPLETED" ? "bg-teal-100 text-teal-700 hover:bg-teal-200" :
-                                                status === "DOCUMENT_PENDING" ? "bg-orange-100 text-orange-700 hover:bg-orange-200" :
-                                                    status === "DOCUMENT_VERIFIED" ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200" :
-                                                        status === "INTERESTED" ? "bg-green-100 text-green-700 hover:bg-green-200" :
-                                                            status === "NOT_INTERESTED" ? "bg-slate-100 text-slate-700 hover:bg-slate-200" :
-                                                                status === "NOT_ELIGIBLE" ? "bg-rose-100 text-rose-700 hover:bg-rose-200" :
-                                                                    status === "ON_HOLD" ? "bg-gray-100 text-gray-700 hover:bg-gray-200" :
-                                                                        "bg-gray-100 text-gray-700 hover:bg-gray-200"}
-                                border-none rounded-lg font-bold px-3 py-1 transition-all hover:scale-105 active:scale-95
-                            `}>
-                                {status.replace(/_/g, ' ')}
-                            </Badge>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start" className="w-56 overflow-y-auto max-h-[300px]">
-                            {statuses.map((s) => (
-                                <DropdownMenuItem
-                                    key={s.value}
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        handleStatusChange(s.value);
-                                    }}
-                                    className={`
-                                        cursor-pointer py-2
-                                        ${status === s.value ? "bg-primary/5 font-semibold text-primary" : ""}
-                                    `}
-                                >
-                                    {s.label}
-                                </DropdownMenuItem>
-                            ))}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                );
-            }
-        },
-        {
-            accessorKey: "createdAt",
-            header: "Date",
-            cell: ({ row }) => (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <Calendar className="h-3.5 w-3.5" />
-                    {new Date(row.original.createdAt).toLocaleDateString()}
-                </div>
-            ),
-        },
-        {
-            id: "actions",
-            cell: ({ row }) => (
-                <div className="flex items-center justify-end gap-2">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            router.push(prefixPath(`/students/${row.original.id}/applications/add`));
-                        }}
-                        className="h-8 px-3 text-[10px] font-bold bg-cyan-50 text-cyan-700 hover:bg-cyan-100 rounded-lg flex items-center gap-1.5 transition-all"
-                    >
-                        <Plus className="h-3 w-3" />
-                        Move to Application
-                    </Button>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" className="h-8 w-8 p-0">
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem asChild>
-                                <Link href={prefixPath(`/students/${row.original.id}`)} className="cursor-pointer">
-                                    <Eye className="mr-2 h-4 w-4" /> View
-                                </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    router.push(prefixPath(`/students/${row.original.id}/edit`));
-                                }}
-                                className="cursor-pointer"
-                            >
-                                <Pencil className="mr-2 h-4 w-4" /> Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    router.push(prefixPath(`/students/${row.original.id}/applications/add`));
-                                }}
-                                className="cursor-pointer text-cyan-600 font-bold bg-cyan-50 hover:bg-cyan-100"
-                            >
-                                <Plus className="mr-2 h-4 w-4" /> Move to Application
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                className="text-red-600 cursor-pointer"
-                                onClick={() => onDelete(row.original.id)}
-                            >
-                                <Trash2 className="mr-2 h-4 w-4" /> Delete
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-            ),
-        },
-    ];
-
     const router = useRouter();
     const { prefixPath } = useRolePath();
+    const updateMutation = useUpdateStudent();
+    const [assignSheetOpen, setAssignSheetOpen] = useState(false);
+    const [selectedStudent, setSelectedStudent] = useState<{ id: string, name: string, agentId?: string, counselorId?: string } | null>(null);
 
-    const table = useReactTable({
-        data,
-        columns,
-        getCoreRowModel: getCoreRowModel(),
-    });
+    const STUDENT_STATUSES = [
+        "NEW",
+        "UNDER_REVIEW",
+        "COUNSELLING_SCHEDULED",
+        "COUNSELLING_COMPLETED",
+        "DOCUMENT_PENDING",
+        "DOCUMENT_VERIFIED",
+        "INTERESTED",
+        "NOT_INTERESTED",
+        "NOT_ELIGIBLE",
+        "ON_HOLD",
+    ];
+
+    const getStatusVariant = (status: string) => {
+        const variants: Record<string, string> = {
+            NEW: "bg-blue-50 text-blue-600 border-blue-100",
+            UNDER_REVIEW: "bg-amber-50 text-amber-600 border-amber-100",
+            DOCUMENT_VERIFIED: "bg-emerald-50 text-emerald-600 border-emerald-100",
+            INTERESTED: "bg-green-50 text-green-600 border-green-100",
+            NOT_ELIGIBLE: "bg-rose-50 text-rose-600 border-rose-100",
+            ON_HOLD: "bg-slate-50 text-slate-600 border-slate-100",
+        };
+        return variants[status] || "bg-slate-50 text-slate-500 border-slate-100";
+    };
+
+    const handleStatusChange = async (studentId: string, newStatus: string) => {
+        try {
+            await updateMutation.mutateAsync({
+                id: studentId,
+                data: { status: newStatus }
+            });
+            toast.success("Status updated");
+            onUpdate();
+        } catch (error) {
+            toast.error("Failed to update status");
+        }
+    };
 
     return (
-        <div className="w-full overflow-hidden">
-            <div className="overflow-x-auto">
-                <table className="w-full border-collapse">
-                    <thead>
-                        <tr className="border-b border-border">
-                            {table.getHeaderGroups().map((headerGroup) =>
-                                headerGroup.headers.map((header, index) => (
-                                    <th
-                                        key={header.id}
-                                        className={`
-                                            py-2 px-4 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground
-                                            ${index === 0 ? "pl-6" : ""}
-                                            ${index === headerGroup.headers.length - 1 ? "pr-6" : ""}
-                                        `}
-                                    >
-                                        {flexRender(header.column.columnDef.header, header.getContext())}
-                                    </th>
-                                ))
-                            )}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {table.getRowModel().rows.map((row) => (
-                            <tr
-                                key={row.id}
-                                onClick={() => router.push(prefixPath(`/students/${row.original.id}`))}
-                                className="group hover:bg-muted/50 transition-colors border-b border-border last:border-0 cursor-pointer"
-                            >
-                                {row.getVisibleCells().map((cell, index) => (
-                                    <td
-                                        key={cell.id}
-                                        className={`
-                                            py-3 px-4 align-middle 
-                                            ${index === 0 ? "pl-6" : ""}
-                                            ${index === row.getVisibleCells().length - 1 ? "pr-6" : ""}
-                                        `}
-                                        onClick={(e) => {
-                                            if ((e.target as HTMLElement).closest('button, a, [role="menuitem"], [role="button"]')) {
-                                                e.stopPropagation();
-                                            }
-                                        }}
-                                    >
-                                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                    </td>
-                                ))}
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
-
-            {/* Pagination Controls */}
-            {pagination && (
-                <div className="flex items-center justify-between px-4 py-4 border-t border-border mt-auto">
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs text-muted-foreground">Rows per page</span>
-                        <select
-                            value={pagination.pageSize}
-                            onChange={(e) => pagination.onPageSizeChange(Number(e.target.value))}
-                            className="h-8 w-16 rounded-md border border-input bg-background px-2 text-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+        <div className="relative border rounded-xl overflow-hidden bg-background shadow-sm shadow-slate-200/50">
+            <Table>
+                <TableHeader className="bg-muted/30">
+                    <TableRow>
+                        <TableHead className="w-[280px] pl-6">Student Information</TableHead>
+                        <TableHead>Contact Detail</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Assigned Team</TableHead>
+                        <TableHead>Destination</TableHead>
+                        <TableHead className="text-right pr-6">Actions</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {data.map((student) => (
+                        <TableRow 
+                            key={student.id} 
+                            className="group cursor-pointer hover:bg-muted/30 transition-colors border-b last:border-0"
+                            onClick={(e) => {
+                                const target = e.target as HTMLElement;
+                                if (target.closest('button, [role="combobox"], [role="checkbox"], .select-trigger, [role="menuitem"]')) {
+                                    return;
+                                }
+                                router.push(prefixPath(`/students/${student.id}`));
+                            }}
                         >
-                            {[5, 10, 20, 50].map((size) => (
-                                <option key={size} value={size}>
-                                    {size}
-                                </option>
-                            ))}
-                        </select>
-                    </div>
+                            <TableCell className="pl-6">
+                                <div className="flex items-center gap-3">
+                                    <Avatar className="h-10 w-10 rounded-xl border-2 border-white shadow-sm shrink-0">
+                                        <AvatarFallback className="rounded-xl bg-primary/5 text-primary text-xs font-black uppercase">
+                                            {student.name?.charAt(0) || 'S'}
+                                        </AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="font-bold text-sm text-slate-900 truncate uppercase tracking-tight">{student.name || 'Unknown Student'}</span>
+                                        <div className="flex items-center gap-2 mt-0.5">
+                                            <Badge variant="outline" className="text-[9px] font-black uppercase py-0 px-1.5 border-slate-100 text-slate-400">
+                                                ID: {student.id.slice(-6).toUpperCase()}
+                                            </Badge>
+                                            {student.lead?.source && (
+                                                <span className="text-[10px] text-muted-foreground/60 font-medium">via {student.lead.source}</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+                            </TableCell>
+                            <TableCell>
+                                <div className="flex flex-col gap-1">
+                                    <div className="flex items-center gap-2 text-[11px] font-bold text-slate-600">
+                                        <Phone className="h-3 w-3 text-slate-300" />
+                                        {student.phone}
+                                    </div>
+                                    <div className="flex items-center gap-2 text-[11px] font-medium text-slate-400">
+                                        <Mail className="h-3 w-3 text-slate-300" />
+                                        {student.email || "No email"}
+                                    </div>
+                                </div>
+                            </TableCell>
+                            <TableCell onClick={(e) => e.stopPropagation()}>
+                                <Select 
+                                    value={student.status || "NEW"} 
+                                    onValueChange={(v) => handleStatusChange(student.id, v)}
+                                >
+                                    <SelectTrigger className={cn(
+                                        "h-8 w-[160px] px-3 py-0 text-[10px] font-black uppercase border-0 shadow-none transition-all rounded-lg focus:ring-1 focus:ring-primary/20",
+                                        getStatusVariant(student.status || "NEW")
+                                    )}>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent className="rounded-xl border-slate-100 shadow-xl">
+                                        {STUDENT_STATUSES.map(s => (
+                                            <SelectItem key={s} value={s} className="text-[10px] font-black uppercase py-2">
+                                                {s.replace(/_/g, ' ')}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </TableCell>
+                            <TableCell>
+                                <div className="flex flex-col min-w-0">
+                                    <span className="text-xs font-bold text-slate-700 truncate">
+                                        {student.counselor?.name || student.agent?.name || "Unassigned"}
+                                    </span>
+                                    {student.counselor && student.agent && (
+                                        <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest mt-0.5">
+                                            Partner: {student.agent.name}
+                                        </span>
+                                    )}
+                                </div>
+                            </TableCell>
+                            <TableCell>
+                                <div className="flex items-center gap-2">
+                                    <Globe className="h-3.5 w-3.5 text-slate-300" />
+                                    <span className="text-xs font-bold text-slate-600">
+                                        {student.lead?.interestedCountry || "N/A"}
+                                    </span>
+                                </div>
+                            </TableCell>
+                            <TableCell className="text-right pr-6" onClick={(e) => e.stopPropagation()}>
+                                <div className="flex items-center justify-end gap-1">
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() => router.push(prefixPath(`/students/${student.id}/applications/add`))}
+                                        className="h-8 w-8 text-primary/60 hover:text-primary hover:bg-primary/5 rounded-lg"
+                                        title="Move to Application"
+                                    >
+                                        <Plus className="h-4 w-4" />
+                                    </Button>
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-slate-50 rounded-lg">
+                                                <MoreHorizontal className="h-4 w-4" />
+                                            </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end" className="w-48 rounded-xl border-slate-100 shadow-xl p-1">
+                                            <DropdownMenuItem onClick={() => router.push(prefixPath(`/students/${student.id}`))}>
+                                                <Eye className="h-4 w-4 mr-2 text-slate-400" /> View Profile
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => router.push(prefixPath(`/students/${student.id}/edit`))}>
+                                                <Pencil className="h-4 w-4 mr-2 text-slate-400" /> Edit Detail
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem
+                                                onClick={() => {
+                                                    setSelectedStudent({
+                                                        id: student.id,
+                                                        name: student.name || 'Unknown Student',
+                                                        agentId: student.agentId || undefined,
+                                                        counselorId: student.counselorId || undefined
+                                                    });
+                                                    setAssignSheetOpen(true);
+                                                }}>
+                                                <UserCheck className="h-4 w-4 mr-2 text-slate-400" /> Assign Team
+                                            </DropdownMenuItem>
+                                            <div className="h-px bg-slate-100 my-1" />
+                                            <DropdownMenuItem 
+                                                className="text-rose-600 focus:text-rose-600 focus:bg-rose-50"
+                                                onClick={() => onDelete(student.id)}
+                                            >
+                                                <Trash2 className="h-4 w-4 mr-2" /> Delete Record
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                </div>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                    {data.length === 0 && (
+                        <TableRow>
+                            <TableCell colSpan={6} className="h-48 text-center text-muted-foreground">
+                                <div className="flex flex-col items-center gap-2">
+                                    <div className="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 mb-2">
+                                        <Users className="h-6 w-6 text-slate-200" />
+                                    </div>
+                                    <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">No matching students</span>
+                                    <span className="text-[10px] font-medium text-slate-300">Try adjusting your filters</span>
+                                </div>
+                            </TableCell>
+                        </TableRow>
+                    )}
+                </TableBody>
+            </Table>
 
+            {pagination && (
+                <div className="flex items-center justify-between px-6 py-4 border-t bg-slate-50/30 min-h-[64px]">
+                    <div className="flex items-center gap-8">
+                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none">
+                            Page {pagination.page} <span className="text-slate-200 mx-2">/</span> {pagination.totalPages}
+                        </div>
+                        <div className="flex items-center gap-3 border-l pl-8 border-slate-100">
+                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Display</span>
+                            <Select
+                                value={pagination.pageSize.toString()}
+                                onValueChange={(v) => pagination.onPageSizeChange(Number(v))}
+                            >
+                                <SelectTrigger className="h-8 w-[72px] text-[10px] font-black border-slate-200 bg-white shadow-sm focus:ring-1 focus:ring-primary/20 rounded-lg">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="min-w-[72px] rounded-xl shadow-2xl border-slate-100">
+                                    {[10, 20, 50, 100].map((size) => (
+                                        <SelectItem key={size} value={size.toString()} className="text-[10px] font-black uppercase">
+                                            {size}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
                     <div className="flex items-center gap-2">
-                        <div className="text-xs font-medium text-muted-foreground">
-                            Page {pagination.page} of {pagination.totalPages}
-                        </div>
-                        <div className="flex items-center gap-1">
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => pagination.onPageChange(Math.max(1, pagination.page - 1))}
-                                disabled={pagination.page <= 1}
-                                className="rounded-xl h-8 w-8"
-                            >
-                                <ChevronLeft className="h-4 w-4" />
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => pagination.onPageChange(Math.min(pagination.totalPages, pagination.page + 1))}
-                                disabled={pagination.page >= pagination.totalPages}
-                                className="rounded-xl h-8 w-8"
-                            >
-                                <ChevronRight className="h-4 w-4" />
-                            </Button>
-                        </div>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-9 px-5 text-[10px] font-black uppercase tracking-widest border-slate-200 bg-white hover:bg-slate-50 transition-all rounded-xl"
+                            disabled={pagination.page <= 1}
+                            onClick={() => pagination.onPageChange(pagination.page - 1)}
+                        >
+                            <ChevronLeft className="h-4 w-4 mr-2 text-slate-400" /> Previous
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-9 px-5 text-[10px] font-black uppercase tracking-widest border-slate-200 bg-white hover:bg-slate-50 transition-all rounded-xl"
+                            disabled={pagination.page >= pagination.totalPages}
+                            onClick={() => pagination.onPageChange(pagination.page + 1)}
+                        >
+                            Next <ChevronRight className="h-4 w-4 ml-2 text-slate-400" />
+                        </Button>
                     </div>
                 </div>
             )}
 
-            {/* Modal removed as we now use separate page */}
+            {selectedStudent && (
+                <AssignStudentSheet
+                    isOpen={assignSheetOpen}
+                    onClose={() => {
+                        setAssignSheetOpen(false);
+                        setSelectedStudent(null);
+                    }}
+                    studentId={selectedStudent.id}
+                    studentName={selectedStudent.name}
+                    currentAgentId={selectedStudent.agentId}
+                    currentCounselorId={selectedStudent.counselorId}
+                    onUpdate={onUpdate}
+                />
+            )}
         </div>
     );
 }

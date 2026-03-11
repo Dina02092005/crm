@@ -1,16 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
 import axios from 'axios';
 import { basename } from 'path';
+import { withPermission } from '@/lib/permissions';
 
 // GET /api/file-manager/download?file=https://...&name=Passport.pdf
-export async function GET(req: NextRequest) {
+export const GET = withPermission('FILE_MANAGER', 'DOWNLOAD', async (req: Request) => {
     try {
-        const session = await getServerSession(authOptions) as any;
-        if (!session || !['ADMIN', 'MANAGER'].includes(session.user?.role)) {
-            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-        }
 
         const { searchParams } = new URL(req.url);
         const fileUrl = searchParams.get('file');
@@ -38,15 +33,11 @@ export async function GET(req: NextRequest) {
         console.error('FILE_MANAGER_DOWNLOAD_ERROR:', error);
         return NextResponse.json({ message: error.message }, { status: 500 });
     }
-}
+});
 
 // POST /api/file-manager/download — body: { files: [{url, name}] }
-export async function POST(req: NextRequest) {
+export const POST = withPermission('FILE_MANAGER', 'DOWNLOAD', async (req: Request) => {
     try {
-        const session = await getServerSession(authOptions) as any;
-        if (!session || !['ADMIN', 'MANAGER'].includes(session.user?.role)) {
-            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-        }
 
         const body = await req.json();
         const files: { url: string; name: string }[] = body.files || [];
@@ -86,7 +77,7 @@ export async function POST(req: NextRequest) {
         console.error('FILE_MANAGER_ZIP_ERROR:', error);
         return NextResponse.json({ message: error.message }, { status: 500 });
     }
-}
+});
 
 function getContentType(ext: string): string {
     const map: Record<string, string> = {

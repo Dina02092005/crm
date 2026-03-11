@@ -21,24 +21,48 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useStudents } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useRolePath } from "@/hooks/use-role-path";
+import { useCountries, useCounselors } from "@/hooks/use-masters";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { FilterX } from "lucide-react";
 
 export default function StudentsPage() {
     const router = useRouter();
     const { data: session } = useSession();
     const { prefixPath } = useRolePath();
     const [search, setSearch] = useState("");
+    const [status, setStatus] = useState("ALL");
+    const [onboardedBy, setOnboardedBy] = useState("ALL");
+    const [interestedCountry, setInterestedCountry] = useState("ALL");
+    const [intake, setIntake] = useState("ALL");
     const [showCreateDialog, setShowCreateDialog] = useState(false);
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
 
     const debouncedSearch = useDebounce(search, 500);
 
-    const { data, isLoading, refetch } = useStudents(page, limit, debouncedSearch);
+    const { data, isLoading, refetch } = useStudents(
+        page,
+        limit,
+        debouncedSearch,
+        status === "ALL" ? "" : status,
+        onboardedBy === "ALL" ? "" : onboardedBy,
+        interestedCountry === "ALL" ? "" : interestedCountry,
+        intake === "ALL" ? "" : intake
+    );
 
-    // Reset page on search changes
+    const { data: countries } = useCountries();
+    const { data: counselors } = useCounselors();
+
+    // Reset page on search/filter changes
     useEffect(() => {
         setPage(1);
-    }, [debouncedSearch]);
+    }, [debouncedSearch, status, onboardedBy, interestedCountry, intake]);
 
     const students = data?.students || [];
     const pagination = data?.pagination || { page: 1, limit: 10, totalPages: 1, total: 0 };
@@ -95,6 +119,81 @@ export default function StudentsPage() {
                             <Plus className="h-4 w-4 mr-2" />
                             Add Student
                         </Button>
+                    </div>
+
+                    {/* Advanced Filters */}
+                    <div className="flex flex-wrap items-center gap-3 mb-6">
+                        <div className="w-full sm:w-[150px]">
+                            <Select value={status} onValueChange={setStatus}>
+                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 border-0 focus:ring-0">
+                                    <SelectValue placeholder="Status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="ALL">All Status</SelectItem>
+                                    <SelectItem value="PROSPECT">Prospect</SelectItem>
+                                    <SelectItem value="APPLICANT">Applicant</SelectItem>
+                                    <SelectItem value="ENROLLED">Enrolled</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="w-full sm:w-[150px]">
+                            <Select value={onboardedBy} onValueChange={setOnboardedBy}>
+                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 border-0 focus:ring-0">
+                                    <SelectValue placeholder="Onboarded By" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="ALL">All Staff</SelectItem>
+                                    {counselors?.map((c: any) => (
+                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="w-full sm:w-[150px]">
+                            <Select value={interestedCountry} onValueChange={setInterestedCountry}>
+                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 border-0 focus:ring-0">
+                                    <SelectValue placeholder="Country" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="ALL">All Countries</SelectItem>
+                                    {countries?.countries?.map((c: any) => (
+                                        <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="w-full sm:w-[150px]">
+                            <Select value={intake} onValueChange={setIntake}>
+                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 border-0 focus:ring-0">
+                                    <SelectValue placeholder="Intake" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="ALL">All Intakes</SelectItem>
+                                    {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map(m => (
+                                        <SelectItem key={m} value={m}>{m} 2024/25</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {(status !== "ALL" || onboardedBy !== "ALL" || interestedCountry !== "ALL" || intake !== "ALL") && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                    setStatus("ALL");
+                                    setOnboardedBy("ALL");
+                                    setInterestedCountry("ALL");
+                                    setIntake("ALL");
+                                }}
+                                className="h-8 text-[11px] text-muted-foreground hover:text-destructive gap-1"
+                            >
+                                <FilterX className="h-3 w-3" /> Clear filters
+                            </Button>
+                        )}
                     </div>
 
                     <StudentsTable

@@ -12,8 +12,6 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { PhoneInput } from "@/components/ui/phone-input";
-import { DatePicker } from "@/components/ui/date-picker";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -23,11 +21,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Plus } from "lucide-react";
+import { useCreateLead } from "@/hooks/use-leads";
 
 const formSchema = z.object({
-    firstName: z.string().min(1, "First name is required").optional().or(z.literal("")),
-    lastName: z.string().min(1, "Last name is required").optional().or(z.literal("")),
+    firstName: z.string().optional().or(z.literal("")),
+    lastName: z.string().optional().or(z.literal("")),
     email: z.string().email("Invalid email address").optional().or(z.literal("")),
     phone: z.string().min(10, "Phone must be at least 10 digits"),
     alternateNo: z.string().optional(),
@@ -46,11 +46,10 @@ const formSchema = z.object({
     source: z.string().optional(),
     remark: z.string().optional(),
     message: z.string().optional(),
+    interest: z.string().optional(),
 });
 
 type CreateLeadFormData = z.infer<typeof formSchema>;
-
-import { useCreateLead } from "@/hooks/use-leads";
 
 function ErrorMessage({ field }: { field: any }) {
     if (!field.state.meta.isTouched || !field.state.meta.errors.length) return null
@@ -71,14 +70,13 @@ export function CreateLeadDialog({ onLeadCreated }: { onLeadCreated: () => void 
             const res = await fetch("/api/websites");
             if (res.ok) {
                 const data = await res.json();
-                setWebsites(data);
+                setWebsites(data.websites || []);
             }
         } catch (error) {
             console.error(error);
         }
     };
 
-    // Fetch websites when dialog opens
     const handleOpenChange = (isOpen: boolean) => {
         setOpen(isOpen);
         if (isOpen) {
@@ -108,15 +106,28 @@ export function CreateLeadDialog({ onLeadCreated }: { onLeadCreated: () => void 
             source: "",
             remark: "",
             message: "",
+            interest: "",
         } as CreateLeadFormData,
         validators: {
             onChange: formSchema,
         },
         onSubmit: async ({ value }) => {
             try {
-                // Ensure dateOfBirth is handled as a Date if required by API or back-converted
-                // Our API handles string to date conversion, but let's be safe.
-                await createLeadMutation.mutateAsync(value as any);
+                // Build name from firstName + lastName, fall back to "Unknown Lead"
+                const name = [value.firstName, value.lastName]
+                    .map(s => s?.trim())
+                    .filter(Boolean)
+                    .join(" ") || "Unknown Lead";
+
+                const payload = {
+                    ...value,
+                    name,
+                    // Null-coerce optional enum/date fields so backend gets null, not ""
+                    dateOfBirth: value.dateOfBirth?.trim() || null,
+                    interest: value.interest?.trim() || null,
+                };
+
+                await createLeadMutation.mutateAsync(payload as any);
                 toast.success("Lead created successfully");
                 setOpen(false);
                 form.reset();
@@ -369,6 +380,26 @@ export function CreateLeadDialog({ onLeadCreated }: { onLeadCreated: () => void 
                         <h3 className="text-sm font-semibold border-b pb-1 text-cyan-700">Course Preference</h3>
                         <div className="grid grid-cols-2 gap-4">
                             <form.Field
+                                name="interest"
+                                children={(field) => (
+                                    <div className="space-y-1">
+                                        <Label htmlFor="interest" className="text-xs">Lead Interest</Label>
+                                        <Select value={field.state.value} onValueChange={(v) => field.handleChange(v)}>
+                                            <SelectTrigger className="h-8 text-sm">
+                                                <SelectValue placeholder="Interest" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="STUDY_ABROAD">Study Abroad</SelectItem>
+                                                <SelectItem value="SKILL_DEVELOPMENT">Skill Development</SelectItem>
+                                                <SelectItem value="LOAN">Loan</SelectItem>
+                                                <SelectItem value="MBBS">MBBS</SelectItem>
+                                                <SelectItem value="OTHER">Other</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
+                            />
+                            <form.Field
                                 name="interestedCourse"
                                 children={(field) => (
                                     <div className="space-y-1">
@@ -383,6 +414,8 @@ export function CreateLeadDialog({ onLeadCreated }: { onLeadCreated: () => void 
                                     </div>
                                 )}
                             />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
                             <form.Field
                                 name="interestedCountry"
                                 children={(field) => (
@@ -398,8 +431,6 @@ export function CreateLeadDialog({ onLeadCreated }: { onLeadCreated: () => void 
                                     </div>
                                 )}
                             />
-                        </div>
-                        <div className="grid grid-cols-2 gap-4">
                             <form.Field
                                 name="intake"
                                 children={(field) => (
@@ -416,6 +447,8 @@ export function CreateLeadDialog({ onLeadCreated }: { onLeadCreated: () => void 
                                     </div>
                                 )}
                             />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
                             <form.Field
                                 name="applyLevel"
                                 children={(field) => (
@@ -435,7 +468,7 @@ export function CreateLeadDialog({ onLeadCreated }: { onLeadCreated: () => void 
                         </div>
                     </div>
 
-                    {/* Source & Notes Section */}
+                    {/* Source & Other Section */}
                     <div className="space-y-4 pt-2">
                         <h3 className="text-sm font-semibold border-b pb-1 text-cyan-700">Source & Other</h3>
                         <form.Field
@@ -451,7 +484,7 @@ export function CreateLeadDialog({ onLeadCreated }: { onLeadCreated: () => void 
                                             <SelectValue placeholder="Select source" />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            {websites.map((site) => (
+                                            {websites.map((site: any) => (
                                                 <SelectItem key={site.id} value={site.name}>{site.name}</SelectItem>
                                             ))}
                                         </SelectContent>
@@ -460,46 +493,51 @@ export function CreateLeadDialog({ onLeadCreated }: { onLeadCreated: () => void 
                                 </div>
                             )}
                         />
-                        <form.Field
-                            name="remark"
-                            children={(field) => (
-                                <div className="space-y-1">
-                                    <Label htmlFor="remark" className="text-xs">Remark</Label>
-                                    <Input
-                                        id="remark"
-                                        value={field.state.value || ""}
-                                        onBlur={field.handleBlur}
-                                        onChange={(e) => field.handleChange(e.target.value)}
-                                        className="h-8 text-sm"
-                                    />
-                                </div>
-                            )}
-                        />
-                        <form.Field
-                            name="message"
-                            children={(field) => (
-                                <div className="space-y-1">
-                                    <Label htmlFor="message" className="text-xs">Notes</Label>
-                                    <Input
-                                        id="message"
-                                        placeholder="Inquiry about..."
-                                        value={field.state.value || ""}
-                                        onBlur={field.handleBlur}
-                                        onChange={(e) => field.handleChange(e.target.value)}
-                                        className="h-8 text-sm"
-                                    />
-                                </div>
-                            )}
-                        />
+                        <div className="grid grid-cols-2 gap-4">
+                            <form.Field
+                                name="remark"
+                                children={(field) => (
+                                    <div className="space-y-1">
+                                        <Label htmlFor="remark" className="text-xs">Remark</Label>
+                                        <Input
+                                            id="remark"
+                                            value={field.state.value || ""}
+                                            onBlur={field.handleBlur}
+                                            onChange={(e) => field.handleChange(e.target.value)}
+                                            className="h-8 text-sm"
+                                        />
+                                    </div>
+                                )}
+                            />
+                            <form.Field
+                                name="message"
+                                children={(field) => (
+                                    <div className="space-y-1">
+                                        <Label htmlFor="message" className="text-xs">Notes</Label>
+                                        <Input
+                                            id="message"
+                                            placeholder="Inquiry about..."
+                                            value={field.state.value || ""}
+                                            onBlur={field.handleBlur}
+                                            onChange={(e) => field.handleChange(e.target.value)}
+                                            className="h-8 text-sm"
+                                        />
+                                    </div>
+                                )}
+                            />
+                        </div>
                     </div>
 
                     <form.Subscribe
-                        selector={(state) => [state.canSubmit, state.isSubmitting]}
-                        children={([canSubmit, isSubmitting]) => (
-                            <Button type="submit" className="w-full bg-cyan-600 hover:bg-cyan-700" disabled={createLeadMutation.isPending || !canSubmit}>
-                                {createLeadMutation.isPending ? "Creating..." : "Create Lead"}
-                            </Button>
-                        )}
+                        selector={(state: any) => [state.canSubmit, state.isSubmitting]}
+                        children={(state: any) => {
+                            const [canSubmit, isSubmitting] = state;
+                            return (
+                                <Button type="submit" className="w-full bg-cyan-600 hover:bg-cyan-700" disabled={createLeadMutation.isPending || !canSubmit}>
+                                    {createLeadMutation.isPending ? "Creating..." : "Create Lead"}
+                                </Button>
+                            );
+                        }}
                     />
                 </form>
             </DialogContent>

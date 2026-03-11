@@ -37,15 +37,41 @@ interface FetchLeadsParams {
     limit?: number;
     search?: string;
     status?: string;
+    assignedTo?: string;
+    interestedCountry?: string;
+    highestQualification?: string;
+    interest?: string;
+    source?: string;
+    from?: string;
+    to?: string;
 }
 
-export function useLeads({ page = 1, limit = 10, search = "", status = "" }: FetchLeadsParams) {
+export function useLeads({
+    page = 1,
+    limit = 10,
+    search = "",
+    status = "",
+    assignedTo = "",
+    interestedCountry = "",
+    highestQualification = "",
+    interest = "",
+    source = "",
+    from = "",
+    to = ""
+}: FetchLeadsParams) {
     return useQuery({
-        queryKey: ["leads", { page, limit, search, status }],
+        queryKey: ["leads", { page, limit, search, status, assignedTo, interestedCountry, highestQualification, interest, source, from, to }],
         queryFn: async () => {
             const params = new URLSearchParams();
             if (search) params.append("search", search);
             if (status && status !== "ALL") params.append("status", status);
+            if (assignedTo) params.append("assignedTo", assignedTo);
+            if (interestedCountry) params.append("interestedCountry", interestedCountry);
+            if (highestQualification) params.append("highestQualification", highestQualification);
+            if (interest) params.append("interest", interest);
+            if (source) params.append("source", source);
+            if (from) params.append("from", from);
+            if (to) params.append("to", to);
             params.append("page", page.toString());
             params.append("limit", limit.toString());
 

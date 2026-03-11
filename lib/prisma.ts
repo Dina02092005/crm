@@ -1,25 +1,30 @@
-import { PrismaClient } from '../prisma/generated/client'
-
+import { PrismaClient } from '@prisma/client'
 
 const prismaClientSingleton = () => {
-  try {
-    return new PrismaClient()
-  } catch (error: any) {
-    console.error('------- PRISMA INIT ERROR -------')
-    console.error(error.message || error)
-    console.error('--------------------------------')
-    throw error
-  }
+  console.log(`[PRISMA] [PID: ${process.pid}] NEW PrismaClient created`);
+  return new PrismaClient({
+    log: ['error', 'warn'],
+  })
 }
 
 declare global {
-  var prisma: undefined | ReturnType<typeof prismaClientSingleton>
+  var prismaGlobal: undefined | ReturnType<typeof prismaClientSingleton>
 }
 
-const prisma = globalThis.prisma ?? prismaClientSingleton()
+let prisma: ReturnType<typeof prismaClientSingleton>;
 
-export { prisma }
-export * from '../prisma/generated/client'
+if (globalThis.prismaGlobal) {
+  prisma = globalThis.prismaGlobal;
+  console.log(`[PRISMA] [PID: ${process.pid}] EXISITING client reused from globalThis`);
+} else {
+  prisma = prismaClientSingleton();
+  if (process.env.NODE_ENV !== 'production') {
+    globalThis.prismaGlobal = prisma;
+  }
+}
+
 export default prisma
+export { prisma }
 
-if (process.env.NODE_ENV !== 'production') globalThis.prisma = prisma
+// Re-export types and enums
+export * from '@prisma/client'

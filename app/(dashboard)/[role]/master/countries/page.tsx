@@ -11,7 +11,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Plus, Pencil, Trash2, Globe } from "lucide-react";
+import { Plus, Pencil, Trash2, Globe, Search, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import {
     Sheet,
     SheetContent,
@@ -23,6 +23,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { useCountries } from "@/hooks/use-masters";
+import { useDebounce } from "@/hooks/use-debounce";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 
 interface Country {
     id: string;
@@ -33,34 +43,28 @@ interface Country {
 
 export default function CountriesPage() {
     const { can } = usePermissions();
-    const [countries, setCountries] = useState<Country[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
-    const [isSheetOpen, setIsSheetOpen] = useState(false);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+
+    // Filter & Pagination State
+    const [search, setSearch] = useState("");
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(20);
+    const debouncedSearch = useDebounce(search, 500);
+
+    const { data, isLoading, refetch } = useCountries(page, limit, debouncedSearch);
+
+    const countries = data?.countries || [];
+    const pagination = data?.pagination || { total: 0, page: 1, limit: 20, totalPages: 1 };
 
     // Form states
+    const [isSheetOpen, setIsSheetOpen] = useState(false);
+    const [isSubmitting, setIsSubmitting] = useState(false);
     const [name, setName] = useState("");
     const [code, setCode] = useState("");
     const [editingCountry, setEditingCountry] = useState<Country | null>(null);
 
-    const fetchCountries = async () => {
-        setIsLoading(true);
-        try {
-            const res = await fetch("/api/master/countries");
-            if (res.ok) {
-                const data = await res.json();
-                setCountries(data);
-            }
-        } catch (error) {
-            toast.error("Failed to fetch countries");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
     useEffect(() => {
-        fetchCountries();
-    }, []);
+        setPage(1);
+    }, [debouncedSearch]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -81,7 +85,7 @@ export default function CountriesPage() {
                 setCode("");
                 setEditingCountry(null);
                 setIsSheetOpen(false);
-                fetchCountries();
+                refetch();
             } else {
                 const error = await res.json();
                 toast.error(error.message || (editingCountry ? "Failed to update" : "Failed to add"));
@@ -110,7 +114,7 @@ export default function CountriesPage() {
 
             if (res.ok) {
                 toast.success("Country deleted");
-                fetchCountries();
+                refetch();
             } else {
                 toast.error("Failed to delete country");
             }
@@ -120,8 +124,13 @@ export default function CountriesPage() {
     };
 
     return (
-        <div className="flex flex-col gap-6">
-            <div className="flex justify-end items-center">
+        <div className="flex flex-col gap-6 p-4 md:p-8 max-w-[1600px] mx-auto w-full">
+            {/* Minimal Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                    <h1 className="text-2xl font-semibold tracking-tight text-foreground">Countries</h1>
+                    <p className="text-sm text-muted-foreground mt-1">Configure global regions and ISO identifiers.</p>
+                </div>
                 {can("MASTERS", "CREATE") && (
                     <Sheet open={isSheetOpen} onOpenChange={(open) => {
                         setIsSheetOpen(open);
@@ -132,98 +141,146 @@ export default function CountriesPage() {
                         }
                     }}>
                         <SheetTrigger asChild>
-                            <Button className="bg-primary hover:bg-primary/90 text-white rounded-xl h-10 px-5 text-sm font-bold shadow-sm flex items-center gap-2">
+                            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground font-bold h-10 px-6 uppercase tracking-wider text-[11px] rounded-md gap-2">
                                 <Plus className="h-4 w-4" /> Add Country
                             </Button>
                         </SheetTrigger>
-                        <SheetContent className="sm:max-w-[425px] border-l border-border bg-card">
-                            <SheetHeader className="mb-6">
-                                <SheetTitle className="text-xl font-bold text-foreground">
-                                    {editingCountry ? "Edit Country" : "Add New Country"}
+                        <SheetContent className="sm:max-w-[400px] p-0 overflow-hidden border-none shadow-2xl">
+                            <div className="bg-primary/5 px-6 py-4 border-b">
+                                <SheetTitle className="text-base font-bold tracking-tight">
+                                    {editingCountry ? "Modify Region" : "Register New Region"}
                                 </SheetTitle>
-                                <SheetDescription className="text-muted-foreground">
-                                    {editingCountry ? "Update the details of the existing country." : "Create a new country entry for the system."}
+                                <SheetDescription className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mt-1 leading-none opacity-60">
+                                    Master Data Management
                                 </SheetDescription>
-                            </SheetHeader>
-                            <form onSubmit={handleSubmit} className="space-y-5">
-                                <div className="space-y-2">
-                                    <Label htmlFor="name" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Country Name</Label>
+                            </div>
+                            <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="name" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground leading-none">Official Name</Label>
                                     <Input
                                         id="name"
                                         value={name}
                                         onChange={(e) => setName(e.target.value)}
                                         placeholder="e.g. United Kingdom"
                                         required
-                                        className="rounded-xl border-border bg-background focus:ring-primary/20 h-10"
+                                        className="h-10 bg-muted/20 border-muted/50"
                                     />
                                 </div>
-                                <div className="space-y-2">
-                                    <Label htmlFor="code" className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Country Code (Optional)</Label>
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="code" className="text-[10px] font-black uppercase tracking-widest text-muted-foreground leading-none">ISO Alpha Code</Label>
                                     <Input
                                         id="code"
                                         value={code}
                                         onChange={(e) => setCode(e.target.value)}
                                         placeholder="e.g. UK or GBR"
-                                        className="rounded-xl border-border bg-background focus:ring-primary/20 h-10"
+                                        className="h-10 bg-muted/20 border-muted/50"
                                     />
                                 </div>
-                                <Button type="submit" disabled={isSubmitting} className="w-full bg-primary hover:bg-primary/90 text-white rounded-xl h-11 font-bold transition-all shadow-md">
-                                    {isSubmitting ? "Processing..." : (editingCountry ? "Update Country" : "Save Country")}
-                                </Button>
+                                <div className="flex items-center justify-end gap-3 pt-4">
+                                    <Button type="button" variant="ghost" onClick={() => setIsSheetOpen(false)} className="text-[10px] font-black uppercase tracking-widest h-10 px-6">
+                                        Cancel
+                                    </Button>
+                                    <Button type="submit" disabled={isSubmitting} className="h-10 px-8 bg-primary hover:bg-primary/90 text-primary-foreground font-bold uppercase tracking-widest text-[10px]">
+                                        {isSubmitting && <Loader2 className="mr-2 h-3 w-3 animate-spin" />}
+                                        {editingCountry ? "Update Record" : "Create Record"}
+                                    </Button>
+                                </div>
                             </form>
                         </SheetContent>
                     </Sheet>
                 )}
             </div>
 
-            <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+            {/* Filter Bar */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b pb-4">
+                <div className="relative w-full sm:w-80">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Filter regions..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="pl-9 h-10 w-full bg-background border-muted/50 focus:border-primary/50"
+                    />
+                </div>
+            </div>
+
+            {/* Data Table Section */}
+            <div className="bg-background rounded-lg border shadow-sm overflow-hidden">
                 <Table>
-                    <TableHeader className="bg-muted/50">
-                        <TableRow className="border-border hover:bg-transparent">
-                            <TableHead className="font-bold text-xs uppercase tracking-widest py-4 px-6 text-muted-foreground">Name</TableHead>
-                            <TableHead className="font-bold text-xs uppercase tracking-widest py-4 px-6 text-muted-foreground">Code</TableHead>
-                            <TableHead className="font-bold text-xs uppercase tracking-widest py-4 px-6 text-muted-foreground">Status</TableHead>
-                            <TableHead className="text-right font-bold text-xs uppercase tracking-widest py-4 px-6 text-muted-foreground">Actions</TableHead>
+                    <TableHeader className="bg-muted/30">
+                        <TableRow className="hover:bg-transparent">
+                            <TableHead className="w-12 px-4 border-r text-[10px] font-black uppercase tracking-widest text-muted-foreground">#</TableHead>
+                            <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Region Name</TableHead>
+                            <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">ISO Code</TableHead>
+                            <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Registry Status</TableHead>
+                            <TableHead className="text-right px-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={4} className="text-center py-12 text-muted-foreground italic">
-                                    Loading countries...
+                                <TableCell colSpan={5} className="h-64 text-center">
+                                    <div className="flex flex-col items-center justify-center gap-3">
+                                        <Loader2 className="h-6 w-6 animate-spin text-primary/60" />
+                                        <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Syncing Global Registry...</span>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ) : countries.length === 0 ? (
                             <TableRow>
-                                <TableCell colSpan={4} className="text-center py-12 text-muted-foreground italic">
-                                    No countries found. Add one to get started.
+                                <TableCell colSpan={5} className="h-64 text-center">
+                                    <div className="flex flex-col items-center justify-center gap-2">
+                                        <Globe className="h-8 w-8 text-muted-foreground/20" />
+                                        <div className="flex flex-col gap-0.5">
+                                            <span className="text-sm font-semibold">No regions listed</span>
+                                            <span className="text-xs text-muted-foreground">Initialize the registry by adding your first country.</span>
+                                        </div>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            countries.map((c) => (
-                                <TableRow key={c.id} className="border-border/40 hover:bg-primary/[0.02] transition-colors">
-                                    <TableCell className="font-semibold py-4 px-6 text-sm">
-                                        <div className="flex items-center gap-2">
-                                            <Globe className="h-4 w-4 text-muted-foreground/60" />
-                                            {c.name}
+                            countries.map((c: any, idx: number) => (
+                                <TableRow key={c.id} className="group hover:bg-muted/30 border-b last:border-0 transition-colors">
+                                    <TableCell className="px-4 border-r font-mono text-[10px] text-muted-foreground/60">
+                                        {(page - 1) * limit + idx + 1}
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-7 w-7 rounded-md bg-muted flex items-center justify-center text-muted-foreground border">
+                                                <Globe className="h-3.5 w-3.5" />
+                                            </div>
+                                            <span className="font-semibold text-sm tracking-tight">{c.name}</span>
                                         </div>
                                     </TableCell>
-                                    <TableCell className="py-4 px-6 text-sm text-muted-foreground font-medium uppercase">{c.code || "-"}</TableCell>
-                                    <TableCell className="py-4 text-xs font-medium uppercase tracking-widest">
-                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full ${c.isActive ? "bg-emerald-100 text-emerald-700 font-bold" : "bg-gray-100 text-gray-500 font-medium"}`}>
-                                            {c.isActive ? "Active" : "Inactive"}
-                                        </span>
+                                    <TableCell>
+                                        <code className="px-2 py-0.5 rounded bg-muted/50 border text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                                            {c.code || "—"}
+                                        </code>
                                     </TableCell>
-                                    <TableCell className="text-right py-4 px-6">
-                                        <div className="flex justify-end gap-1">
+                                    <TableCell>
+                                        <div className="flex items-center gap-1.5">
+                                            <div className={cn(
+                                                "h-1.5 w-1.5 rounded-full",
+                                                c.isActive ? "bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]" : "bg-muted-foreground/30"
+                                            )} />
+                                            <span className={cn(
+                                                "text-[10px] font-black uppercase tracking-widest",
+                                                c.isActive ? "text-emerald-600" : "text-muted-foreground/50"
+                                            )}>
+                                                {c.isActive ? "Active" : "Disabled"}
+                                            </span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-right px-4">
+                                        <div className="flex justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                             {can("MASTERS", "EDIT") && (
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"
                                                     onClick={() => handleEdit(c)}
-                                                    className="h-8 w-8 rounded-lg hover:bg-primary/10 hover:text-primary transition-all"
+                                                    className="h-8 w-8 text-muted-foreground hover:text-primary"
                                                 >
-                                                    <Pencil className="h-4 w-4" />
+                                                    <Pencil className="h-3.5 w-3.5" />
                                                 </Button>
                                             )}
                                             {can("MASTERS", "DELETE") && (
@@ -231,9 +288,9 @@ export default function CountriesPage() {
                                                     variant="ghost"
                                                     size="icon"
                                                     onClick={() => handleDelete(c.id)}
-                                                    className="h-8 w-8 rounded-lg hover:bg-destructive/10 hover:text-destructive transition-all"
+                                                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
                                                 >
-                                                    <Trash2 className="h-4 w-4" />
+                                                    <Trash2 className="h-3.5 w-3.5" />
                                                 </Button>
                                             )}
                                         </div>
@@ -243,6 +300,56 @@ export default function CountriesPage() {
                         )}
                     </TableBody>
                 </Table>
+
+                {/* Enhanced Pagination Controls */}
+                <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/5 min-h-[56px]">
+                    <div className="flex items-center gap-6">
+                        <div className="text-[11px] font-black text-muted-foreground uppercase tracking-widest leading-none">
+                            Page {pagination.page} / {pagination.totalPages}
+                        </div>
+                        <div className="flex items-center gap-2 border-l pl-6 border-muted/30">
+                            <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Show</span>
+                            <Select
+                                value={limit.toString()}
+                                onValueChange={(v) => {
+                                    setLimit(Number(v));
+                                    setPage(1);
+                                }}
+                            >
+                                <SelectTrigger className="h-7 w-[70px] text-[10px] font-bold border-muted/30 bg-background focus:ring-1 focus:ring-primary/20">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent className="min-w-[70px]">
+                                    {[10, 20, 50, 100].map((size) => (
+                                        <SelectItem key={size} value={size.toString()} className="text-[10px] font-bold">
+                                            {size}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 text-[10px] font-black uppercase px-4 border-muted/30 hover:bg-muted/50 transition-colors"
+                            disabled={page <= 1}
+                            onClick={() => setPage(page - 1)}
+                        >
+                            <ChevronLeft className="h-3.5 w-3.5 mr-1.5" /> Prev
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-8 text-[10px] font-black uppercase px-4 border-muted/30 hover:bg-muted/50 transition-colors"
+                            disabled={page >= pagination.totalPages}
+                            onClick={() => setPage(page + 1)}
+                        >
+                            Next <ChevronRight className="h-3.5 w-3.5 ml-1.5" />
+                        </Button>
+                    </div>
+                </div>
             </div>
         </div>
     );

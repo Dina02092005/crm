@@ -83,6 +83,7 @@ const formSchema = z.object({
     applyLevel: z.string().optional().or(z.literal("")),
     source: z.string().min(1, "Source is required"),
     status: z.nativeEnum(LeadStatus).default(LeadStatus.NEW),
+    interest: z.string().optional().or(z.literal("")),
     remark: z.string().optional().or(z.literal("")),
     passportNo: z.string().optional().or(z.literal("")),
     passportIssueDate: z.string().optional().or(z.literal("")),
@@ -165,6 +166,7 @@ export default function EditStudentPage() {
             applyLevel: "",
             source: "",
             status: LeadStatus.NEW,
+            interest: "",
             remark: "",
             passportNo: "",
             passportIssueDate: "",
@@ -235,7 +237,7 @@ export default function EditStudentPage() {
                     axios.get("/api/websites")
                 ]);
 
-                setWebsites(websitesRes.data);
+                setWebsites(websitesRes.data.websites || []);
                 const student = studentRes.data;
                 const lead = student.lead;
 
@@ -262,6 +264,7 @@ export default function EditStudentPage() {
                     form.setFieldValue("applyLevel", lead.applyLevel || "");
                     form.setFieldValue("source", lead.source || "");
                     form.setFieldValue("status", lead.status || student.status || LeadStatus.NEW);
+                    form.setFieldValue("interest", lead.interest || "");
                     form.setFieldValue("remark", lead.remark || "");
                     form.setFieldValue("passportNo", lead.passportNo || student.passportNo || "");
                     form.setFieldValue("passportIssueDate", (lead.passportIssueDate || student.passportIssueDate) ? new Date(lead.passportIssueDate || student.passportIssueDate).toISOString().split('T')[0] : "");
@@ -487,6 +490,23 @@ export default function EditStudentPage() {
                                                         <SelectItem value="NOT_INTERESTED">Not Interested</SelectItem>
                                                         <SelectItem value="ON_HOLD">On Hold</SelectItem>
                                                         <SelectItem value="CLOSED">Closed/Converted</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        )} />
+                                        <form.Field name="interest" children={(field) => (
+                                            <div className="space-y-1">
+                                                <Label className="text-xs font-bold text-muted-foreground uppercase tracking-tight">Interest</Label>
+                                                <Select value={field.state.value} onValueChange={(val) => field.handleChange(val as any)}>
+                                                    <SelectTrigger className={iconicInputClass}>
+                                                        <SelectValue placeholder="Select Interest" />
+                                                    </SelectTrigger>
+                                                    <SelectContent className="rounded-xl">
+                                                        <SelectItem value="STUDY_ABROAD">Study Abroad</SelectItem>
+                                                        <SelectItem value="SKILL_DEVELOPMENT">Skill Development</SelectItem>
+                                                        <SelectItem value="LOAN">Loan</SelectItem>
+                                                        <SelectItem value="MBBS">MBBS</SelectItem>
+                                                        <SelectItem value="OTHER">Other</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </div>

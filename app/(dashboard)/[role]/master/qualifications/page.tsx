@@ -22,7 +22,9 @@ import {
 } from "@/components/ui/sheet";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { Loader2, Plus, Trash2, Pencil } from "lucide-react";
+import { Loader2, Plus, Trash2, Pencil, Search } from "lucide-react";
+import { useQualifications } from "@/hooks/use-masters";
+import { useDebounce } from "@/hooks/use-debounce";
 
 interface Qualification {
     id: string;
@@ -33,32 +35,27 @@ interface Qualification {
 
 export default function QualificationsPage() {
     const { can } = usePermissions();
-    const [qualifications, setQualifications] = useState<Qualification[]>([]);
-    const [loading, setLoading] = useState(true);
+
+    // Filter & Pagination State
+    const [search, setSearch] = useState("");
+    const [page, setPage] = useState(1);
+    const [limit] = useState(25);
+    const debouncedSearch = useDebounce(search, 500);
+
+    const { data, isLoading, refetch } = useQualifications(page, limit, debouncedSearch);
+
+    const qualifications = data?.qualifications || [];
+    const pagination = data?.pagination || { total: 0, page: 1, limit: 25, totalPages: 1 };
+
+    // Modal State
     const [isSheetOpen, setIsSheetOpen] = useState(false);
     const [editingQualification, setEditingQualification] = useState<Qualification | null>(null);
     const [name, setName] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const fetchQualifications = async () => {
-        try {
-            const res = await fetch("/api/master/qualifications");
-            if (res.ok) {
-                const data = await res.json();
-                setQualifications(data);
-            } else {
-                toast.error("Failed to load qualifications");
-            }
-        } catch (error) {
-            console.error(error);
-        } finally {
-            setLoading(false);
-        }
-    };
-
     useEffect(() => {
-        fetchQualifications();
-    }, []);
+        setPage(1);
+    }, [debouncedSearch]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -78,7 +75,7 @@ export default function QualificationsPage() {
                 setName("");
                 setEditingQualification(null);
                 setIsSheetOpen(false);
-                fetchQualifications();
+                refetch();
             } else {
                 const error = await res.json();
                 toast.error(error.message || (editingQualification ? "Failed to update" : "Failed to add"));
@@ -104,7 +101,7 @@ export default function QualificationsPage() {
             });
             if (res.ok) {
                 toast.success("Deleted successfully");
-                fetchQualifications();
+                refetch();
             } else {
                 toast.error("Failed to delete");
             }
@@ -121,12 +118,9 @@ export default function QualificationsPage() {
         }
     };
 
-    if (loading) return <div className="flex justify-center p-8"><Loader2 className="animate-spin" /></div>;
-
-
     return (
         <div className="p-6 space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
                     <h1 className="text-2xl font-bold tracking-tight text-foreground">Master Settings: Qualifications</h1>
                     <p className="text-sm text-muted-foreground mt-1">Manage academic qualifications available for leads and students.</p>
@@ -134,7 +128,7 @@ export default function QualificationsPage() {
                 {can("MASTERS", "CREATE") && (
                     <Sheet open={isSheetOpen} onOpenChange={handleSheetOpenChange}>
                         <SheetTrigger asChild>
-                            <Button className="gap-2 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl shadow-sm px-6">
+                            <Button className="gap-2 bg-primary hover:bg-primary/90 text-white font-bold rounded-xl shadow-sm px-6 h-11">
                                 <Plus className="h-4 w-4" /> Add Qualification
                             </Button>
                         </SheetTrigger>
@@ -167,28 +161,54 @@ export default function QualificationsPage() {
                 )}
             </div>
 
+            {/* Search Bar */}
+            <div className="flex items-center gap-4">
+                <div className="relative flex-1 max-w-sm">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                        placeholder="Search qualification..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="pl-9 rounded-xl border-border/50 bg-card shadow-sm h-11"
+                    />
+                </div>
+            </div>
+
             <div className="bg-card rounded-2xl border border-border/50 shadow-sm overflow-hidden">
                 <Table>
                     <TableHeader className="bg-muted/50">
                         <TableRow className="border-border/50">
-                            <TableHead className="font-bold py-4 px-6 text-[11px] uppercase tracking-widest text-muted-foreground">Name</TableHead>
+                            <TableHead className="w-[50px] font-bold py-4 px-6 text-[11px] uppercase tracking-widest text-muted-foreground">#</TableHead>
+                            <TableHead className="font-bold py-4 text-[11px] uppercase tracking-widest text-muted-foreground">Name</TableHead>
                             <TableHead className="font-bold py-4 text-[11px] uppercase tracking-widest text-muted-foreground">Status</TableHead>
                             <TableHead className="font-bold py-4 text-right px-6 text-[11px] uppercase tracking-widest text-muted-foreground">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {qualifications.length === 0 ? (
+                        {isLoading ? (
                             <TableRow>
-                                <TableCell colSpan={3} className="text-center py-12 text-muted-foreground italic">
-                                    No qualifications found. Add one to get started.
+                                <TableCell colSpan={4} className="h-48 text-center text-muted-foreground">
+                                    <div className="flex flex-col items-center justify-center gap-2">
+                                        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                        <span>Loading qualifications...</span>
+                                    </div>
+                                </TableCell>
+                            </TableRow>
+                        ) : qualifications.length === 0 ? (
+                            <TableRow>
+                                <TableCell colSpan={4} className="h-48 text-center text-muted-foreground italic">
+                                    No qualifications found matching your search.
                                 </TableCell>
                             </TableRow>
                         ) : (
-                            qualifications.map((q) => (
+                            qualifications.map((q: any, idx: number) => (
                                 <TableRow key={q.id} className="border-border/40 hover:bg-primary/[0.02] transition-colors">
-                                    <TableCell className="font-semibold py-4 px-6 text-sm">{q.name}</TableCell>
+                                    <TableCell className="font-medium py-4 px-6 text-xs text-muted-foreground">
+                                        {(page - 1) * limit + idx + 1}
+                                    </TableCell>
+                                    <TableCell className="font-semibold py-4 text-sm">{q.name}</TableCell>
                                     <TableCell className="py-4 text-xs font-medium uppercase tracking-widest">
-                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full ${q.isActive ? "bg-emerald-100 text-emerald-700 font-bold" : "bg-gray-100 text-gray-500 font-medium"}`}>
+                                        <span className={`inline-flex items-center px-3 py-1 rounded-full ${q.isActive ? "bg-emerald-100 text-emerald-700 font-bold" : "bg-gray-100 text-gray-500 font-medium"}`}>
                                             {q.isActive ? "Active" : "Inactive"}
                                         </span>
                                     </TableCell>
@@ -221,6 +241,35 @@ export default function QualificationsPage() {
                         )}
                     </TableBody>
                 </Table>
+
+                {/* Pagination */}
+                {pagination.totalPages > 1 && (
+                    <div className="flex items-center justify-between px-6 py-4 border-t bg-muted/20">
+                        <p className="text-sm text-muted-foreground font-medium">
+                            Showing <span className="text-foreground">{(page - 1) * limit + 1}</span> to <span className="text-foreground">{Math.min(page * limit, pagination.total)}</span> of <span className="text-foreground">{pagination.total}</span> qualifications
+                        </p>
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={page <= 1}
+                                onClick={() => setPage(page - 1)}
+                                className="rounded-xl px-4"
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                disabled={page >= pagination.totalPages}
+                                onClick={() => setPage(page + 1)}
+                                className="rounded-xl px-4"
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

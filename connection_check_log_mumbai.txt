@@ -1,0 +1,5 @@
+﻿
+Invalid `prisma.country.findMany()` invocation:
+
+
+Error querying the database: FATAL: Tenant or user not found

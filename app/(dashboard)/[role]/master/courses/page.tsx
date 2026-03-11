@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,8 @@ import { usePermissions } from "@/hooks/use-permissions";
 import { AddCourseModal } from "@/components/masters/AddCourseModal";
 import { ManageIntakesModal } from "@/components/masters/ManageIntakesModal";
 import { ImportCoursesModal } from "@/components/masters/ImportCoursesModal";
+import { useCountries, useUniversities, useCourses } from "@/hooks/use-masters";
+import { useDebounce } from "@/hooks/use-debounce";
 
 export default function CoursesPage() {
     const { can } = usePermissions();
@@ -48,78 +50,36 @@ export default function CoursesPage() {
     const [selectedCourse, setSelectedCourse] = useState<any>(null);
 
     // Filters State
-    const [countries, setCountries] = useState<any[]>([]);
-    const [universities, setUniversities] = useState<any[]>([]);
     const [selectedCountry, setSelectedCountry] = useState<string>("all");
     const [selectedUniversity, setSelectedUniversity] = useState<string>("all");
     const [searchTerm, setSearchTerm] = useState("");
     const [isFilterCollapsed, setIsFilterCollapsed] = useState(false);
 
-    // Data State
-    const [courses, setCourses] = useState<any[]>([]);
-    const [total, setTotal] = useState(0);
+    // Pagination State
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
-    const [isLoading, setIsLoading] = useState(true);
 
-    const fetchCountries = async () => {
-        try {
-            const res = await axios.get("/api/master/countries");
-            setCountries(res.data);
-        } catch (error) {
-            console.error("Error fetching countries:", error);
-        }
-    };
+    const debouncedSearch = useDebounce(searchTerm, 500);
 
-    const fetchUniversities = async (countryId: string) => {
-        try {
-            const res = await axios.get(`/api/master/universities?countryId=${countryId}`);
-            setUniversities(res.data.universities || []);
-        } catch (error) {
-            console.error("Error fetching universities:", error);
-        }
-    };
+    // Hooks for data fetching
+    const { data: countriesData } = useCountries(1, 100);
+    const { data: universitiesData } = useUniversities(selectedCountry !== "all" ? selectedCountry : undefined, 1, 100);
+    const { data: coursesData, isLoading, refetch } = useCourses({
+        page,
+        limit,
+        countryId: selectedCountry !== "all" ? selectedCountry : undefined,
+        universityId: selectedUniversity !== "all" ? selectedUniversity : undefined,
+        search: debouncedSearch
+    });
 
-    const fetchCourses = useCallback(async () => {
-        setIsLoading(true);
-        try {
-            const params = new URLSearchParams({
-                page: page.toString(),
-                limit: limit.toString(),
-            });
-            if (selectedCountry !== "all") params.append("countryId", selectedCountry);
-            if (selectedUniversity !== "all") params.append("universityId", selectedUniversity);
-            if (searchTerm) params.append("search", searchTerm);
-
-            const res = await axios.get(`/api/master/courses?${params.toString()}`);
-            setCourses(res.data.courses);
-            setTotal(res.data.total);
-        } catch (error) {
-            console.error("Error fetching courses:", error);
-            toast.error("Failed to load courses");
-        } finally {
-            setIsLoading(false);
-        }
-    }, [page, limit, selectedCountry, selectedUniversity, searchTerm]);
-
-    // Fetch initial data
-    useEffect(() => {
-        fetchCountries();
-    }, []);
+    const countries = countriesData?.countries || [];
+    const universities = universitiesData?.universities || [];
+    const courses = coursesData?.courses || [];
+    const pagination = coursesData?.pagination || { total: 0, page: 1, limit: 10, totalPages: 1 };
 
     useEffect(() => {
-        fetchCourses();
-    }, [fetchCourses]);
-
-    // Fetch universities when country changes
-    useEffect(() => {
-        if (selectedCountry !== "all") {
-            fetchUniversities(selectedCountry);
-        } else {
-            setUniversities([]);
-            setSelectedUniversity("all");
-        }
-    }, [selectedCountry]);
+        setPage(1);
+    }, [selectedCountry, selectedUniversity, debouncedSearch]);
 
     const handleReset = () => {
         setSelectedCountry("all");
@@ -133,7 +93,7 @@ export default function CoursesPage() {
         try {
             await axios.delete(`/api/master/courses/${id}`);
             toast.success("Course deleted successfully");
-            fetchCourses();
+            refetch();
         } catch (error) {
             toast.error("Failed to delete course");
         }
@@ -228,7 +188,7 @@ export default function CoursesPage() {
                                 </SelectTrigger>
                                 <SelectContent className="rounded-none">
                                     <SelectItem value="all">All Countries</SelectItem>
-                                    {countries.map(c => (
+                                    {countries.map((c: any) => (
                                         <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                                     ))}
                                 </SelectContent>
@@ -247,7 +207,7 @@ export default function CoursesPage() {
                                 </SelectTrigger>
                                 <SelectContent className="rounded-none">
                                     <SelectItem value="all">All Universities</SelectItem>
-                                    {universities.map(u => (
+                                    {universities.map((u: any) => (
                                         <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
                                     ))}
                                 </SelectContent>
@@ -270,7 +230,7 @@ export default function CoursesPage() {
                         <div className="flex gap-2">
                             <Button
                                 className="flex-1 rounded-none h-11 bg-primary hover:bg-primary/90 shadow-md gap-2"
-                                onClick={() => { setPage(1); fetchCourses(); }}
+                                onClick={() => { setPage(1); refetch(); }}
                             >
                                 <Search className="w-4 h-4" />
                                 Search
@@ -360,7 +320,7 @@ export default function CoursesPage() {
                                     </TableCell>
                                 </TableRow>
                             ) : (
-                                courses.map((course) => (
+                                courses.map((course: any) => (
                                     <TableRow key={course.id} className="hover:bg-gray-50/50 border-b border-gray-100 items-start">
                                         <TableCell className="border-x border-gray-100 p-2">
                                             <div className="flex items-center justify-center gap-2">
@@ -443,9 +403,31 @@ export default function CoursesPage() {
                 {/* Pagination Footer */}
                 <div className="p-4 border-t border-gray-200 bg-gray-50/50 flex flex-col sm:flex-row justify-between items-center gap-4">
                     <div className="text-sm text-gray-500">
-                        Showing <span className="font-bold text-gray-900">{(page - 1) * limit + 1}</span> to <span className="font-bold text-gray-900">{Math.min(page * limit, total)}</span> of <span className="font-bold text-gray-900">{total}</span> entries
+                        Showing <span className="font-bold text-gray-900">{(page - 1) * limit + 1}</span> to <span className="font-bold text-gray-900">{Math.min(page * limit, pagination.total)}</span> of <span className="font-bold text-gray-900">{pagination.total}</span> entries
                     </div>
 
+                    {pagination.totalPages > 1 && (
+                        <div className="flex gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="rounded-none border-gray-300 bg-white"
+                                disabled={page <= 1}
+                                onClick={() => setPage(page - 1)}
+                            >
+                                Previous
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="rounded-none border-gray-300 bg-white"
+                                disabled={page >= pagination.totalPages}
+                                onClick={() => setPage(page + 1)}
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    )}
                 </div>
             </div>
 
@@ -453,7 +435,7 @@ export default function CoursesPage() {
             <AddCourseModal
                 isOpen={isAddOpen}
                 onClose={() => setIsAddOpen(false)}
-                onSuccess={fetchCourses}
+                onSuccess={refetch}
                 currentCourse={selectedCourse}
             />
 
@@ -462,7 +444,7 @@ export default function CoursesPage() {
                     isOpen={isIntakeOpen}
                     onClose={() => setIsIntakeOpen(false)}
                     course={selectedCourse}
-                    onSuccess={fetchCourses}
+                    onSuccess={refetch}
                 />
             )}
 
@@ -470,7 +452,7 @@ export default function CoursesPage() {
                 <ImportCoursesModal
                     isOpen={isImportOpen}
                     onClose={() => setIsImportOpen(false)}
-                    onSuccess={fetchCourses}
+                    onSuccess={refetch}
                 />
             )}
         </div>

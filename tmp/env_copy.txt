@@ -1,0 +1,35 @@
+﻿#DATABASE_URL="postgresql://myappuser:StrongPasswordHere@72.62.240.101:5432/myappdb?connection_limit=3&pool_timeout=40&statement_cache_size=0"
+
+
+DATABASE_URL="postgresql://myappuser:StrongPasswordHere@72.62.240.101:5432/myappdb?connection_limit=20&pool_timeout=30"
+
+# NextAuth
+NEXTAUTH_SECRET="your_random_secret"
+
+NEXTAUTH_URL="http://localhost:3001"
+
+
+# Email Configuration
+# SMTP_HOST=smtp.gmail.com
+# SMTP_PORT=587
+# SMTP_SECURE=false
+# SMTP_USER="dinakars23it@psnacet.edu.in"
+# SMTP_PASS="rmku mptx yufz ssrn"
+# SMTP_FROM="dinakars23it@psnacet.edu.in"
+
+# Email Configuration
+SMTP_HOST=smtp.zoho.in
+SMTP_PORT=465
+SMTP_SECURE=true
+SMTP_USER=info@interfx.in
+SMTP_PASS=nSF0DUaaviuS
+SMTP_FROM="Interbuddy <info@interfx.in>"
+
+# S3 Configuration
+BUCKET_NAME=inter-platform-assets
+NEW_REGION=sgp1
+NEW_ACCESS_KEY=DO801Y2JWXKHYTZ7QWKM
+SECRET_ACCESS_KEY=zCCDJtyjgwgaTpo77nHQI1Ol6AQfSMVaguBRulExKXA
+S3_ENDPOINT=https://sgp1.digitaloceanspaces.com
+S3_FORCE_PATH_STYLE=false
+S3_MAKE_PUBLIC=true

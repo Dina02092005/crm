@@ -46,6 +46,7 @@ const leadSchema = z.object({
     message: z.string().optional(),
     remark: z.string().optional(),
     imageUrl: z.string().nullable(),
+    interest: z.string().optional(),
 });
 
 type LeadFormData = z.infer<typeof leadSchema>;
@@ -96,6 +97,7 @@ export function LeadForm({ leadId, onSuccess, initialData }: LeadFormProps) {
             message: initialData?.message || "",
             remark: initialData?.remark || "",
             imageUrl: initialData?.imageUrl || null,
+            interest: "",
         } as LeadFormData,
         validators: {
             onChange: leadSchema,
@@ -152,6 +154,7 @@ export function LeadForm({ leadId, onSuccess, initialData }: LeadFormProps) {
                     message: lead.message || "",
                     remark: lead.remark || "",
                     imageUrl: lead.imageUrl || null,
+                    interest: lead.interest || "",
                 });
             } catch (error) {
                 toast.error("Failed to load lead details");
@@ -163,7 +166,7 @@ export function LeadForm({ leadId, onSuccess, initialData }: LeadFormProps) {
         const fetchWebsites = async () => {
             try {
                 const res = await axios.get("/api/websites");
-                setWebsites(res.data);
+                setWebsites(res.data.websites || []);
             } catch (error) {
                 console.error("Failed to load websites", error);
             }
@@ -172,7 +175,7 @@ export function LeadForm({ leadId, onSuccess, initialData }: LeadFormProps) {
         const fetchQualifications = async () => {
             try {
                 const res = await axios.get("/api/master/qualifications");
-                setQualifications(res.data);
+                setQualifications(res.data.qualifications || []);
             } catch (error) {
                 console.error("Failed to load qualifications", error);
             }
@@ -181,7 +184,7 @@ export function LeadForm({ leadId, onSuccess, initialData }: LeadFormProps) {
         const fetchCountries = async () => {
             try {
                 const res = await axios.get("/api/master/countries");
-                setCountries(res.data);
+                setCountries(res.data.countries || []);
             } catch (error) {
                 console.error("Failed to load countries", error);
             }
@@ -439,6 +442,26 @@ export function LeadForm({ leadId, onSuccess, initialData }: LeadFormProps) {
             <div className="space-y-4 pt-4">
                 <h3 className="text-lg font-semibold border-b pb-2">Course Preference</h3>
                 <div className="grid grid-cols-2 gap-4">
+                    <form.Field
+                        name="interest"
+                        children={(field) => (
+                            <div className="space-y-2">
+                                <Label htmlFor="interest">Lead Interest</Label>
+                                <Select value={field.state.value} onValueChange={(v) => field.handleChange(v)}>
+                                    <SelectTrigger className="rounded-xl">
+                                        <SelectValue placeholder="Select interest" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="STUDY_ABROAD">Study Abroad</SelectItem>
+                                        <SelectItem value="SKILL_DEVELOPMENT">Skill Development</SelectItem>
+                                        <SelectItem value="LOAN">Loan</SelectItem>
+                                        <SelectItem value="MBBS">MBBS</SelectItem>
+                                        <SelectItem value="OTHER">Other</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+                    />
                     <form.Field
                         name="interestedCourse"
                         children={(field) => (

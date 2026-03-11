@@ -1,0 +1,5 @@
+﻿
+Invalid `prisma.website.findMany()` invocation:
+
+
+Error querying the database: FATAL: Tenant or user not found

@@ -19,8 +19,9 @@ export async function DELETE(
         // Delete associated activities and assignments first if not set to cascade in prisma
         // Given the schema provided earlier has some relations, I should be careful.
         // Actually, let's just delete the lead, assuming cascade or handling it.
-        await prisma.lead.delete({
+        await prisma.lead.update({
             where: { id },
+            data: { deletedAt: new Date() }
         });
 
         return NextResponse.json({ message: 'Lead deleted successfully' });
@@ -232,7 +233,7 @@ export async function GET(
 
         const { id } = await params;
         const lead = await prisma.lead.findUnique({
-            where: { id },
+            where: { id, deletedAt: null },
             include: {
                 activities: {
                     orderBy: { createdAt: 'desc' },

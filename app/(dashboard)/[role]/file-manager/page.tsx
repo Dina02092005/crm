@@ -337,16 +337,16 @@ export default function FileManagerPage() {
                             className="bg-white w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                            <div className="p-6 border-b border-border/50 flex items-center justify-between bg-muted/30">
                                 <div className="flex items-center gap-4">
-                                    <div className="hidden sm:flex h-12 w-12 rounded-xl bg-yellow-400/20 items-center justify-center text-yellow-600 font-bold">
+                                    <div className="hidden sm:flex h-12 w-12 rounded-xl bg-primary/10 items-center justify-center text-primary font-bold">
                                         {students.find(s => s.id === expandedStudentId)?.name.charAt(0)}
                                     </div>
                                     <div>
-                                        <h2 className="text-xl font-bold text-slate-800">
+                                        <h2 className="text-xl font-bold text-foreground">
                                             {students.find(s => s.id === expandedStudentId)?.name}'s Documents
                                         </h2>
-                                        <p className="text-sm text-slate-500 font-medium">Manage and view uploaded files</p>
+                                        <p className="text-sm text-muted-foreground font-medium">Manage and view uploaded files</p>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-3">
@@ -354,7 +354,7 @@ export default function FileManagerPage() {
                                         <Button
                                             variant="outline"
                                             size="sm"
-                                            className="hidden sm:flex items-center gap-2 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800 h-9 px-4 rounded-xl font-bold transition-all"
+                                            className="hidden sm:flex items-center gap-2 border-primary/20 text-primary hover:bg-primary/5 hover:text-primary h-9 px-4 rounded-xl font-bold transition-all"
                                             onClick={() => handleBulkDownload(expandedStudentId)}
                                             disabled={isZipping[expandedStudentId]}
                                         >
@@ -366,7 +366,7 @@ export default function FileManagerPage() {
                                             {isZipping[expandedStudentId] ? "Zipping..." : "Download All as ZIP"}
                                         </Button>
                                     )}
-                                    <Button variant="ghost" size="icon" onClick={() => setExpandedStudentId(null)} className="rounded-full w-10 h-10 hover:bg-slate-100">
+                                    <Button variant="ghost" size="icon" onClick={() => setExpandedStudentId(null)} className="rounded-full w-10 h-10 hover:bg-muted">
                                         <MoreHorizontal className="h-5 w-5 rotate-45" />
                                     </Button>
                                 </div>
@@ -375,21 +375,21 @@ export default function FileManagerPage() {
                             <div className="flex-1 overflow-y-auto p-6">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {documents[expandedStudentId]?.map(doc => (
-                                        <div key={doc.id} className="flex items-center justify-between p-4 rounded-xl border border-slate-100 bg-slate-50/30 hover:bg-slate-50 transition-colors">
+                                        <div key={doc.id} className="flex items-center justify-between p-4 rounded-xl border border-border/50 bg-muted/30 hover:bg-muted/50 transition-colors">
                                             <div className="flex items-center gap-4">
-                                                <div className="h-10 w-10 bg-white rounded-lg flex items-center justify-center shadow-sm border border-slate-200">
-                                                    <FileText className="h-5 w-5 text-slate-400" />
+                                                <div className="h-10 w-10 bg-background rounded-lg flex items-center justify-center shadow-sm border border-border">
+                                                    <FileText className="h-5 w-5 text-muted-foreground" />
                                                 </div>
                                                 <div>
-                                                    <p className="font-bold text-slate-700 text-sm">{doc.documentName}</p>
-                                                    <p className="text-[10px] text-slate-400 truncate max-w-[200px]">{doc.fileName}</p>
+                                                    <p className="font-bold text-foreground text-sm">{doc.documentName}</p>
+                                                    <p className="text-[10px] text-muted-foreground truncate max-w-[200px]">{doc.fileName}</p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-2">
                                                 <Button
                                                     size="icon"
                                                     variant="ghost"
-                                                    className="h-9 w-9 text-slate-400 hover:text-[#3B4264] hover:bg-white"
+                                                    className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-background"
                                                     onClick={() => setPreviewFile({ url: doc.fileUrl, name: doc.documentName })}
                                                 >
                                                     <Eye className="h-4 w-4" />
@@ -397,7 +397,7 @@ export default function FileManagerPage() {
                                                 <Button
                                                     size="icon"
                                                     variant="ghost"
-                                                    className="h-9 w-9 text-slate-400 hover:text-emerald-600 hover:bg-white"
+                                                    className="h-9 w-9 text-muted-foreground hover:text-primary hover:bg-background"
                                                     onClick={() => handleSingleDownload(doc)}
                                                 >
                                                     <Download className="h-4 w-4" />

@@ -4,14 +4,12 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 
+import { withPermission } from '@/lib/permissions';
+
 export const dynamic = 'force-dynamic';
 
-export async function GET(req: NextRequest) {
+export const GET = withPermission('AGENTS', 'VIEW', async (req) => {
     try {
-        const session = await getServerSession(authOptions) as any;
-        if (!session || session.user.role !== 'ADMIN') {
-            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-        }
 
         const { searchParams } = new URL(req.url);
         const search = searchParams.get("search") || "";
@@ -64,22 +62,17 @@ export async function GET(req: NextRequest) {
         ]);
 
         return NextResponse.json({
-            agents,
+            employees: agents,
             pagination: { total, page, limit, totalPages: Math.ceil(total / limit) },
         });
     } catch (error) {
         console.error('Fetch agents error:', error);
         return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
     }
-}
+});
 
-export async function POST(req: NextRequest) {
+export const POST = withPermission('AGENTS', 'CREATE', async (req) => {
     try {
-        const session = await getServerSession(authOptions) as any;
-        if (!session || session.user.role !== 'ADMIN') {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
-
         const body = await req.json();
         const { name, email, password, companyName, address, phone, commission, roleId } = body;
 
@@ -113,4 +106,4 @@ export async function POST(req: NextRequest) {
         console.error('Create agent error:', error);
         return NextResponse.json({ error: "Failed to create agent" }, { status: 500 });
     }
-}
+});

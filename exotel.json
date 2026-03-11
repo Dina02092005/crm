@@ -1,0 +1,38 @@
+[
+    {
+        "id": "1bff8dc6-0dd3-435e-b67e-0fba75580e94",
+        "userId": "7b168bea-b9f2-4992-b344-66940638eda8",
+        "phone": "+919443613730",
+        "department": "BUSINESS",
+        "designation": "RM",
+        "salary": null,
+        "joiningDate": null,
+        "agentId": null,
+        "exotelAgentId": "94581577c2f44cc98163ab88ea8a13c0",
+        "exotelAvailable": true
+    },
+    {
+        "id": "4a2daba8-1049-4f8a-9f9b-096559d483b9",
+        "userId": "58c2ad73-735a-4c9c-ae8f-75f3f700283e",
+        "phone": "+919790272035",
+        "department": "IT",
+        "designation": "",
+        "salary": null,
+        "joiningDate": null,
+        "agentId": "cc251bb6-0f60-47a2-9e42-8496e1cbc930",
+        "exotelAgentId": "517ef2007a3d452aa6dce7aea6ec402f",
+        "exotelAvailable": true
+    },
+    {
+        "id": "73e261e0-590e-4c50-a8e6-64b478470d52",
+        "userId": "9e4ff6f6-a5e5-4e36-91a1-89da09229d42",
+        "phone": "+919487115607",
+        "department": "BUSINESS",
+        "designation": "RM",
+        "salary": 15000,
+        "joiningDate": "2026-07-15 00:00:00",
+        "agentId": null,
+        "exotelAgentId": null,
+        "exotelAvailable": false
+    }
+]

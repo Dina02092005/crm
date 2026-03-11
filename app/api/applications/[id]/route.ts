@@ -86,8 +86,8 @@ export const GET = withPermission('APPLICATIONS', 'VIEW', async (req, { params, 
     }
 });
 
-// PUT /api/applications/[id]
-export const PUT = withPermission('APPLICATIONS', 'EDIT', async (req, { params, permission }) => {
+// PATCH /api/applications/[id]
+export const PATCH = withPermission('APPLICATIONS', 'EDIT', async (req, { params, permission }) => {
     try {
         const { user: sessionUser } = permission;
         const session = { user: sessionUser };

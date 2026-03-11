@@ -41,6 +41,10 @@ export interface Student {
     savedAddresses?: SavedAddress[];
     imageUrl?: string | null;
     leadId?: string | null;
+    agentId?: string | null;
+    counselorId?: string | null;
+    agent?: User | null;
+    counselor?: User | null;
     lead?: Lead;
     applications?: Application[];
     _count?: {

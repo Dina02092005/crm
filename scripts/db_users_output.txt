@@ -1,0 +1,5 @@
+Found 4 users:
+- Email: rajalakshmisuresh1602@gmail.com, Role: AGENT, Active: true
+- Email: admin@example.com, Role: ADMIN, Active: true
+- Email: dinakarsuresh615@gmail.com, Role: STUDENT, Active: true
+- Email: counselor@example.com, Role: COUNSELOR, Active: true

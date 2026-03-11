@@ -114,7 +114,13 @@ export function RecentLeadsTable({ data }: { data: RecentLead[] }) {
                             table.getRowModel().rows.map((row) => (
                                 <tr
                                     key={row.id}
-                                    onClick={() => router.push(prefixPath(`/leads/${row.original.id}`))}
+                                    onClick={(e) => {
+                                        const target = e.target as HTMLElement;
+                                        if (target.closest('button, a, [role="menuitem"]')) {
+                                            return;
+                                        }
+                                        router.push(prefixPath(`/leads/${row.original.id}`));
+                                    }}
                                     className="group hover:bg-muted/50 transition-colors border-b border-border last:border-0 cursor-pointer"
                                 >
                                     {row.getVisibleCells().map((cell, index) => (
