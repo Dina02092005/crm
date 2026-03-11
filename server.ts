@@ -14,6 +14,10 @@ import { createServer } from 'http';
 import { parse } from 'url';
 import next from 'next';
 import { Server as SocketIOServer } from 'socket.io';
+import { loadEnvConfig } from '@next/env';
+
+const projectDir = process.cwd();
+loadEnvConfig(projectDir);
 
 const dev = process.env.NODE_ENV !== 'production';
 const hostname = process.env.HOSTNAME || 'localhost';
