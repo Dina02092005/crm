@@ -181,44 +181,54 @@ export default function StudentDetailPage() {
             );
         }
     }
-
     return (
-        <div className="flex flex-col gap-5 p-4 sm:p-6 max-w-7xl mx-auto w-full">
-            {/* Header */}
-            <div className="flex items-center gap-4">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="rounded-xl h-8 w-8 hover:bg-muted"
-                    onClick={() => router.back()}
-                >
-                    <ArrowLeft className="h-4 w-4 text-muted-foreground" />
-                </Button>
-                <div>
-                    <h1 className="text-xl font-bold text-foreground">{isStudent ? "My Profile" : "Student Details"}</h1>
-                    <p className="text-xs text-muted-foreground">{isStudent ? "View and manage your personal documents and details" : "Complete profile of the student and their applications"}</p>
+        <div className="flex flex-col min-h-screen bg-background">
+            {/* Top Navigation Tabs - Using the pill style from Leads page */}
+            <div className="bg-background px-4 sm:px-8 py-3 overflow-x-auto scrollbar-hide border-b">
+                <div className="flex items-center gap-2 min-w-max">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => router.push(`?tab=${tab.id}`)}
+                            className={`
+                                px-4 py-1.5 rounded-xl flex items-center gap-2 transition-all
+                                ${defaultTab === tab.id
+                                    ? "bg-primary/10 shadow-sm ring-1 ring-inset ring-primary/30 text-primary"
+                                    : "bg-card hover:bg-muted/50 text-muted-foreground"
+                                }
+                            `}
+                        >
+                            <span className={defaultTab === tab.id ? "text-primary" : "text-muted-foreground"}>
+                                {tab.icon}
+                            </span>
+                            <span className={`text-[11px] font-bold uppercase tracking-wider ${defaultTab === tab.id ? "text-primary" : "text-muted-foreground"}`}>
+                                {tab.label}
+                            </span>
+                        </button>
+                    ))}
                 </div>
             </div>
 
-            <Tabs defaultValue={defaultTab} className="w-full">
-                <TabsList className="w-full bg-slate-100 border border-border/50 rounded-xl h-11 p-1 overflow-x-auto overflow-y-hidden no-scrollbar">
-                    {tabs.map((tab) => (
-                        <TabsTrigger
-                            key={tab.id}
-                            value={tab.id}
-                            className="flex-1 text-[11px] font-bold rounded-lg data-[state=active]:bg-[#3e3a8e] data-[state=active]:text-white data-[state=active]:shadow-sm transition-all whitespace-nowrap min-w-[80px]"
-                        >
-                            {tab.icon}
-                            <span className="ml-1.5 hidden sm:inline">{tab.label}</span>
-                        </TabsTrigger>
-                    ))}
-                </TabsList>
+            <div className="p-4 sm:p-6 space-y-6 max-w-7xl mx-auto w-full">
+                {/* Back Button */}
+                <div className="flex items-center gap-4">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-xl h-8 w-8 hover:bg-muted"
+                        onClick={() => router.back()}
+                    >
+                        <ArrowLeft className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                    <div>
+                        <h1 className="text-xl font-bold text-foreground">{isStudent ? "My Profile" : "Student Details"}</h1>
+                        <p className="text-xs text-muted-foreground">{isStudent ? "View and manage your personal documents and details" : "Complete profile of the student and their applications"}</p>
+                    </div>
+                </div>
 
-                {/* === OVERVIEW TAB === */}
-                <TabsContent value="overview" className="mt-5">
+                {defaultTab === "overview" && (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-                        {/* Left: Profile Card */}
-                        <div className="lg:col-span-1 space-y-5">
+                        <div className="col-span-1 space-y-6">
                             <Card className="border border-border rounded-2xl bg-card shadow-none">
                                 <CardHeader className="pb-2 border-b border-border/50">
                                     <div className="flex items-center gap-3">
@@ -231,9 +241,9 @@ export default function StudentDetailPage() {
                                         </div>
                                     </div>
                                 </CardHeader>
-                                <CardContent className="p-4 space-y-4">
+                                <CardContent className="p-5 space-y-5">
                                     <div className="space-y-1">
-                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Contact</p>
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-tight">Contact Information</p>
                                         <div className="space-y-2">
                                             <div className="flex items-center justify-between text-sm">
                                                 <span className="text-muted-foreground">Phone</span>
@@ -283,7 +293,7 @@ export default function StudentDetailPage() {
                                     </div>
 
                                     {!isStudent && (
-                                        <div className="pt-3 border-t border-border/50 flex flex-col gap-2">
+                                        <div className="pt-4 border-t border-border/50 flex flex-col gap-2">
                                             <Button
                                                 className="w-full bg-primary hover:bg-primary/90 rounded-xl h-9 text-sm font-bold shadow-sm"
                                                 disabled={isCalling}
@@ -337,11 +347,11 @@ export default function StudentDetailPage() {
                             </Card>
                         </div>
 
-                        {/* Right: Detail Cards */}
-                        <div className="lg:col-span-2 space-y-5">
+                        {/* Right Column: Interaction Bar & Details */}
+                        <div className="lg:col-span-2 space-y-6">
                             {/* Personal Details */}
                             {lead && (
-                                <Card className="border border-border rounded-2xl bg-card shadow-none overflow-hidden">
+                                <Card className="border border-border rounded-xl bg-card shadow-none overflow-hidden">
                                     <CardHeader className="pb-2 border-b border-border/50">
                                         <CardTitle className="text-sm font-bold flex items-center gap-2">
                                             <User className="h-4 w-4 text-primary" /> Personal Details
@@ -364,7 +374,7 @@ export default function StudentDetailPage() {
 
                             {/* Education & Application */}
                             {lead && (lead.highestQualification || lead.interestedCourse || lead.interestedCountry || lead.applyLevel || lead.intake || lead.testName) && (
-                                <Card className="border border-border rounded-2xl bg-card shadow-none overflow-hidden">
+                                <Card className="border border-border rounded-xl bg-card shadow-none overflow-hidden">
                                     <CardHeader className="pb-2 border-b border-border/50">
                                         <CardTitle className="text-sm font-bold flex items-center gap-2">
                                             <BookOpen className="h-4 w-4 text-primary" /> Education & Application
@@ -372,7 +382,7 @@ export default function StudentDetailPage() {
                                     </CardHeader>
                                     <CardContent className="p-4">
                                         <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
-                                            <InfoField label="Highest Qualification" value={lead.highestQualification} />
+                                            <InfoField label="Highest Qual" value={lead.highestQualification} />
                                             <InfoField label="Interested Course" value={lead.interestedCourse} />
                                             <InfoField label="Interested Country" value={lead.interestedCountry} />
                                             <InfoField label="Apply Level" value={lead.applyLevel} />
@@ -387,7 +397,7 @@ export default function StudentDetailPage() {
 
                             {/* Passport Details */}
                             {(student.passportNo || lead?.passportNo || lead?.passportIssueDate || lead?.passportExpiryDate) && (
-                                <Card className="border border-border rounded-2xl bg-card shadow-none overflow-hidden">
+                                <Card className="border border-border rounded-xl bg-card shadow-none overflow-hidden">
                                     <CardHeader className="pb-2 border-b border-border/50">
                                         <CardTitle className="text-sm font-bold flex items-center gap-2">
                                             <Globe className="h-4 w-4 text-primary" /> Passport Details
@@ -405,7 +415,7 @@ export default function StudentDetailPage() {
 
                             {/* Academic Details */}
                             {lead?.academicDetails && (lead.academicDetails as any[]).length > 0 && (
-                                <Card className="border border-border rounded-2xl bg-card shadow-none overflow-hidden">
+                                <Card className="border border-border rounded-xl bg-card shadow-none overflow-hidden">
                                     <CardHeader className="pb-2 border-b border-border/50">
                                         <CardTitle className="text-sm font-bold flex items-center gap-2">
                                             <GraduationCap className="h-4 w-4 text-primary" /> Academic Details
@@ -428,7 +438,7 @@ export default function StudentDetailPage() {
 
                             {/* Work Experience */}
                             {lead?.workExperience && (lead.workExperience as any[]).length > 0 && (
-                                <Card className="border border-border rounded-2xl bg-card shadow-none overflow-hidden">
+                                <Card className="border border-border rounded-xl bg-card shadow-none overflow-hidden">
                                     <CardHeader className="pb-2 border-b border-border/50">
                                         <CardTitle className="text-sm font-bold flex items-center gap-2">
                                             <Briefcase className="h-4 w-4 text-primary" /> Work Experience
@@ -449,11 +459,11 @@ export default function StudentDetailPage() {
                             )}
                         </div>
                     </div>
-                </TabsContent>
+                )}
 
                 {/* === DOCUMENTS TAB === */}
-                <TabsContent value="documents" className="mt-5">
-                    <Card className="border border-border rounded-2xl bg-card shadow-none overflow-hidden">
+                {defaultTab === "documents" && (
+                    <Card className="border border-border rounded-xl bg-card shadow-none overflow-hidden">
                         <CardContent className="p-5">
                             <StudentDocumentsSection
                                 studentId={student.id}
@@ -461,10 +471,7 @@ export default function StudentDetailPage() {
                             />
                         </CardContent>
                     </Card>
-                </TabsContent>
-
-
-            </Tabs>
+                )}
 
             <ConfirmDialog
                 isOpen={confirmConfig.isOpen}
@@ -490,6 +497,7 @@ export default function StudentDetailPage() {
                     toast.success("Visa application initiated");
                 }}
             />
+        </div>
         </div>
     );
 }

@@ -23,6 +23,7 @@ import EmployeeForm from "@/components/forms/EmployeeForm";
 import { Employee } from "@/types/api";
 import { ExotelAccountButton } from "@/components/dashboard/ExotelAccountButton";
 import { useSession } from "next-auth/react";
+import { useRolePath } from "@/hooks/use-role-path";
 
 interface EmployeesTableProps {
     data: any[];
@@ -43,6 +44,7 @@ export function EmployeesTable({ data, onUpdate, onDelete, onToggleStatus, pagin
     const [editSheetOpen, setEditSheetOpen] = useState(false);
     const [editingEmployee, setEditingEmployee] = useState<Employee | undefined>(undefined);
     const { data: session } = useSession() as any;
+    const { prefixPath } = useRolePath();
     const isAdmin = session?.user?.role === "ADMIN";
 
     const columns: ColumnDef<any>[] = [
@@ -252,7 +254,13 @@ export function EmployeesTable({ data, onUpdate, onDelete, onToggleStatus, pagin
                         {table.getRowModel().rows.map((row) => (
                             <tr
                                 key={row.id}
-                                onClick={() => router.push(`/employees/${row.original.id}`)}
+                                onClick={(e) => {
+                                    const target = e.target as HTMLElement;
+                                    if (target.closest('button, a, [role="menuitem"], [role="button"], [role="checkbox"], .select-trigger')) {
+                                        return;
+                                    }
+                                    router.push(prefixPath(`/employees/${row.original.id}`));
+                                }}
                                 className="group hover:bg-muted/50 transition-colors border-b border-border last:border-0 cursor-pointer"
                             >
                                 {row.getVisibleCells().map((cell, index) => (
@@ -263,11 +271,6 @@ export function EmployeesTable({ data, onUpdate, onDelete, onToggleStatus, pagin
                                             ${index === 0 ? "pl-6" : ""}
                                             ${index === row.getVisibleCells().length - 1 ? "pr-6" : ""}
                                         `}
-                                        onClick={(e) => {
-                                            if ((e.target as HTMLElement).closest('button, a, [role="menuitem"], [role="button"]')) {
-                                                e.stopPropagation();
-                                            }
-                                        }}
                                     >
                                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                     </td>

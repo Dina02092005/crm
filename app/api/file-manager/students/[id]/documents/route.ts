@@ -1,19 +1,32 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { withPermission } from '@/lib/permissions';
 
-export async function GET(
-    req: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
-) {
+export const GET = withPermission('FILE_MANAGER', 'VIEW', async (req, { params, permission }) => {
     try {
-        const session = await getServerSession(authOptions) as any;
-        if (!session || !['ADMIN', 'MANAGER'].includes(session.user?.role)) {
-            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-        }
-
         const { id } = await params;
+
+        // Scope Check
+        if (permission.scope !== 'ALL') {
+            const student = await prisma.student.findUnique({
+                where: { id },
+                select: { counselorId: true, agentId: true, onboardedBy: true }
+            });
+
+            if (!student) {
+                return NextResponse.json({ message: 'Student not found' }, { status: 404 });
+            }
+
+            if (permission.scope === 'ASSIGNED') {
+                if (student.counselorId !== permission.user.id && student.agentId !== permission.user.id) {
+                    return NextResponse.json({ error: "Forbidden: Student not assigned to you" }, { status: 403 });
+                }
+            } else if (permission.scope === 'OWN') {
+                if (student.onboardedBy !== permission.user.id) {
+                    return NextResponse.json({ error: "Forbidden: You did not onboard this student" }, { status: 403 });
+                }
+            }
+        }
 
         const documents = await prisma.studentDocument.findMany({
             where: { studentId: id },
@@ -53,4 +66,4 @@ export async function GET(
         console.error('FILE_MANAGER_DOCS_ERROR:', error);
         return NextResponse.json({ message: error.message }, { status: 500 });
     }
-}
+});

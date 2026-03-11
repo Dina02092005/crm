@@ -24,6 +24,7 @@ import {
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSession } from "next-auth/react";
 import {
     User,
     Phone,
@@ -103,6 +104,7 @@ function ErrorMessage({ field }: { field: any }) {
 export function ConvertToStudentModal({ isOpen, onClose, lead, onSuccess }: ConvertToStudentModalProps) {
     const router = useRouter();
     const queryClient = useQueryClient();
+    const { data: session } = useSession() as any;
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [agents, setAgents] = useState<any[]>([]);
     const [counselors, setCounselors] = useState<any[]>([]);
@@ -111,10 +113,16 @@ export function ConvertToStudentModal({ isOpen, onClose, lead, onSuccess }: Conv
     useEffect(() => {
         if (!isOpen) return;
         axios.get("/api/agents")
-            .then(res => setAgents(res.data?.agents || res.data || []))
+            .then(res => {
+                const data = res.data?.agents || res.data?.data || res.data;
+                setAgents(Array.isArray(data) ? data : []);
+            })
             .catch(() => setAgents([]));
         axios.get("/api/counselors")
-            .then(res => setCounselors(res.data?.counselors || res.data || []))
+            .then(res => {
+                const data = res.data?.counselors || res.data?.data || res.data;
+                setCounselors(Array.isArray(data) ? data : []);
+            })
             .catch(() => setCounselors([]));
     }, [isOpen]);
 
@@ -132,8 +140,8 @@ export function ConvertToStudentModal({ isOpen, onClose, lead, onSuccess }: Conv
             passportExpiryDate: lead?.passportExpiryDate ? new Date(lead.passportExpiryDate).toISOString() : "",
             highestQualification: lead?.highestQualification || "",
             address: lead?.address || "",
-            agentId: "",
-            counselorId: "",
+            agentId: session?.user?.role === "AGENT" ? session.user.id : "",
+            counselorId: session?.user?.role === "COUNSELOR" ? session.user.id : "",
         } as ConvertToStudentFormData,
         validators: { onChange: formSchema },
         onSubmit: async ({ value }) => {
@@ -170,7 +178,7 @@ export function ConvertToStudentModal({ isOpen, onClose, lead, onSuccess }: Conv
         <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <DialogContent className="p-0 gap-0 sm:max-w-[640px] overflow-hidden rounded-2xl border-0 shadow-2xl">
                 {/* ── Gradient Header ── */}
-                <div className="bg-gradient-to-br from-blue-600 via-blue-500 to-cyan-500 px-6 pt-6 pb-8">
+                <div className="bg-primary px-6 pt-6 pb-8">
                     <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center">
                             <GraduationCap className="h-5 w-5 text-white" />
@@ -179,7 +187,7 @@ export function ConvertToStudentModal({ isOpen, onClose, lead, onSuccess }: Conv
                             <DialogTitle className="text-white text-lg font-bold leading-tight">
                                 Convert Lead to Student
                             </DialogTitle>
-                            <p className="text-blue-100 text-xs mt-0.5">
+                            <p className="text-primary-foreground/80 text-xs mt-0.5">
                                 Review and confirm details before converting <span className="font-semibold">{lead?.name}</span>
                             </p>
                         </div>
@@ -204,7 +212,7 @@ export function ConvertToStudentModal({ isOpen, onClose, lead, onSuccess }: Conv
                                 <FieldWrapper icon={User} label="Full Name" required>
                                     <Input value={field.state.value} onBlur={field.handleBlur}
                                         onChange={(e) => field.handleChange(e.target.value)}
-                                        className="h-9 rounded-xl bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-blue-500/50 text-sm" />
+                                        className="h-9 rounded-xl bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-primary/50 text-sm" />
                                     <ErrorMessage field={field} />
                                 </FieldWrapper>
                             )} />
@@ -212,7 +220,7 @@ export function ConvertToStudentModal({ isOpen, onClose, lead, onSuccess }: Conv
                                 <FieldWrapper icon={Mail} label="Email">
                                     <Input value={field.state.value || ""} onBlur={field.handleBlur}
                                         onChange={(e) => field.handleChange(e.target.value)} type="email"
-                                        className="h-9 rounded-xl bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-blue-500/50 text-sm" />
+                                        className="h-9 rounded-xl bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-primary/50 text-sm" />
                                     <ErrorMessage field={field} />
                                 </FieldWrapper>
                             )} />
@@ -220,7 +228,7 @@ export function ConvertToStudentModal({ isOpen, onClose, lead, onSuccess }: Conv
                                 <FieldWrapper icon={Phone} label="Phone" required>
                                     <Input value={field.state.value} onBlur={field.handleBlur}
                                         onChange={(e) => field.handleChange(e.target.value)}
-                                        className="h-9 rounded-xl bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-blue-500/50 text-sm" />
+                                        className="h-9 rounded-xl bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-primary/50 text-sm" />
                                     <ErrorMessage field={field} />
                                 </FieldWrapper>
                             )} />
@@ -228,7 +236,7 @@ export function ConvertToStudentModal({ isOpen, onClose, lead, onSuccess }: Conv
                                 <FieldWrapper icon={Phone} label="Alternate No">
                                     <Input value={field.state.value || ""} onBlur={field.handleBlur}
                                         onChange={(e) => field.handleChange(e.target.value)}
-                                        className="h-9 rounded-xl bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-blue-500/50 text-sm" />
+                                        className="h-9 rounded-xl bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-primary/50 text-sm" />
                                 </FieldWrapper>
                             )} />
                             <form.Field name="dateOfBirth" children={(field) => (
@@ -241,7 +249,7 @@ export function ConvertToStudentModal({ isOpen, onClose, lead, onSuccess }: Conv
                             <form.Field name="gender" children={(field) => (
                                 <FieldWrapper icon={User} label="Gender">
                                     <Select value={field.state.value} onValueChange={(v) => field.handleChange(v)}>
-                                        <SelectTrigger className="h-9 rounded-xl bg-muted/50 border-0 focus:ring-2 focus:ring-blue-500/50 text-sm">
+                                        <SelectTrigger className="h-9 rounded-xl bg-muted/50 border-0 focus:ring-2 focus:ring-primary/50 text-sm">
                                             <SelectValue placeholder="Select gender" />
                                         </SelectTrigger>
                                         <SelectContent>
@@ -256,14 +264,14 @@ export function ConvertToStudentModal({ isOpen, onClose, lead, onSuccess }: Conv
                                 <FieldWrapper label="Nationality">
                                     <Input value={field.state.value || ""} onBlur={field.handleBlur}
                                         onChange={(e) => field.handleChange(e.target.value)}
-                                        className="h-9 rounded-xl bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-blue-500/50 text-sm" />
+                                        className="h-9 rounded-xl bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-primary/50 text-sm" />
                                 </FieldWrapper>
                             )} />
                             <form.Field name="highestQualification" children={(field) => (
                                 <FieldWrapper icon={BookOpen} label="Highest Qualification">
                                     <Input value={field.state.value || ""} onBlur={field.handleBlur}
                                         onChange={(e) => field.handleChange(e.target.value)}
-                                        className="h-9 rounded-xl bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-blue-500/50 text-sm" />
+                                        className="h-9 rounded-xl bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-primary/50 text-sm" />
                                 </FieldWrapper>
                             )} />
                         </div>
@@ -275,7 +283,7 @@ export function ConvertToStudentModal({ isOpen, onClose, lead, onSuccess }: Conv
                                 <FieldWrapper icon={IdCard} label="Passport No">
                                     <Input value={field.state.value || ""} onBlur={field.handleBlur}
                                         onChange={(e) => field.handleChange(e.target.value)}
-                                        className="h-9 rounded-xl bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-blue-500/50 text-sm" />
+                                        className="h-9 rounded-xl bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-primary/50 text-sm" />
                                 </FieldWrapper>
                             )} />
                             <form.Field name="passportIssueDate" children={(field) => (
@@ -299,7 +307,7 @@ export function ConvertToStudentModal({ isOpen, onClose, lead, onSuccess }: Conv
                             <FieldWrapper icon={MapPin} label="Address">
                                 <Input value={field.state.value || ""} onBlur={field.handleBlur}
                                     onChange={(e) => field.handleChange(e.target.value)}
-                                    className="h-9 rounded-xl bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-blue-500/50 text-sm" />
+                                    className="h-9 rounded-xl bg-muted/50 border-0 focus-visible:ring-2 focus-visible:ring-primary/50 text-sm" />
                             </FieldWrapper>
                         )} />
 
@@ -309,12 +317,12 @@ export function ConvertToStudentModal({ isOpen, onClose, lead, onSuccess }: Conv
                             <form.Field name="agentId" children={(field) => (
                                 <FieldWrapper icon={Briefcase} label="Assign Agent">
                                     <Select value={field.state.value || ""} onValueChange={(v) => field.handleChange(v === "__none__" ? "" : v)}>
-                                        <SelectTrigger className="h-9 rounded-xl bg-muted/50 border-0 focus:ring-2 focus:ring-blue-500/50 text-sm">
+                                        <SelectTrigger className="h-9 rounded-xl bg-muted/50 border-0 focus:ring-2 focus:ring-primary/50 text-sm">
                                             <SelectValue placeholder="Select agent (optional)" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="__none__">None</SelectItem>
-                                            {agents.map((a: any) => (
+                                            {(Array.isArray(agents) ? agents : []).map((a: any) => (
                                                 <SelectItem key={a.id} value={a.id}>
                                                     {a.name}
                                                     {a.agentProfile?.companyName ? ` — ${a.agentProfile.companyName}` : ""}
@@ -327,12 +335,12 @@ export function ConvertToStudentModal({ isOpen, onClose, lead, onSuccess }: Conv
                             <form.Field name="counselorId" children={(field) => (
                                 <FieldWrapper icon={UserCheck} label="Assign Counselor">
                                     <Select value={field.state.value || ""} onValueChange={(v) => field.handleChange(v === "__none__" ? "" : v)}>
-                                        <SelectTrigger className="h-9 rounded-xl bg-muted/50 border-0 focus:ring-2 focus:ring-blue-500/50 text-sm">
+                                        <SelectTrigger className="h-9 rounded-xl bg-muted/50 border-0 focus:ring-2 focus:ring-primary/50 text-sm">
                                             <SelectValue placeholder="Select counselor (optional)" />
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="__none__">None</SelectItem>
-                                            {counselors.map((c: any) => (
+                                            {(Array.isArray(counselors) ? counselors : []).map((c: any) => (
                                                 <SelectItem key={c.id} value={c.id}>
                                                     {c.name}
                                                 </SelectItem>
@@ -360,7 +368,7 @@ export function ConvertToStudentModal({ isOpen, onClose, lead, onSuccess }: Conv
                                     <Button
                                         type="submit"
                                         disabled={!canSubmit || isSubmitting}
-                                        className="h-9 rounded-xl px-5 text-sm bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 text-white shadow-md shadow-blue-500/30 border-0"
+                                        className="h-9 rounded-xl px-5 text-sm bg-primary hover:bg-primary/90 text-primary-foreground shadow-sm"
                                     >
                                         {isSubmitting ? (
                                             <><Loader2 className="h-4 w-4 animate-spin mr-2" />Converting...</>

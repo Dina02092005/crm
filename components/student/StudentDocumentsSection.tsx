@@ -89,8 +89,8 @@ export default function StudentDocumentsSection({ studentId, interestedCountry }
 
     const fetchCountries = async () => {
         try {
-            const res = await axios.get(`/api/master/countries`);
-            setCountries(res.data);
+            const res = await axios.get(`/api/master/countries?limit=100`);
+            setCountries(res.data.countries || []);
         } catch (e) {
             console.error("Failed to load countries", e);
         }

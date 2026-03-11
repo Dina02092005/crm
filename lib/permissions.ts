@@ -98,30 +98,13 @@ export async function checkPermission(
         // Role-enum based fallbacks (Internal Staff Defaults)
         const ROLE_DEFAULTS: Record<string, { actions: string[]; scope: PermissionScope }> = {
             MANAGER: { actions: ["VIEW", "CREATE", "EDIT", "DELETE", "APPROVE", "DOWNLOAD"], scope: "ALL" },
-            AGENT: { actions: ["VIEW", "CREATE", "EDIT"], scope: "ASSIGNED" },
-            COUNSELOR: { actions: ["VIEW", "CREATE", "EDIT"], scope: "ASSIGNED" },
+            AGENT: { actions: ["VIEW", "CREATE", "EDIT", "DOWNLOAD"], scope: "ASSIGNED" },
+            COUNSELOR: { actions: ["VIEW", "CREATE", "EDIT", "DOWNLOAD"], scope: "ASSIGNED" },
             SALES_REP: { actions: ["VIEW", "CREATE", "EDIT"], scope: "ASSIGNED" },
             SUPPORT_AGENT: { actions: ["VIEW", "CREATE", "EDIT"], scope: "ASSIGNED" },
             EMPLOYEE: { actions: ["VIEW", "CREATE", "EDIT"], scope: "OWN" },
             STUDENT: { actions: ["VIEW"], scope: "OWN" },
         };
-
-        // If user has a roleProfile, use it (fine-grained permissions)
-        if (user.roleProfile && user.roleProfile.isActive) {
-            const modulePermission = user.roleProfile.permissions.find(p => p.module === module);
-            if (modulePermission) {
-                if (modulePermission.actions.includes(action)) {
-                    return {
-                        hasPermission: true,
-                        scope: modulePermission.scope as PermissionScope,
-                        user
-                    };
-                } else {
-                    return { hasPermission: false, scope: "OWN", user };
-                }
-            }
-            // If module permission is not FOUND in the profile, fall through to defaults
-        }
 
         // Fallback: use role-enum defaults
         const userRole = (user.role || "").toUpperCase();

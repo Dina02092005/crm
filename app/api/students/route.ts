@@ -102,6 +102,12 @@ export const GET = withPermission('STUDENTS', 'VIEW', async (req, { permission }
                             interestedCountry: true,
                         },
                     },
+                    agent: {
+                        select: { id: true, name: true, email: true }
+                    },
+                    counselor: {
+                        select: { id: true, name: true, email: true }
+                    },
                     _count: {
                         select: {
                             applications: true

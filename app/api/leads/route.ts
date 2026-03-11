@@ -173,6 +173,15 @@ export const POST = withPermission('LEADS', 'CREATE', async (req, { permission }
                 createdById: permission.user.id,
                 status: body.status || 'NEW',
                 temperature: body.temperature || 'COLD',
+                // Automatically assign leads created by Counselors or Agents to themselves
+                ...( (permission.user.role === 'COUNSELOR' || permission.user.role === 'AGENT') ? {
+                    assignments: {
+                        create: {
+                            assignedTo: permission.user.id,
+                            assignedBy: permission.user.id,
+                        }
+                    }
+                } : {})
             },
         });
 

@@ -50,56 +50,62 @@ export function MoveToVisaModal({
 
     useEffect(() => {
         if (isOpen) {
-            fetchAgents();
+            fetchAllStaff();
         } else {
             setFormData({ agentId: "", counselorId: "", appointmentDate: "" });
             setCounselors([]);
+            setAgents([]);
         }
     }, [isOpen]);
 
-    const fetchAgents = async () => {
+    const fetchAllStaff = async () => {
         setIsLoadingStaff(true);
         try {
-            const res = await axios.get("/api/employees?role=AGENT&limit=100");
-            setAgents(res.data.employees || []);
+            const [agentsRes, counselorsRes] = await Promise.all([
+                axios.get("/api/employees?role=AGENT&limit=100"),
+                axios.get("/api/employees?role=COUNSELOR&limit=100")
+            ]);
+            setAgents(agentsRes.data.employees || []);
+            setCounselors(counselorsRes.data.employees || []);
         } catch (error) {
-            console.error("Failed to fetch agents:", error);
-            toast.error("Failed to load agents list");
+            console.error("Failed to fetch staff:", error);
+            toast.error("Failed to load staff list");
         } finally {
             setIsLoadingStaff(false);
         }
     };
 
-    const fetchCounselors = async (agentId: string) => {
+    const fetchCounselorsForAgent = async (agentId: string) => {
+        if (!agentId) {
+            // Restore all counselors if agent is cleared
+            const res = await axios.get("/api/employees?role=COUNSELOR&limit=100");
+            setCounselors(res.data.employees || []);
+            return;
+        }
         setIsLoadingStaff(true);
         try {
-            // Fetch counselors belonging to this agent
             const res = await axios.get(`/api/employees?role=COUNSELOR&agentId=${agentId}&limit=100`);
             setCounselors(res.data.employees || []);
         } catch (error) {
             console.error("Failed to fetch counselors:", error);
-            toast.error("Failed to load counselors list");
         } finally {
             setIsLoadingStaff(false);
         }
     };
 
     const handleAgentChange = (val: string) => {
-        setFormData(prev => ({ ...prev, agentId: val, counselorId: "" }));
-        fetchCounselors(val);
+        const agentId = val === "none" ? "" : val;
+        setFormData(prev => ({ ...prev, agentId, counselorId: "" }));
+        fetchCounselorsForAgent(agentId);
     };
 
     const handleSave = async () => {
         if (!application) return;
-        if (!formData.agentId) {
-            toast.error("Please select an Agent");
-            return;
-        }
 
         setIsSubmitting(true);
         try {
             await axios.post(`/api/applications/${application.id}/ready-for-visa`, {
-                agentId: formData.agentId,
+                agentId: formData.agentId || null,
                 counselorId: formData.counselorId || null,
                 appointmentDate: formData.appointmentDate || null
             });
@@ -139,13 +145,14 @@ export function MoveToVisaModal({
                     <div className="space-y-4">
                         <div className="space-y-2">
                             <Label className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-2">
-                                <User className="h-3 w-3" /> Select Agent*
+                                <User className="h-3 w-3" /> Select Agent (Optional)
                             </Label>
-                            <Select value={formData.agentId} onValueChange={handleAgentChange}>
+                            <Select value={formData.agentId || "none"} onValueChange={handleAgentChange}>
                                 <SelectTrigger className="rounded-xl h-11">
                                     <SelectValue placeholder={isLoadingStaff ? "Loading..." : "Select Agent"} />
                                 </SelectTrigger>
                                 <SelectContent className="rounded-xl">
+                                    <SelectItem value="none" className="text-muted-foreground italic">None / Unset</SelectItem>
                                     {agents.map(a => (
                                         <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
                                     ))}
@@ -158,14 +165,15 @@ export function MoveToVisaModal({
                                 <Users className="h-3 w-3" /> Select Counselor (Optional)
                             </Label>
                             <Select
-                                value={formData.counselorId}
-                                onValueChange={(val) => setFormData(prev => ({ ...prev, counselorId: val }))}
-                                disabled={!formData.agentId || counselors.length === 0}
+                                value={formData.counselorId || "none"}
+                                onValueChange={(val) => setFormData(prev => ({ ...prev, counselorId: val === "none" ? "" : val }))}
+                                disabled={isLoadingStaff}
                             >
                                 <SelectTrigger className="rounded-xl h-11">
-                                    <SelectValue placeholder={!formData.agentId ? "Select an agent first" : counselors.length === 0 ? "No counselors for this agent" : "Select Counselor"} />
+                                    <SelectValue placeholder={isLoadingStaff ? "Loading..." : "Select Counselor"} />
                                 </SelectTrigger>
                                 <SelectContent className="rounded-xl">
+                                    <SelectItem value="none" className="text-muted-foreground italic">None / Unset</SelectItem>
                                     {counselors.map(c => (
                                         <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                                     ))}
@@ -191,7 +199,7 @@ export function MoveToVisaModal({
                     </Button>
                     <Button
                         onClick={handleSave}
-                        disabled={isSubmitting || !formData.agentId}
+                        disabled={isSubmitting}
                         className="rounded-xl h-11 px-8 bg-primary hover:bg-primary/90 font-bold shadow-lg shadow-primary/20 transition-all active:scale-95"
                     >
                         {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Plane className="h-4 w-4 mr-2" />}

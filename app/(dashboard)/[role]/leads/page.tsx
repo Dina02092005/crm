@@ -23,6 +23,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { FilterX } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export default function LeadsPage() {
     const [search, setSearch] = useState("");
@@ -63,124 +64,94 @@ export default function LeadsPage() {
     const totalPages = data?.pagination.totalPages || 0;
     const totalLeads = data?.pagination.total || 0;
 
-    // Reset page when search or status changes
     useEffect(() => {
         setPage(1);
     }, [debouncedSearch, status, assignedTo, interestedCountry, highestQualification, interest, source, fromDate, toDate]);
 
-
     const { data: leadStats } = useLeadStats();
 
-    // Map stats to filter IDs
     const getCount = (id: string) => {
         if (!leadStats) return 0;
         return leadStats[id as keyof typeof leadStats] || 0;
     };
 
+    const hasFilters = assignedTo !== "ALL" || interestedCountry !== "ALL" || highestQualification !== "ALL" || interest !== "ALL" || source !== "ALL" || fromDate || toDate;
+
     return (
-        <div className="flex flex-col gap-3 p-3 sm:p-4">
-            <Card className="border-0 rounded-3xl overflow-hidden bg-card">
-                <CardContent className="p-4">
-                    {/* Integrated Search and Action Row */}
-                    <div className="flex flex-row items-center justify-between gap-2">
-                        <div className="relative max-w-sm w-full">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
+        <div className="flex flex-col gap-6 p-4 md:p-8 max-w-[1600px] mx-auto w-full">
+            {/* Header Section */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-semibold tracking-tight">Leads</h1>
+                    <p className="text-sm text-muted-foreground mt-1">
+                        Manage and track your potential students and inquiries.
+                    </p>
+                </div>
+                <div className="flex items-center gap-3">
+                    {role === "ADMIN" && <BulkUploadLeadsButton onSuccess={refetch} />}
+                    <Link href={prefixPath("/leads/new")}>
+                        <Button className="h-10 px-4 gap-2 font-medium">
+                            <Plus className="h-4 w-4" /> Add Lead
+                        </Button>
+                    </Link>
+                </div>
+            </div>
+
+            {/* Filter & Actions Bar */}
+            <div className="space-y-4">
+                <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between border-b pb-4">
+                    <div className="flex flex-wrap items-center gap-3 flex-1">
+                        <div className="relative w-full sm:w-80">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input
-                                placeholder="Search by name, email, or phone..."
+                                placeholder="Search leads..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="pl-9 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-9 text-[13px] placeholder:text-muted-foreground/40 font-sans w-full"
-                            />
-                        </div>
-                        <div className="flex items-center gap-2">
-                            {role === "ADMIN" && <BulkUploadLeadsButton onSuccess={refetch} />}
-                            <Link href={prefixPath("/leads/new")}>
-                                <Button className="bg-[#10B981] hover:bg-[#059669] text-white rounded-xl h-9 px-4 text-[13px] font-bold shadow-sm flex items-center gap-2">
-                                    <Plus className="h-4 w-4" /> Add Lead
-                                </Button>
-                            </Link>
-                        </div>
-                    </div>
-
-                    {/* Advanced Filters */}
-                    <div className="flex flex-wrap items-center gap-2 mt-4 mb-2">
-                        <div className="w-full sm:w-[150px]">
-                            <Select value={assignedTo} onValueChange={setAssignedTo}>
-                                <SelectTrigger className="h-9 text-[11px] rounded-xl bg-muted/50 border-0 focus:ring-0">
-                                    <SelectValue placeholder="Assigned To" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="ALL">All Counselors</SelectItem>
-                                    {counselors?.map((c: any) => (
-                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="w-full sm:w-[150px]">
-                            <Select value={interestedCountry} onValueChange={setInterestedCountry}>
-                                <SelectTrigger className="h-9 text-[11px] rounded-xl bg-muted/50 border-0 focus:ring-0">
-                                    <SelectValue placeholder="Country" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="ALL">All Countries</SelectItem>
-                                    {countries?.countries?.map((c: any) => (
-                                        <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="w-full sm:w-[150px]">
-                            <Select value={interest} onValueChange={setInterest}>
-                                <SelectTrigger className="h-9 text-[11px] rounded-xl bg-muted/50 border-0 focus:ring-0">
-                                    <SelectValue placeholder="Interest" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="ALL">All Interests</SelectItem>
-                                    <SelectItem value="STUDY_ABROAD">Study Abroad</SelectItem>
-                                    <SelectItem value="SKILL_DEVELOPMENT">Skill Development</SelectItem>
-                                    <SelectItem value="LOAN">Loan</SelectItem>
-                                    <SelectItem value="MBBS">MBBS</SelectItem>
-                                    <SelectItem value="OTHER">Other</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="w-full sm:w-[150px]">
-                            <Select value={source} onValueChange={setSource}>
-                                <SelectTrigger className="h-9 text-[11px] rounded-xl bg-muted/50 border-0 focus:ring-0">
-                                    <SelectValue placeholder="Source" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="ALL">All Sources</SelectItem>
-                                    {["Google", "Facebook", "Instagram", "WhatsApp", "Referral", "Other"].map((s) => (
-                                        <SelectItem key={s} value={s}>{s}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="w-full sm:w-[140px]">
-                            <Input
-                                type="date"
-                                value={fromDate}
-                                onChange={(e) => setFromDate(e.target.value)}
-                                className="h-9 text-[11px] rounded-xl bg-muted/50 border-0 focus:ring-0"
+                                className="pl-9 h-10 w-full bg-background"
                             />
                         </div>
 
-                        <div className="w-full sm:w-[140px]">
-                            <Input
-                                type="date"
-                                value={toDate}
-                                onChange={(e) => setToDate(e.target.value)}
-                                className="h-9 text-[11px] rounded-xl bg-muted/50 border-0 focus:ring-0"
-                            />
-                        </div>
+                        <Select value={status} onValueChange={setStatus}>
+                            <SelectTrigger className="h-10 w-[140px]">
+                                <SelectValue placeholder="Status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="ALL">All Status</SelectItem>
+                                <SelectItem value="NEW">New</SelectItem>
+                                <SelectItem value="UNDER_REVIEW">Under Review</SelectItem>
+                                <SelectItem value="CONTACTED">Contacted</SelectItem>
+                                <SelectItem value="CONVERTED">Converted</SelectItem>
+                                <SelectItem value="CLOSED">Closed</SelectItem>
+                            </SelectContent>
+                        </Select>
 
-                        {(assignedTo !== "ALL" || interestedCountry !== "ALL" || highestQualification !== "ALL" || interest !== "ALL" || source !== "ALL" || fromDate || toDate) && (
+                        <Select value={assignedTo} onValueChange={setAssignedTo}>
+                            <SelectTrigger className="h-10 w-[180px]">
+                                <SelectValue placeholder="Assigned To" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="ALL">All Counselors</SelectItem>
+                                {counselors?.map((c: any) => (
+                                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+
+                        <Select value={interest} onValueChange={setInterest}>
+                            <SelectTrigger className="h-10 w-[160px]">
+                                <SelectValue placeholder="Interest" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="ALL">All Interests</SelectItem>
+                                <SelectItem value="STUDY_ABROAD">Study Abroad</SelectItem>
+                                <SelectItem value="SKILL_DEVELOPMENT">Skill Development</SelectItem>
+                                <SelectItem value="LOAN">Loan</SelectItem>
+                                <SelectItem value="MBBS">MBBS</SelectItem>
+                                <SelectItem value="OTHER">Other</SelectItem>
+                            </SelectContent>
+                        </Select>
+
+                        {hasFilters && (
                             <Button
                                 variant="ghost"
                                 size="sm"
@@ -193,71 +164,75 @@ export default function LeadsPage() {
                                     setFromDate("");
                                     setToDate("");
                                 }}
-                                className="h-8 text-[11px] text-muted-foreground hover:text-destructive gap-1"
+                                className="h-10 px-3 text-muted-foreground hover:text-foreground"
                             >
-                                <FilterX className="h-3 w-3" /> Clear
+                                <FilterX className="h-4 w-4 mr-2" /> Reset
                             </Button>
                         )}
                     </div>
+                </div>
 
-                    {/* Filter Pills */}
-                    <div className="flex flex-wrap gap-2 mt-3 mb-4">
-                        {[
-                            { id: "ALL", label: "All", color: "text-primary", bg: "bg-primary/10" },
-                            { id: "NEW", label: "New", color: "text-primary", bg: "bg-primary/10" },
-                            { id: "ASSIGNED", label: "Assigned", color: "text-blue-500", bg: "bg-blue-500/10" },
-                            { id: "IN_PROGRESS", label: "In Progress", color: "text-indigo-500", bg: "bg-indigo-500/10" },
-                            { id: "FOLLOW_UP", label: "Follow Up", color: "text-orange-500", bg: "bg-orange-500/10" },
-                            { id: "CONVERTED", label: "Converted", color: "text-emerald-500", bg: "bg-emerald-500/10" },
-                            { id: "LOST", label: "Lost", color: "text-gray-500", bg: "bg-gray-500/10" },
-                        ].map((f) => (
+                {/* Status Pills */}
+                <div className="flex flex-wrap gap-2">
+                    {[
+                        { id: "ALL", label: "All" },
+                        { id: "NEW", label: "New" },
+                        { id: "ASSIGNED", label: "Assigned" },
+                        { id: "IN_PROGRESS", label: "In Progress" },
+                        { id: "FOLLOW_UP", label: "Follow Up" },
+                        { id: "CONVERTED", label: "Converted" },
+                        { id: "LOST", label: "Lost" },
+                    ].map((f) => {
+                        const active = status === f.id;
+                        return (
                             <button
                                 key={f.id}
                                 onClick={() => setStatus(f.id)}
-                                className={`
-                                    px-3 py-1 rounded-lg flex items-center gap-2 transition-all
-                                    ${status === f.id
-                                        ? `${f.bg} shadow-sm ring-1 ring-inset ${f.color.replace('text-', 'ring-')}/30`
-                                        : "bg-muted/50 hover:bg-muted text-muted-foreground"
-                                    }
-                                `}
+                                className={cn(
+                                    "px-4 py-1.5 text-sm font-medium rounded-full border transition-colors",
+                                    active 
+                                        ? "bg-primary text-primary-foreground border-primary"
+                                        : "bg-background text-muted-foreground border-input hover:bg-muted"
+                                )}
                             >
-                                <div className="flex items-center gap-1.5">
-                                    <span className={`text-[10px] font-bold uppercase tracking-wider ${status === f.id ? f.color : "text-muted-foreground"}`}>
-                                        {f.label}
-                                    </span>
-                                    <span className={`text-[10px] font-bold ${status === f.id ? f.color : "text-muted-foreground/70"}`}>
-                                        ({getCount(f.id)})
-                                    </span>
-                                </div>
+                                {f.label}
+                                <span className={cn(
+                                    "ml-2 text-xs opacity-70",
+                                    active ? "text-primary-foreground" : "text-muted-foreground"
+                                )}>
+                                    {getCount(f.id)}
+                                </span>
                             </button>
-                        ))}
-                    </div>
+                        );
+                    })}
+                </div>
+            </div>
 
-                    {isLoading ? (
-                        <div className="space-y-4">
-                            <Skeleton className="h-12 w-full rounded-xl" />
-                            <Skeleton className="h-20 w-full rounded-xl" />
-                            <Skeleton className="h-20 w-full rounded-xl" />
-                        </div>
-                    ) : (
-                        <LeadsTable
-                            data={leads}
-                            onUpdate={refetch}
-                            pagination={{
-                                page,
-                                totalPages,
-                                pageSize: limit,
-                                onPageChange: setPage,
-                                onPageSizeChange: (newLimit) => {
-                                    setLimit(newLimit);
-                                    setPage(1);
-                                }
-                            }}
-                        />
-                    )}
-                </CardContent>
-            </Card>
+            {/* Table Section */}
+            <div className="bg-background rounded-lg border shadow-sm overflow-hidden">
+                {isLoading ? (
+                    <div className="p-8 space-y-4">
+                        <Skeleton className="h-12 w-full" />
+                        <Skeleton className="h-12 w-full" />
+                        <Skeleton className="h-12 w-full" />
+                    </div>
+                ) : (
+                    <LeadsTable
+                        data={leads}
+                        onUpdate={refetch}
+                        pagination={{
+                            page,
+                            totalPages,
+                            pageSize: limit,
+                            onPageChange: setPage,
+                            onPageSizeChange: (newLimit) => {
+                                setLimit(newLimit);
+                                setPage(1);
+                            }
+                        }}
+                    />
+                )}
+            </div>
         </div>
     );
 }

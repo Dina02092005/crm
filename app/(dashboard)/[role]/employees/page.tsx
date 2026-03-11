@@ -101,7 +101,7 @@ export default function CounselorsPage() {
     return (
         <div className="flex flex-col gap-2 p-3 sm:p-4">
             <div className="flex items-center justify-between mb-2 px-1">
-                <h1 className="text-xl font-bold tracking-tight text-gray-900">Counselors Management</h1>
+                {/* <h1 className="text-xl font-bold tracking-tight text-gray-900">Counselors Management</h1> */}
             </div>
 
             <Card className="border-0 rounded-3xl overflow-hidden bg-card shadow-sm border-gray-100">

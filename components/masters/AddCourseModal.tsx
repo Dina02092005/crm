@@ -92,8 +92,8 @@ export function AddCourseModal({
 
     const fetchCountries = async () => {
         try {
-            const res = await axios.get("/api/master/countries");
-            setCountries(res.data);
+            const res = await axios.get("/api/master/countries?limit=100");
+            setCountries(res.data.countries || []);
         } catch (error) {
             console.error("Error fetching countries:", error);
         }

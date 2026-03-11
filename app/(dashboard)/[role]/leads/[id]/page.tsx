@@ -77,6 +77,7 @@ import { ConvertToStudentModal } from "@/components/dashboard/ConvertToStudentMo
 import { CallHistoryList } from "@/components/calls/CallHistoryList";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { AssignLeadSheet } from "@/components/dashboard/AssignLeadSheet";
 import { cn } from "@/lib/utils";
 
 
@@ -90,7 +91,6 @@ export default function LeadDetailPage() {
     const [lead, setLead] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(true);
     const [activeTab, setActiveTab] = useState("profile");
-    const [employees, setEmployees] = useState<any[]>([]);
 
     // DateTimePicker states
     const [taskDueDate, setTaskDueDate] = useState<Date | undefined>();
@@ -208,29 +208,6 @@ export default function LeadDetailPage() {
         }
     };
 
-    const fetchEmployees = async () => {
-        if (session?.user?.role === 'ADMIN' || session?.user?.role === 'MANAGER') {
-            try {
-                const response = await axios.get('/api/employees');
-                setEmployees(response.data.employees || []);
-            } catch (error) {
-                console.error("Failed to fetch employees");
-            }
-        }
-    };
-
-    const handleAssign = async (employeeId: string) => {
-        setIsAssigning(true);
-        try {
-            await axios.patch(`/api/leads/${params.id}`, { assignedTo: employeeId });
-            toast.success("Lead assigned successfully");
-            fetchLead();
-        } catch (error) {
-            toast.error("Failed to assign lead");
-        } finally {
-            setIsAssigning(false);
-        }
-    };
 
     const handleLogActivity = async (type: string, content: string, updateLead: boolean = false) => {
         setIsLogging(true);
@@ -382,11 +359,6 @@ export default function LeadDetailPage() {
     useEffect(() => {
         fetchLead();
     }, [params.id]);
-
-
-    useEffect(() => {
-        if (session) fetchEmployees();
-    }, [session]);
 
     useEffect(() => {
         if (activeTab === "followups") {
@@ -1826,51 +1798,14 @@ export default function LeadDetailPage() {
                 </DialogContent>
             </Dialog>
 
-            {/* Assign Employee Dialog */}
-            <Dialog open={isAssigning} onOpenChange={setIsAssigning}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle>Assign Lead</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-4 py-4">
-                        <p className="text-sm text-muted-foreground">Select an employee to assign this lead to.</p>
-                        <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
-                            {employees.length > 0 ? (
-                                employees.map((emp: any) => (
-                                    <button
-                                        key={emp.id}
-                                        onClick={() => handleAssign(emp.id)}
-                                        className="w-full h-auto p-3 flex items-center justify-between rounded-xl border border-border bg-card hover:bg-muted/50 transition-colors text-left"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
-                                                {emp.name.charAt(0)}
-                                            </div>
-                                            <div>
-                                                <p className="text-sm font-medium leading-none">{emp.name}</p>
-                                                <p className="text-xs text-muted-foreground mt-0.5">{emp.email}</p>
-                                            </div>
-                                        </div>
-                                        {lead.assignments?.[lead.assignments.length - 1]?.assignedTo === emp.id && (
-                                            <Badge variant="secondary" className="text-[10px]">Current</Badge>
-                                        )}
-                                    </button>
-                                ))
-                            ) : (
-                                <p className="text-sm text-muted-foreground italic text-center py-4">No employees found.</p>
-                            )}
-                        </div>
-                    </div>
-                    <DialogFooter>
-                        <Button
-                            variant="outline"
-                            onClick={() => setIsAssigning(false)}
-                        >
-                            Cancel
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+            {/* Assign Employee Drawer */}
+            <AssignLeadSheet
+                isOpen={isAssigning}
+                onClose={() => setIsAssigning(false)}
+                leadId={lead?.id || null}
+                leadName={leadName}
+                onAssign={fetchLead}
+            />
 
             <ConfirmDialog
                 isOpen={confirmConfig.isOpen}
