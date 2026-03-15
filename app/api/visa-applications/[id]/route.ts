@@ -64,6 +64,28 @@ export async function PATCH(
         if (updateData.decisionDate) updateData.decisionDate = new Date(updateData.decisionDate);
         if (updateData.expiryDate) updateData.expiryDate = new Date(updateData.expiryDate);
 
+        // Auto-assign when moving to ENROLLED or DEFERRED
+        if (updateData.status && ["DEFERRED", "ENROLLED"].includes(updateData.status as string)) {
+            if (session.user.role === 'COUNSELOR') {
+                updateData.counselorId = session.user.id;
+                const counselor = await prisma.counselorProfile.findUnique({
+                    where: { userId: session.user.id },
+                    select: { agentId: true }
+                });
+                if (counselor && counselor.agentId) {
+                    const agent = await prisma.agentProfile.findUnique({ where: { id: counselor.agentId }});
+                    if (agent) updateData.agentId = agent.userId;
+                }
+            } else if (session.user.role === 'AGENT') {
+                updateData.agentId = session.user.id;
+            }
+        }
+
+        // Handle explicit nulls for unassignments
+        if (updateData.agentId === null) updateData.agentId = null;
+        if (updateData.counselorId === null) updateData.counselorId = null;
+        if (updateData.assignedOfficerId === null) updateData.assignedOfficerId = null;
+
         const visaApplication = await prisma.visaApplication.update({
             where: { id },
             data: updateData,
@@ -75,9 +97,19 @@ export async function PATCH(
 
         // Sync status to UniversityApplication if it's FINAL stages
         if (["DEFERRED", "ENROLLED"].includes(visaApplication.status) && visaApplication.universityApplicationId) {
+            const uniAppUpdateData: any = { 
+                status: visaApplication.status as any 
+            };
+            
+            // Sync assignment so the Univ App remains visible in their dashboard
+            if (visaApplication.counselorId || visaApplication.agentId) {
+                uniAppUpdateData.assignedToId = visaApplication.counselorId || visaApplication.agentId;
+                uniAppUpdateData.assignedById = session.user.id;
+            }
+
             await prisma.universityApplication.update({
                 where: { id: visaApplication.universityApplicationId },
-                data: { status: visaApplication.status as any }
+                data: uniAppUpdateData
             });
 
             // Steps 4 & 5: Notify based on final status

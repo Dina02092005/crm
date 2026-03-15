@@ -92,8 +92,8 @@ function VisaApplicationsPageContent({ role }: { role: string }) {
                         {[
                             { id: "ALL", label: "All", color: "text-primary", bg: "bg-primary/10" },
                             { id: "PENDING", label: "Pending", color: "text-amber-600", bg: "bg-amber-600/10" },
-                            { id: "FILE_SUBMITTED", label: "Submitted", color: "text-blue-600", bg: "bg-blue-600/10" },
-                            { id: "PROCESS", label: "In Process", color: "text-indigo-600", bg: "bg-indigo-600/10" },
+                            { id: "VISA_APPLICATION_SUBMITTED", label: "Submitted", color: "text-blue-600", bg: "bg-blue-600/10" },
+                            { id: "VISA_APPLICATION_IN_PROGRESS", label: "In Process", color: "text-indigo-600", bg: "bg-indigo-600/10" },
                             { id: "VISA_APPROVED", label: "Approved", color: "text-emerald-600", bg: "bg-emerald-600/10" },
                             { id: "VISA_REJECTED", label: "Rejected", color: "text-rose-600", bg: "bg-rose-600/10" },
                             { id: "VISA_REFUSED", label: "Refused", color: "text-red-700", bg: "bg-red-700/10" },

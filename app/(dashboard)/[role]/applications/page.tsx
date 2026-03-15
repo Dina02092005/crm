@@ -284,7 +284,7 @@ function ApplicationsPageContent({ role }: { role: string }) {
                         {[
                             { id: "ALL", label: "All", color: "text-primary", bg: "bg-primary/10" },
                             { id: "PENDING", label: "Pending", color: "text-amber-600", bg: "bg-amber-600/10" },
-                            { id: "APPROVED", label: "Approved", color: "text-emerald-600", bg: "bg-emerald-600/10" },
+                            { id: "FINALIZED", label: "Approved", color: "text-emerald-600", bg: "bg-emerald-600/10" },
                             { id: "READY_FOR_VISA", label: "Ready for Visa", color: "text-orange-600", bg: "bg-orange-600/10" },
                             { id: "DEFERRED", label: "Deferred", color: "text-pink-600", bg: "bg-pink-600/10" },
                             { id: "ENROLLED", label: "Enrolled", color: "text-cyan-600", bg: "bg-cyan-600/10" },

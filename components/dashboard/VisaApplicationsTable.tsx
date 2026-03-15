@@ -52,6 +52,9 @@ import { format } from "date-fns";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 
+import { AssignVisaApplicationSheet } from "./AssignVisaApplicationSheet";
+import { useState } from "react";
+
 interface VisaApplicationsTableProps {
     data: any[];
     onUpdate: () => void;
@@ -86,6 +89,7 @@ export function VisaApplicationsTable({
     const router = useRouter();
     const { prefixPath } = useRolePath();
     const updateMutation = useUpdateVisaApplication();
+    const [assignApp, setAssignApp] = useState<any>(null);
 
     const getStatusVariant = (status: VisaStatus) => {
         const variants: Record<string, string> = {
@@ -121,6 +125,7 @@ export function VisaApplicationsTable({
                         <TableHead className="w-[300px] pl-6 font-bold uppercase text-[10px] tracking-widest text-slate-400">Student & Visa Type</TableHead>
                         <TableHead className="font-bold uppercase text-[10px] tracking-widest text-slate-400">Destination</TableHead>
                         <TableHead className="font-bold uppercase text-[10px] tracking-widest text-slate-400">Status</TableHead>
+                        <TableHead className="font-bold uppercase text-[10px] tracking-widest text-slate-400">Team / Flow</TableHead>
                         <TableHead className="font-bold uppercase text-[10px] tracking-widest text-slate-400">Timeline</TableHead>
                         <TableHead className="text-right pr-6 font-bold uppercase text-[10px] tracking-widest text-slate-400">Actions</TableHead>
                     </TableRow>
@@ -187,6 +192,18 @@ export function VisaApplicationsTable({
                                 </Select>
                             </TableCell>
                             <TableCell>
+                                <div className="flex flex-col min-w-0 gap-1">
+                                    <div className="text-[11px] font-bold text-slate-700 truncate flex items-center gap-1.5">
+                                        <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black">Couns:</span>
+                                        {app.counselor?.name || "Unassigned"}
+                                    </div>
+                                    <div className="text-[11px] font-medium text-slate-400 truncate flex items-center gap-1.5">
+                                        <span className="text-[9px] text-slate-300 uppercase tracking-widest font-black">Agent:</span>
+                                        {app.agent?.name || "Direct"}
+                                    </div>
+                                </div>
+                            </TableCell>
+                            <TableCell>
                                 <div className="flex flex-col gap-1">
                                     <div className="flex items-center gap-2 text-[11px] font-bold text-slate-600">
                                         <Calendar className="h-3 w-3 text-slate-300" />
@@ -228,6 +245,9 @@ export function VisaApplicationsTable({
                                             <DropdownMenuItem onClick={() => router.push(prefixPath(`/visa-applications/${app.id}`))}>
                                                 <Eye className="h-4 w-4 mr-2 text-slate-400" /> Detailed View
                                             </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => setAssignApp(app)}>
+                                                <Users className="h-4 w-4 mr-2 text-slate-400" /> Assign Team
+                                            </DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => onOpenHistory?.(app)}>
                                                 <History className="h-4 w-4 mr-2 text-slate-400" /> Visa History
                                             </DropdownMenuItem>
@@ -259,7 +279,7 @@ export function VisaApplicationsTable({
                     ))}
                     {data.length === 0 && (
                         <TableRow>
-                            <TableCell colSpan={5} className="h-64 text-center text-muted-foreground">
+                            <TableCell colSpan={6} className="h-64 text-center text-muted-foreground">
                                 <div className="flex flex-col items-center gap-2">
                                     <div className="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 mb-2">
                                         <Plane className="h-6 w-6 text-slate-200" />
@@ -320,6 +340,20 @@ export function VisaApplicationsTable({
                     </div>
                 </div>
             )}
+
+            {/* Modals */}
+            <AssignVisaApplicationSheet
+                isOpen={!!assignApp}
+                onClose={() => setAssignApp(null)}
+                visaId={assignApp?.id || null}
+                studentName={assignApp?.student?.name || null}
+                currentAgentId={assignApp?.agentId}
+                currentCounselorId={assignApp?.counselorId}
+                onAssign={() => {
+                    onUpdate();
+                    setAssignApp(null);
+                }}
+            />
         </div>
     );
 }

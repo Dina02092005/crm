@@ -27,13 +27,14 @@ export const GET = withPermission('STUDENTS', 'VIEW', async (req, { permission }
                 none: {}
             }
         };
-        const userRole = (session as any).user.role;
 
         // RBAC & Explicit filtering
         if (scope === 'OWN' || scope === 'ASSIGNED' || onboardedBy) {
             let onboardedByIds: string[] = [];
+            let shouldFilterByOnboarded = false;
 
             if (scope === 'OWN' || scope === 'ASSIGNED') {
+                shouldFilterByOnboarded = true;
                 onboardedByIds = [session.user.id];
 
                 if (session.user.role === 'AGENT') {
@@ -55,10 +56,11 @@ export const GET = withPermission('STUDENTS', 'VIEW', async (req, { permission }
                     onboardedByIds = [onboardedBy];
                 }
             } else if (onboardedBy) {
+                shouldFilterByOnboarded = true;
                 onboardedByIds = [onboardedBy];
             }
 
-            if (where.id !== "none") {
+            if (where.id !== "none" && shouldFilterByOnboarded) {
                 where.onboardedBy = { in: onboardedByIds };
             }
         }

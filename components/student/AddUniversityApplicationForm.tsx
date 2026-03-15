@@ -80,6 +80,7 @@ export function AddUniversityApplicationForm({
     useEffect(() => {
         fetchMasters();
         fetchAgents();
+        fetchCounselors();
     }, []);
 
     const fetchAgents = async () => {
@@ -91,9 +92,12 @@ export function AddUniversityApplicationForm({
         }
     };
 
-    const fetchCounselors = async (agentId: string) => {
+    const fetchCounselors = async (agentId?: string) => {
         try {
-            const res = await axios.get(`/api/employees?role=COUNSELOR&agentId=${agentId}&limit=100`);
+            const url = agentId && agentId !== "none"
+                ? `/api/employees?role=COUNSELOR&status=active&agentId=${agentId}&limit=200`
+                : `/api/employees?role=COUNSELOR&status=active&limit=200`;
+            const res = await axios.get(url);
             setCounselors(res.data.employees || []);
         } catch (error) {
             console.error("Failed to fetch counselors:", error);
@@ -238,8 +242,8 @@ export function AddUniversityApplicationForm({
                     intake: r.intake,
                     deadlineDate: r.deadlineDate,
                     associateId: r.associateId,
-                    agentId: globalAgentId || null,
-                    counselorId: globalCounselorId || null
+                    agentId: (!globalAgentId || globalAgentId === "none") ? null : globalAgentId,
+                    counselorId: (!globalCounselorId || globalCounselorId === "none") ? null : globalCounselorId
                 }))
             });
 
@@ -335,6 +339,7 @@ export function AddUniversityApplicationForm({
                                                 <SelectValue placeholder="Select Agent" />
                                             </SelectTrigger>
                                             <SelectContent className="rounded-xl border-none shadow-xl">
+                                                <SelectItem value="none">None (Direct)</SelectItem>
                                                 {agents.map(a => (
                                                     <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
                                                 ))}
@@ -346,12 +351,13 @@ export function AddUniversityApplicationForm({
                                         <Select
                                             value={globalCounselorId}
                                             onValueChange={(val) => setGlobalCounselorId(val)}
-                                            disabled={!globalAgentId || counselors.length === 0}
+                                            disabled={counselors.length === 0}
                                         >
                                             <SelectTrigger className="h-10 rounded-xl bg-white border-none shadow-sm text-xs font-bold ring-offset-background focus:ring-2 focus:ring-primary/20">
-                                                <SelectValue placeholder={!globalAgentId ? "Select agent first" : counselors.length === 0 ? "No counselors" : "Select Counselor"} />
+                                                <SelectValue placeholder={counselors.length === 0 ? "No counselors" : "Select Counselor"} />
                                             </SelectTrigger>
                                             <SelectContent className="rounded-xl border-none shadow-xl">
+                                                <SelectItem value="none">None (Unassigned)</SelectItem>
                                                 {counselors.map(c => (
                                                     <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
                                                 ))}

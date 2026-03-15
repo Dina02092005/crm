@@ -20,25 +20,27 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useSession, signOut } from "next-auth/react";
-import { ChevronDown } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
 import { useRolePath } from "@/hooks/use-role-path";
 
-interface AssignLeadSheetProps {
+interface AssignVisaApplicationSheetProps {
     isOpen: boolean;
     onClose: () => void;
-    leadId: string | null;
-    leadName: string | null;
+    visaId: string | null;
+    studentName: string | null;
+    currentAgentId?: string | null;
+    currentCounselorId?: string | null;
     onAssign: () => void;
 }
 
-export function AssignLeadSheet({
+export function AssignVisaApplicationSheet({
     isOpen,
     onClose,
-    leadId,
-    leadName,
+    visaId,
+    studentName,
+    currentAgentId,
+    currentCounselorId,
     onAssign,
-}: AssignLeadSheetProps) {
+}: AssignVisaApplicationSheetProps) {
     const { data: session } = useSession() as any;
     const { prefixPath } = useRolePath();
     const [agents, setAgents] = useState<any[]>([]);
@@ -46,6 +48,7 @@ export function AssignLeadSheet({
     const [isLoadingAgents, setIsLoadingAgents] = useState(false);
     const [loadingAgentsMap, setLoadingAgentsMap] = useState<Record<string, boolean>>({});
     const [isSaving, setIsSaving] = useState(false);
+    
     const [selectedManagerId, setSelectedManagerId] = useState<string>("");
     const [selectedCounselorId, setSelectedCounselorId] = useState<string>("");
 
@@ -54,11 +57,11 @@ export function AssignLeadSheet({
 
     useEffect(() => {
         if (isOpen) {
-            setSelectedManagerId("");
-            setSelectedCounselorId("");
+            setSelectedManagerId(currentAgentId || "none");
+            setSelectedCounselorId(currentCounselorId || "none");
             fetchAllOptions();
         }
-    }, [isOpen, session]);
+    }, [isOpen, session, currentAgentId, currentCounselorId]);
 
     const fetchAllOptions = async () => {
         setIsLoadingAgents(true);
@@ -76,6 +79,13 @@ export function AssignLeadSheet({
                 // Fetch ALL Counselors
                 const counselorRes = await axios.get("/api/employees?role=COUNSELOR&status=active&limit=200");
                 setAgentCounselors({ "all": counselorRes.data.employees });
+                
+                // If there's an existing agent, fetch their specific counselors too
+                if (currentAgentId && currentAgentId !== "none") {
+                    const response = await axios.get(`/api/employees?role=COUNSELOR&status=active&agentId=${currentAgentId}&limit=100`);
+                    setAgentCounselors(prev => ({ ...prev, [currentAgentId]: response.data.employees }));
+                }
+
             } else if (isAgent) {
                 const response = await axios.get("/api/employees?role=COUNSELOR&status=active&limit=100");
                 setAgentCounselors({ "direct": response.data.employees });
@@ -89,9 +99,9 @@ export function AssignLeadSheet({
 
     const handleManagerChange = async (value: string) => {
         setSelectedManagerId(value);
-        setSelectedCounselorId("");
+        setSelectedCounselorId("none"); // Reset counselor when manager changes
 
-        if (value && !agentCounselors[value]) {
+        if (value && value !== "none" && !agentCounselors[value]) {
             setLoadingAgentsMap(prev => ({ ...prev, [value]: true }));
             try {
                 const response = await axios.get(`/api/employees?role=COUNSELOR&status=active&agentId=${value}&limit=100`);
@@ -104,38 +114,26 @@ export function AssignLeadSheet({
         }
     };
 
-    const handleAssignClick = () => {
-        const finalAssigneeId = (selectedCounselorId && selectedCounselorId !== "none") 
-            ? selectedCounselorId 
-            : (selectedManagerId && selectedManagerId !== "none") 
-                ? selectedManagerId 
-                : null;
-        
-        if (finalAssigneeId) {
-            handleAssign(finalAssigneeId);
-        } else {
-            toast.error("Please select a staff member");
-        }
-    };
-
-    const handleAssign = async (employeeId: string) => {
-        if (!leadId || !employeeId) return;
+    const handleAssignClick = async () => {
+        if (!visaId) return;
 
         setIsSaving(true);
         try {
-            await axios.patch(`/api/leads/${leadId}`, {
-                assignedTo: employeeId,
+            await axios.patch(`/api/visa-applications/${visaId}`, {
+                agentId: selectedManagerId === "none" ? null : selectedManagerId,
+                counselorId: selectedCounselorId === "none" ? null : selectedCounselorId,
+                assignedOfficerId: selectedManagerId === "none" ? null : selectedManagerId, // Keep legacy synced
             });
-            toast.success("Lead assigned successfully");
+            toast.success("Assignment updated successfully");
             onAssign();
             onClose();
         } catch (error: any) {
-            console.error("Failed to assign lead", error);
+            console.error("Failed to assign visa application", error);
             if (axios.isAxiosError(error) && error.response?.status === 401) {
                 toast.error("Your session has expired. Please log in again.");
                 signOut({ callbackUrl: prefixPath("/login") });
             } else {
-                toast.error("Failed to assign lead");
+                toast.error(error.response?.data?.error || "Failed to assign visa application");
             }
         } finally {
             setIsSaving(false);
@@ -146,9 +144,9 @@ export function AssignLeadSheet({
         <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
             <SheetContent className="overflow-y-auto w-full sm:max-w-sm">
                 <SheetHeader>
-                    <SheetTitle>Assign Lead</SheetTitle>
+                    <SheetTitle>Update Team Assignment</SheetTitle>
                     <SheetDescription>
-                        Select a manager and optionally a counselor to assign <strong>{leadName}</strong>.
+                        Modify the agent and counselor assigned to <strong>{studentName}</strong>&apos;s Visa Application.
                     </SheetDescription>
                 </SheetHeader>
 
@@ -162,7 +160,7 @@ export function AssignLeadSheet({
                             {isAdmin && (
                                 <div className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label>Manager / Agent (Optional)</Label>
+                                        <Label>Manager / Agent</Label>
                                         <Select value={selectedManagerId} onValueChange={handleManagerChange}>
                                             <SelectTrigger className="w-full h-12 rounded-xl bg-slate-50 border-slate-200">
                                                 <SelectValue placeholder="Select Manager or Agent" />
@@ -187,7 +185,7 @@ export function AssignLeadSheet({
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label>Counselor (Optional)</Label>
+                                        <Label>Counselor</Label>
                                         <Select value={selectedCounselorId} onValueChange={setSelectedCounselorId}>
                                             <SelectTrigger className="w-full h-12 rounded-xl bg-slate-50 border-slate-200">
                                                 <SelectValue placeholder="Select Counselor" />
@@ -218,6 +216,7 @@ export function AssignLeadSheet({
                                             <SelectValue placeholder="Select Counselor" />
                                         </SelectTrigger>
                                         <SelectContent className="rounded-xl shadow-xl border-slate-200">
+                                            <SelectItem value="none" className="py-2">Maintain current assignment</SelectItem>
                                             {agentCounselors["direct"]?.map((counselor) => (
                                                 <SelectItem key={counselor.id} value={counselor.id} className="cursor-pointer py-3 rounded-lg focus:bg-primary/5">
                                                     <span className="text-sm font-medium">{counselor.name}</span>
@@ -234,10 +233,10 @@ export function AssignLeadSheet({
                 <div className="flex flex-col gap-3 mt-10 pt-6 border-t">
                     <Button
                         onClick={handleAssignClick}
-                        disabled={isSaving || (!selectedManagerId && !selectedCounselorId) || (selectedManagerId === "none" && selectedCounselorId === "none")}
+                        disabled={isSaving}
                         className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 transition-all font-semibold shadow-lg shadow-primary/20"
                     >
-                        {isSaving ? "Assigning..." : "Assign Lead"}
+                        {isSaving ? "Updating..." : "Update Assignment"}
                     </Button>
                     <Button
                         variant="ghost"

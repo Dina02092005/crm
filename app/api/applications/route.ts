@@ -39,12 +39,13 @@ export const GET = withPermission('APPLICATIONS', 'VIEW', async (req, { permissi
         // If studentId is provided, returns all applications for that specific student
         if (studentIdString) {
             const studentAppWhere: any = { studentId: studentIdString };
-            if (status) {
-                if (Object.values(ApplicationStatus).includes(status as any)) {
-                    studentAppWhere.status = status;
+            if (status && status !== "ALL") {
+                const effectiveStatus = status === "APPROVED" ? "FINALIZED" : status;
+                if (Object.values(ApplicationStatus).includes(effectiveStatus as any)) {
+                    studentAppWhere.status = effectiveStatus;
+                } else {
+                    studentAppWhere.status = "INVALID_STATUS_FILTER";
                 }
-            } else {
-                studentAppWhere.status = { notIn: ["READY_FOR_VISA", "DEFERRED", "ENROLLED"] };
             }
 
             const [applications, total] = await Promise.all([
@@ -89,15 +90,18 @@ export const GET = withPermission('APPLICATIONS', 'VIEW', async (req, { permissi
         let isAppStatus = false;
         let isVisaStatus = false;
 
-        if (status) {
-            isAppStatus = Object.values(ApplicationStatus).includes(status as any);
-            isVisaStatus = Object.values(VisaStatus).includes(status as any);
+        if (status && status !== "ALL") {
+            const effectiveStatus = status === "APPROVED" ? "FINALIZED" : status;
+            isAppStatus = Object.values(ApplicationStatus).includes(effectiveStatus as any);
+            isVisaStatus = Object.values(VisaStatus).includes(effectiveStatus as any);
+
             if (isAppStatus) {
-                appWhere.status = status;
+                appWhere.status = effectiveStatus;
+            } else if (!isVisaStatus) {
+                // If status is provided but not a valid ApplicationStatus or VisaStatus, 
+                // we should filter for a non-existent status to return empty results.
+                appWhere.status = "INVALID_STATUS_FILTER";
             }
-        } else {
-            // By default, hide applications that have been moved to the visa stage or completed
-            appWhere.status = { notIn: ["READY_FOR_VISA", "DEFERRED", "ENROLLED"] };
         }
         if (countryId) appWhere.countryId = countryId;
         if (universityId) appWhere.universityId = universityId;
@@ -114,8 +118,8 @@ export const GET = withPermission('APPLICATIONS', 'VIEW', async (req, { permissi
         }
 
         // RBAC Logic for applications (Dynamic scope-based)
+        const secondaryIds = [userId];
         if (scope === 'OWN' || scope === 'ASSIGNED') {
-            const secondaryIds = [userId];
             if (userRole === 'AGENT') {
                 const agent = await prisma.agentProfile.findUnique({
                     where: { userId },
@@ -128,36 +132,61 @@ export const GET = withPermission('APPLICATIONS', 'VIEW', async (req, { permissi
                     });
                     secondaryIds.push(...counselors.map(c => c.userId));
                 }
+            } else if (userRole === 'COUNSELOR') {
+                const counselor = await prisma.counselorProfile.findUnique({
+                    where: { userId },
+                    select: { agent: { select: { userId: true } } }
+                });
+                if (counselor?.agent?.userId) {
+                    secondaryIds.push(counselor.agent.userId);
+                }
             }
 
             // Apply restrictions to appWhere
             appWhere.OR = [
                 { assignedToId: { in: secondaryIds } },
                 { assignedById: { in: secondaryIds as any } },
-                { student: { onboardedBy: { in: secondaryIds } } }
+                { agentId: { in: secondaryIds } },
+                { counselorId: { in: secondaryIds } },
+                { student: { onboardedBy: { in: secondaryIds } } },
+                { student: { agentId: { in: secondaryIds } } },
+                { student: { counselorId: { in: secondaryIds } } }
             ];
         }
 
         // Base where clause for STUDENTS
         const studentWhere: Record<string, any> = {};
+        const conditions: any[] = [];
 
-        if (!status) {
-            studentWhere.applications = {
-                some: appWhere,
-                none: {
-                    status: { in: ["READY_FOR_VISA", "DEFERRED", "ENROLLED"] }
-                }
-            };
-        } else if (isAppStatus) {
-            studentWhere.applications = {
-                some: appWhere
-            };
-        } else if (isVisaStatus) {
-            studentWhere.visaApplications = {
-                some: { status: status as any }
-            };
-            if (Object.keys(appWhere).length > 0) {
-                studentWhere.applications = { some: appWhere };
+        // Condition A: Matching University Application
+        if (!status || isAppStatus) {
+            conditions.push({ applications: { some: appWhere } });
+        }
+
+        // Condition B: Matching Visa Application (only if status is provided and is a valid visa status)
+        if (status && status !== "ALL" && isVisaStatus) {
+            const visaWhere: any = { status: status as any };
+            if (countryId) visaWhere.countryId = countryId;
+            if (universityId) visaWhere.universityId = universityId;
+
+            if (scope === 'OWN' || scope === 'ASSIGNED') {
+                visaWhere.OR = [
+                    { agentId: { in: secondaryIds } },
+                    { counselorId: { in: secondaryIds } },
+                    { assignedOfficerId: { in: secondaryIds } },
+                    { student: { onboardedBy: { in: secondaryIds } } },
+                    { student: { agentId: { in: secondaryIds } } },
+                    { student: { counselorId: { in: secondaryIds } } }
+                ];
+            }
+            conditions.push({ visaApplications: { some: visaWhere } });
+        }
+
+        if (conditions.length > 0) {
+            if (conditions.length === 1) {
+                Object.assign(studentWhere, conditions[0]);
+            } else {
+                studentWhere.OR = conditions;
             }
         } else {
             studentWhere.applications = { some: appWhere };
@@ -327,17 +356,18 @@ export const POST = withPermission('APPLICATIONS', 'CREATE', async (req, { permi
             }
         }
 
+        // 1. Run the database transaction (only DB operations)
         const createdApplications = await prisma.$transaction(async (tx) => {
             const results = [];
 
-            // Extract agent/counselor from first app (assuming they are student-wide for this batch)
+            // Extract agent/counselor from first app
             const firstApp = applications[0];
-            if (firstApp && (firstApp.agentId || firstApp.counselorId)) {
+            if (firstApp && (firstApp.agentId !== undefined || firstApp.counselorId !== undefined)) {
                 await tx.student.update({
                     where: { id: studentId },
                     data: {
-                        agentId: firstApp.agentId || null,
-                        counselorId: firstApp.counselorId || null
+                        ...(firstApp.agentId !== undefined && { agentId: firstApp.agentId }),
+                        ...(firstApp.counselorId !== undefined && { counselorId: firstApp.counselorId })
                     }
                 });
             }
@@ -364,17 +394,7 @@ export const POST = withPermission('APPLICATIONS', 'CREATE', async (req, { permi
                         university: { select: { name: true } }
                     }
                 });
-
-                await AuditLogService.log({
-                    userId: (session.user as any).id,
-                    action: "CREATED",
-                    module: "APPLICATIONS",
-                    entity: "UniversityApplication",
-                    entityId: app.id,
-                    newValues: app,
-                    metadata: { studentId, universityId: appData.universityId }
-                });
-
+                
                 if (app.student.leadId) {
                     await tx.leadActivity.create({
                         data: {
@@ -385,16 +405,28 @@ export const POST = withPermission('APPLICATIONS', 'CREATE', async (req, { permi
                         }
                     });
                 }
-
                 results.push(app);
-
-                // Lifecycle notification (Step 2) — fire-and-forget outside transaction
-                notifyApplicationCreated(app.id, (session.user as any).id).catch(
-                    (err) => console.error("[Lifecycle] notifyApplicationCreated failed:", err)
-                );
             }
             return results;
         });
+
+        // 2. Run side-effects outside the transaction to prevent hanging it
+        for (const app of createdApplications) {
+            await AuditLogService.log({
+                userId: (session.user as any).id,
+                action: "CREATED",
+                module: "APPLICATIONS",
+                entity: "UniversityApplication",
+                entityId: app.id,
+                newValues: app,
+                metadata: { studentId, universityId: app.universityId }
+            });
+
+            // Lifecycle notification (Step 2)
+            notifyApplicationCreated(app.id, (session.user as any).id).catch(
+                (err) => console.error("[Lifecycle] notifyApplicationCreated failed:", err)
+            );
+        }
 
         return NextResponse.json(createdApplications, { status: 201 });
     } catch (error) {

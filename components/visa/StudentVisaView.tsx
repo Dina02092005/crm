@@ -177,9 +177,11 @@ export function StudentVisaView() {
 function getVisaStatusColor(status: string) {
     switch (status) {
         case "PENDING": return "bg-amber-100 text-amber-600";
-        case "FILE_SUBMITTED": return "bg-blue-100 text-blue-600";
-        case "PROCESS": return "bg-indigo-100 text-indigo-600";
-        case "VISA_APPROVED": return "bg-emerald-100 text-emerald-600";
+        case "VISA_APPLICATION_SUBMITTED": return "bg-blue-100 text-blue-600";
+        case "VISA_APPLICATION_IN_PROGRESS":
+        case "UNDER_REVIEW": return "bg-indigo-100 text-indigo-600";
+        case "VISA_APPROVED":
+        case "VISA_GRANTED": return "bg-emerald-100 text-emerald-600";
         case "VISA_REJECTED":
         case "VISA_REFUSED": return "bg-rose-100 text-rose-600";
         default: return "bg-slate-100 text-slate-600";
@@ -188,7 +190,8 @@ function getVisaStatusColor(status: string) {
 
 function getStatusBorder(status: string) {
     switch (status) {
-        case "VISA_APPROVED": return "border-emerald-500 bg-emerald-50";
+        case "VISA_APPROVED":
+        case "VISA_GRANTED": return "border-emerald-500 bg-emerald-50";
         case "VISA_REJECTED":
         case "VISA_REFUSED": return "border-rose-500 bg-rose-50";
         default: return "border-amber-500 bg-amber-50";
@@ -198,9 +201,11 @@ function getStatusBorder(status: string) {
 function getNextMilestone(status: string) {
     switch (status) {
         case "PENDING": return "Document Verification";
-        case "FILE_SUBMITTED": return "Embassy Appointment";
-        case "PROCESS": return "Embassy Decision";
-        case "VISA_APPROVED": return "Travel Preparations";
+        case "VISA_APPLICATION_SUBMITTED": return "Embassy Appointment";
+        case "VISA_APPLICATION_IN_PROGRESS":
+        case "UNDER_REVIEW": return "Embassy Decision";
+        case "VISA_APPROVED":
+        case "VISA_GRANTED": return "Travel Preparations";
         default: return "Processing Update";
     }
 }

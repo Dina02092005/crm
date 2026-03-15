@@ -97,6 +97,7 @@ export function ApplicationsTable({
     const updateMutation = useUpdateApplication();
     const [promotingId, setPromotingId] = useState<string | null>(null);
     const [moveToVisaApp, setMoveToVisaApp] = useState<Application | null>(null);
+    const [updatingRecordId, setUpdatingRecordId] = useState<string | null>(null);
 
     const handleRevert = async (appId: string) => {
         try {
@@ -124,6 +125,7 @@ export function ApplicationsTable({
     };
 
     const handleStatusChange = async (appId: string, newStatus: string) => {
+        setUpdatingRecordId(appId);
         try {
             await updateMutation.mutateAsync({
                 id: appId,
@@ -133,6 +135,8 @@ export function ApplicationsTable({
             toast.success("Status updated successfully");
         } catch (error) {
             toast.error("Failed to update status");
+        } finally {
+            setUpdatingRecordId(null);
         }
     };
 
@@ -196,12 +200,21 @@ export function ApplicationsTable({
                                 <Select 
                                     value={app.status || "PENDING"} 
                                     onValueChange={(v) => handleStatusChange(app.id, v)}
+                                    disabled={updatingRecordId === app.id}
                                 >
                                     <SelectTrigger className={cn(
                                         "h-8 w-[160px] px-3 py-0 text-[10px] font-black uppercase border-0 shadow-none transition-all rounded-lg focus:ring-1 focus:ring-primary/20",
-                                        getStatusVariant(app.status as ApplicationStatus)
+                                        getStatusVariant(app.status as ApplicationStatus),
+                                        updatingRecordId === app.id ? "opacity-50 cursor-not-allowed" : ""
                                     )}>
-                                        <SelectValue />
+                                        {updatingRecordId === app.id ? (
+                                            <div className="flex items-center gap-2">
+                                                <div className="h-3 w-3 rounded-full border-2 border-current border-t-transparent animate-spin" />
+                                                <span>Updating...</span>
+                                            </div>
+                                        ) : (
+                                            <SelectValue />
+                                        )}
                                     </SelectTrigger>
                                     <SelectContent className="rounded-xl border-slate-100 shadow-xl">
                                         {["PENDING", "SUBMITTED", "FINALIZED", "UNDER_REVIEW", "OFFER_RECEIVED", "READY_FOR_VISA", "ENROLLED", "DEFERRED", "REJECTED", "WITHDRAWN"].map(s => (

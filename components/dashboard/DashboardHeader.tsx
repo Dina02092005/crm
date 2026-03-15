@@ -139,7 +139,7 @@ export function DashboardHeader({ title, description, action }: DashboardHeaderP
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                             className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
-                            onClick={() => signOut({ callbackUrl: '/login' })}
+                            onClick={() => signOut({ callbackUrl: prefixPath('/login') })}
                         >
                             Log out
                         </DropdownMenuItem>

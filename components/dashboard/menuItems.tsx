@@ -28,18 +28,6 @@ export interface MenuItem {
 export const menuItems: MenuItem[] = [
     { label: "Dashboard", icon: <FaTachometerAlt />, href: "/dashboard" },
     // { label: "My Notes", icon: <FaStickyNote />, href: "/notes", permission: { action: "VIEW", module: "NOTES" } },
-    {
-        label: "Course Finder", 
-        icon: <FaSitemap />, 
-        href: "/search-programs", 
-        roles: ["SUPER_ADMIN", "ADMIN", "COUNSELOR", "AGENT", "STUDENT"]
-    },
-    {
-        label: "University List", 
-        icon: <FaSitemap />, 
-        href: "/master/universities", 
-        roles: ["STUDENT", "AGENT", "COUNSELOR", "SUPER_ADMIN", "ADMIN"]
-    },
     { label: "Call Center", icon: <FaPhone />, href: "/call-center", roles: ["AGENT", "COUNSELOR"] },
     { label: "Leads", icon: <FaHeadset />, href: "/leads", roles: ["ADMIN", "MANAGER", "AGENT", "COUNSELOR", "SALES_REP", "SUPPORT_AGENT"], permission: { action: "VIEW", module: "LEADS" } },
     { label: "Students", icon: <FaUsers />, href: "/students", roles: ["ADMIN", "MANAGER", "AGENT", "COUNSELOR", "SALES_REP", "SUPPORT_AGENT"], permission: { action: "VIEW", module: "STUDENTS" } },
@@ -55,18 +43,18 @@ export const menuItems: MenuItem[] = [
             { label: "Enrolled", href: "/applications?status=ENROLLED", permission: { action: "VIEW", module: "APPLICATIONS" } },
         ]
     },
-    { label: "My Profile", icon: <FaUserCog />, href: "/profile", roles: ["STUDENT"] },
-    { label: "My Documents", icon: <FaFolderOpen />, href: "/profile?tab=documents", roles: ["STUDENT"] },
     {
-        label: "Agents",
-        icon: <FaHeadset />,
-        roles: ["ADMIN"], permission: { action: "VIEW", module: "AGENTS" },
-        submenu: [
-            { label: "Manage Agents", href: "/agents" },
-            { label: "Registration Requests", href: "/agents/requests" },
-        ]
+        label: "Course Finder", 
+        icon: <FaSitemap />, 
+        href: "/search-programs", 
+        roles: ["SUPER_ADMIN", "ADMIN", "COUNSELOR", "AGENT", "STUDENT"]
     },
-    { label: "Counselors", icon: <FaUserCog />, href: "/employees", roles: ["ADMIN", "AGENT"], permission: { action: "VIEW", module: "COUNSELORS" } },
+    {
+        label: "University List", 
+        icon: <FaSitemap />, 
+        href: "/master/universities", 
+        roles: ["STUDENT", "AGENT", "COUNSELOR", "SUPER_ADMIN", "ADMIN"]
+    },
     {
         label: "File Manager",
         icon: <FaFolderOpen />,
@@ -88,6 +76,18 @@ export const menuItems: MenuItem[] = [
             { label: "Websites", href: "/master/websites", permission: { action: "VIEW", module: "MASTER" } },
         ]
     },
+    { label: "My Profile", icon: <FaUserCog />, href: "/profile", roles: ["STUDENT"] },
+    { label: "My Documents", icon: <FaFolderOpen />, href: "/profile?tab=documents", roles: ["STUDENT"] },
+    {
+        label: "Agents",
+        icon: <FaHeadset />,
+        roles: ["ADMIN"], permission: { action: "VIEW", module: "AGENTS" },
+        submenu: [
+            { label: "Manage Agents", href: "/agents" },
+            { label: "Registration Requests", href: "/agents/requests" },
+        ]
+    },
+    { label: "Counselors", icon: <FaUserCog />, href: "/employees", roles: ["ADMIN", "AGENT"], permission: { action: "VIEW", module: "COUNSELORS" } },
     { label: "Reports", icon: <FaSignal />, href: "/reports", roles: ["ADMIN", "MANAGER", "SUPER_ADMIN"], permission: { action: "VIEW", module: "REPORTS" } },
     {
         label: "Roles & Permissions",

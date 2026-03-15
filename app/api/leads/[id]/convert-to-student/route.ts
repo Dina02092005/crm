@@ -134,8 +134,8 @@ export async function POST(
             }
 
             if (student) {
-                let resolvedAgentId = bodyAgentId === "" || bodyAgentId === "__none__" ? null : bodyAgentId;
-                let resolvedCounselorId = bodyCounselorId === "" || bodyCounselorId === "__none__" ? null : bodyCounselorId;
+                let resolvedAgentId = bodyAgentId === "" || bodyAgentId === "__none__" ? null : (bodyAgentId || (lead as any).agentId);
+                let resolvedCounselorId = bodyCounselorId === "" || bodyCounselorId === "__none__" ? null : (bodyCounselorId || (lead as any).counselorId);
 
                 if (session.user.role === "AGENT") {
                     resolvedAgentId = session.user.id;
@@ -159,8 +159,8 @@ export async function POST(
                 });
             } else {
                 // Determine standard assignments (fallback to session user or keep existing if omitted)
-                let resolvedAgentId = bodyAgentId === "" || bodyAgentId === "__none__" ? null : bodyAgentId;
-                let resolvedCounselorId = bodyCounselorId === "" || bodyCounselorId === "__none__" ? null : bodyCounselorId;
+                let resolvedAgentId = bodyAgentId === "" || bodyAgentId === "__none__" ? null : (bodyAgentId || (lead as any).agentId);
+                let resolvedCounselorId = bodyCounselorId === "" || bodyCounselorId === "__none__" ? null : (bodyCounselorId || (lead as any).counselorId);
 
                 // Auto-assignment behavior: if an AGENT or COUNSELOR converts a lead, they assign themselves automatically.
                 if (session.user.role === "AGENT") {
@@ -190,9 +190,17 @@ export async function POST(
             }
 
             // 6. Update Lead
+            let leadDataToUpdate: any = { status: 'CONVERTED' };
+            if (userId) {
+                const existingLeadWithUser = await tx.lead.findUnique({ where: { userId } });
+                if (!existingLeadWithUser || existingLeadWithUser.id === leadId) {
+                    leadDataToUpdate.userId = userId;
+                }
+            }
+
             await tx.lead.update({
                 where: { id: leadId },
-                data: { status: 'CONVERTED', userId: userId }
+                data: leadDataToUpdate
             });
 
             // 7. Copy Documents (Avoid duplicates if re-converting)

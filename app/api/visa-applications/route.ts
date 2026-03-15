@@ -6,12 +6,13 @@ import { VisaStatus, VisaType } from '@/lib/prisma';
 import { AuditLogService } from '@/lib/auditLog';
 import { notifyVisaStarted } from '@/lib/lifecycle-notifications';
 
-export async function GET(req: Request) {
+import { withPermission } from '@/lib/permissions';
+
+export const dynamic = 'force-dynamic';
+
+export const GET = withPermission('VISA', 'VIEW', async (req, { permission }) => {
     try {
-        const session = await getServerSession(authOptions) as any;
-        if (!session || !session.user) {
-            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-        }
+        const { user: sessionUser, scope } = permission;
 
         const { searchParams } = new URL(req.url);
         const studentId = searchParams.get('studentId');
@@ -27,8 +28,15 @@ export async function GET(req: Request) {
         }
 
         if (status && status !== "ALL") {
-            where.status = status as VisaStatus;
-        } else {
+            const isValidStatus = Object.values(VisaStatus).includes(status as any);
+            if (isValidStatus) {
+                where.status = status as VisaStatus;
+            } else {
+                // If status is provided but not a valid VisaStatus, 
+                // we should filter for a non-existent status to return empty results.
+                where.status = "INVALID_STATUS_FILTER";
+            }
+        } else if (!status) {
             // By default, hide applications that have been deferred or enrolled
             where.status = { notIn: ["DEFERRED", "ENROLLED"] as VisaStatus[] };
         }
@@ -41,6 +49,58 @@ export async function GET(req: Request) {
                 { country: { name: { contains: search, mode: 'insensitive' } } },
                 { university: { name: { contains: search, mode: 'insensitive' } } },
             ];
+        }
+
+        // Apply RBAC logic for Visa Applications
+        if (scope === 'OWN' || scope === 'ASSIGNED') {
+            const secondaryIds = [sessionUser.id];
+            
+            if (sessionUser.role === 'AGENT') {
+                const agent = await prisma.agentProfile.findUnique({
+                    where: { userId: sessionUser.id },
+                    select: { id: true }
+                });
+                if (agent) {
+                    const counselors = await prisma.counselorProfile.findMany({
+                        where: { agentId: agent.id },
+                        select: { userId: true }
+                    });
+                    secondaryIds.push(...counselors.map(c => c.userId));
+                }
+            } else if (sessionUser.role === 'COUNSELOR') {
+                const counselor = await prisma.counselorProfile.findUnique({
+                    where: { userId: sessionUser.id },
+                    select: { agent: { select: { userId: true } } }
+                });
+                if (counselor?.agent?.userId) {
+                    secondaryIds.push(counselor.agent.userId);
+                }
+            }
+
+            // Bind to agentId, counselorId, or assignedOfficerId
+            // And if none assigned, it's just in the system but invisible to them unless onboarded?
+            // Fallback to student onboardedBy just in case
+            const scopeFilter = {
+                OR: [
+                    { agentId: { in: secondaryIds } },
+                    { counselorId: { in: secondaryIds } },
+                    { assignedOfficerId: { in: secondaryIds } },
+                    { student: { onboardedBy: { in: secondaryIds } } },
+                    { student: { agentId: { in: secondaryIds } } },
+                    { student: { counselorId: { in: secondaryIds } } }
+                ]
+            };
+
+            // Safely merge with existing where.OR if search exists
+            if (where.OR) {
+                where.AND = [
+                    { OR: where.OR },
+                    scopeFilter
+                ];
+                delete where.OR;
+            } else {
+                where.OR = scopeFilter.OR;
+            }
         }
 
         const [visaApplications, total] = await Promise.all([
@@ -59,6 +119,8 @@ export async function GET(req: Request) {
                         }
                     },
                     assignedOfficer: { select: { name: true, role: true } },
+                    agent: { select: { name: true, role: true } },
+                    counselor: { select: { name: true, role: true } },
                 },
                 orderBy: { createdAt: 'desc' },
                 skip,
@@ -80,7 +142,7 @@ export async function GET(req: Request) {
         console.error('Fetch visa applications error:', error);
         return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
     }
-}
+});
 
 export async function POST(req: Request) {
     try {

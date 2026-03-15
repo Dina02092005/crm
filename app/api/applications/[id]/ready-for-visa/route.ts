@@ -34,6 +34,16 @@ export async function POST(
         const body = await req.json();
         const { agentId, counselorId, appointmentDate } = body;
 
+        // Auto-assign logic (identical to Lead -> Student)
+        let resolvedAgentId = agentId || application.agentId;
+        let resolvedCounselorId = counselorId || application.counselorId;
+
+        if (session.user.role === "AGENT") {
+            resolvedAgentId = (session.user as any).id;
+        } else if (session.user.role === "COUNSELOR") {
+            resolvedCounselorId = (session.user as any).id;
+        }
+
         // Update application status
         await prisma.universityApplication.update({
             where: { id },
@@ -53,7 +63,9 @@ export async function POST(
                 status: VisaStatus.PENDING,
                 applicationDate: new Date(),
                 appointmentDate: appointmentDate ? new Date(appointmentDate) : null,
-                assignedOfficerId: agentId || null,
+                assignedOfficerId: resolvedAgentId || null, // Keeping legacy officer assignment synced if needed
+                agentId: resolvedAgentId || null,
+                counselorId: resolvedCounselorId || null,
             },
             include: {
                 student: true,
