@@ -12,22 +12,25 @@ const Toaster = ({ ...props }: ToasterProps) => {
         <Sonner
             theme={theme as ToasterProps["theme"]}
             className="toaster group"
-            richColors
+            position="top-center"
+            expand={false}
+            duration={5000}
+            closeButton
             toastOptions={{
                 classNames: {
                     toast:
-                        "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-border group-[.toaster]:shadow-lg",
-                    description: "group-[.toast]:text-muted-foreground",
+                        "group toast group-[.toaster]:bg-background group-[.toaster]:text-foreground group-[.toaster]:border-none group-[.toaster]:shadow-[0_8px_30px_rgb(0,0,0,0.12)] group-[.toaster]:rounded-lg group-[.toaster]:p-4 group-[.toaster]:pl-6 group-[.toaster]:flex group-[.toaster]:items-center group-[.toaster]:gap-4 group-[.toaster]:relative",
+                    title: "group-[.toast]:text-sm group-[.toast]:font-bold group-[.toast]:text-slate-900",
+                    description: "group-[.toast]:text-xs group-[.toast]:text-slate-500 group-[.toast]:mt-1",
                     actionButton:
-                        "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground",
+                        "group-[.toast]:bg-primary group-[.toast]:text-primary-foreground group-[.toast]:rounded-lg",
                     cancelButton:
-                        "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground",
-                    success:
-                        "group-[.toaster]:!bg-emerald-50 group-[.toaster]:!text-emerald-600 group-[.toaster]:!border-emerald-200 dark:group-[.toaster]:!bg-emerald-950/30 dark:group-[.toaster]:!text-emerald-400 dark:group-[.toaster]:!border-emerald-800",
-                    error:
-                        "group-[.toaster]:!bg-rose-50 group-[.toaster]:!text-rose-600 group-[.toaster]:!border-rose-200 dark:group-[.toaster]:!bg-rose-950/30 dark:group-[.toaster]:!text-rose-400 dark:group-[.toaster]:!border-rose-800",
-                    warning:
-                        "group-[.toaster]:!bg-amber-50 group-[.toaster]:!text-amber-600 group-[.toaster]:!border-amber-200 dark:group-[.toaster]:!bg-amber-950/30 dark:group-[.toaster]:!text-amber-400 dark:group-[.toaster]:!border-amber-800",
+                        "group-[.toast]:bg-muted group-[.toast]:text-muted-foreground group-[.toast]:rounded-lg",
+                    success: "group-[.toaster]:success-toast",
+                    error: "group-[.toaster]:error-toast",
+                    warning: "group-[.toaster]:warning-toast",
+                    info: "group-[.toaster]:info-toast",
+                    closeButton: "group-[.toast]:!bg-transparent group-[.toast]:!border-none group-[.toast]:!text-slate-300 group-[.toast]:hover:!text-slate-500",
                 },
             }}
             {...props}

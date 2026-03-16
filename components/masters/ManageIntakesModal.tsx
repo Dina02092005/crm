@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Calendar, Trash2, Plus, Loader2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 
 interface ManageIntakesModalProps {
     isOpen: boolean;
@@ -28,6 +30,8 @@ export function ManageIntakesModal({
     course,
     onSuccess,
 }: ManageIntakesModalProps) {
+    const queryClient = useQueryClient();
+    const router = useRouter();
     const [intakes, setIntakes] = useState<any[]>([]);
     const [newIntake, setNewIntake] = useState("");
     const [isLoading, setIsLoading] = useState(false);
@@ -48,6 +52,13 @@ export function ManageIntakesModal({
             });
             setIntakes((prev) => [...prev, res.data]);
             setNewIntake("");
+            
+            // Invalidate query cache
+            queryClient.invalidateQueries({ queryKey: ["courses"] });
+            
+            // Refresh server components
+            router.refresh();
+
             toast.success("Intake added");
             onSuccess();
         } catch (error) {
@@ -62,6 +73,13 @@ export function ManageIntakesModal({
         try {
             await axios.delete(`/api/master/courses/${course.id}/intakes/${intakeId}`);
             setIntakes((prev) => prev.filter((i) => i.id !== intakeId));
+            
+            // Invalidate query cache
+            queryClient.invalidateQueries({ queryKey: ["courses"] });
+            
+            // Refresh server components
+            router.refresh();
+
             toast.success("Intake removed");
             onSuccess();
         } catch (error) {

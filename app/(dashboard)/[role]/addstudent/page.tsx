@@ -29,6 +29,7 @@ import {
 import { useForm } from "@tanstack/react-form";
 import { zodValidator } from "@tanstack/zod-form-adapter";
 import { z } from "zod";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import { toast } from "sonner";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -136,6 +137,7 @@ function ErrorMessage({ field }: { field: any }) {
 }
 
 export default function AddStudentPage() {
+    const queryClient = useQueryClient();
     const router = useRouter();
     const { prefixPath } = useRolePath();
     const [isMounted, setIsMounted] = useState(false);
@@ -211,6 +213,13 @@ export default function AddStudentPage() {
                 };
 
                 await axios.post("/api/students", payload);
+
+                // Invalidate query cache
+                queryClient.invalidateQueries({ queryKey: ["students"] });
+
+                // Refresh server components
+                router.refresh();
+
                 toast.success("Student created successfully");
                 router.push(prefixPath("/students"));
             } catch (error: any) {

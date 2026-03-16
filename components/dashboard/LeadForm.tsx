@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { toast } from "sonner";
 import { SheetFooter, SheetClose } from "@/components/ui/sheet";
 import { useForm } from "@tanstack/react-form";
+import { useQueryClient } from "@tanstack/react-query";
 import { zodValidator } from "@tanstack/zod-form-adapter";
 import { z } from "zod";
 
@@ -66,6 +67,7 @@ function ErrorMessage({ field }: { field: any }) {
 
 
 export function LeadForm({ leadId, onSuccess, initialData }: LeadFormProps) {
+    const queryClient = useQueryClient();
     const [isLoading, setIsLoading] = useState(!!leadId);
 
     const form = useForm({
@@ -106,10 +108,21 @@ export function LeadForm({ leadId, onSuccess, initialData }: LeadFormProps) {
             try {
                 if (leadId) {
                     await axios.patch(`/api/leads/${leadId}`, value);
+                    
+                    // Invalidate caches
+                    queryClient.invalidateQueries({ queryKey: ["leads"] });
+                    queryClient.invalidateQueries({ queryKey: ["lead-stats"] });
+                    queryClient.invalidateQueries({ queryKey: ["lead", leadId] });
+                    
                     toast.success("Lead updated successfully");
                     onSuccess(leadId);
                 } else {
                     const res = await axios.post("/api/leads", value);
+                    
+                    // Invalidate caches
+                    queryClient.invalidateQueries({ queryKey: ["leads"] });
+                    queryClient.invalidateQueries({ queryKey: ["lead-stats"] });
+                    
                     toast.success("Lead created successfully");
                     onSuccess(res.data.id);
                 }

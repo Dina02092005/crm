@@ -26,6 +26,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 
 interface AddUniversityApplicationModalProps {
     isOpen: boolean;
@@ -69,6 +71,8 @@ export function AddUniversityApplicationModal({
     studentPhone,
     onSuccess,
 }: AddUniversityApplicationModalProps) {
+    const queryClient = useQueryClient();
+    const router = useRouter();
     const [isSaving, setIsSaving] = useState(false);
     const [countries, setCountries] = useState<MasterData[]>([]);
     const [associates, setAssociates] = useState<MasterData[]>([]);
@@ -229,6 +233,12 @@ export function AddUniversityApplicationModal({
                     associateId: r.associateId
                 }))
             });
+
+            // Invalidate query cache
+            queryClient.invalidateQueries({ queryKey: ["applications"] });
+            
+            // Refresh server components
+            router.refresh();
 
             toast.success("Applications saved successfully!");
             onSuccess();

@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 import { useRolePath } from "@/hooks/use-role-path";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface AddUniversityApplicationFormProps {
     studentId: string;
@@ -59,6 +60,7 @@ export function AddUniversityApplicationForm({
     onSuccess,
     onCancel,
 }: AddUniversityApplicationFormProps) {
+    const queryClient = useQueryClient();
     const router = useRouter();
     const { prefixPath } = useRolePath();
     const [isSaving, setIsSaving] = useState(false);
@@ -246,6 +248,12 @@ export function AddUniversityApplicationForm({
                     counselorId: (!globalCounselorId || globalCounselorId === "none") ? null : globalCounselorId
                 }))
             });
+
+            // Invalidate query cache
+            queryClient.invalidateQueries({ queryKey: ["applications"] });
+            
+            // Refresh server components
+            router.refresh();
 
             toast.success("Applications saved successfully!");
             if (onSuccess) onSuccess();

@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Plus, X, Trash2 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 
 interface AddCourseModalProps {
     isOpen: boolean;
@@ -36,6 +38,8 @@ export function AddCourseModal({
     onSuccess,
     currentCourse,
 }: AddCourseModalProps) {
+    const queryClient = useQueryClient();
+    const router = useRouter();
     const [isLoading, setIsLoading] = useState(false);
     const [countries, setCountries] = useState<any[]>([]);
     const [universities, setUniversities] = useState<any[]>([]);
@@ -150,6 +154,13 @@ export function AddCourseModal({
                 await axios.post("/api/master/courses", submissionData);
                 toast.success("Course added successfully");
             }
+            
+            // Invalidate query cache
+            queryClient.invalidateQueries({ queryKey: ["courses"] });
+            
+            // Refresh server components
+            router.refresh();
+
             onSuccess();
             onClose();
         } catch (error: any) {

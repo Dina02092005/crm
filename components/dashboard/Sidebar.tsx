@@ -164,7 +164,7 @@ export function Sidebar() {
 
                 {/* MAIN MENU Text - Sticky */}
                 <div className="px-4 shrink-0 transition-all">
-                    <p className={`text-[10px] font-semibold text-gray-500 uppercase tracking-wider mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap hidden group-hover:block ${!isCollapsed ? 'xl:opacity-100 xl:block' : 'xl:group-hover:opacity-100 xl:group-hover:block'}`}>
+                    <p className={`text-[10px] font-medium text-gray-500 uppercase tracking-wider mb-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300 whitespace-nowrap hidden group-hover:block ${!isCollapsed ? 'xl:opacity-100 xl:block' : 'xl:group-hover:opacity-100 xl:group-hover:block'}`}>
                         Main Menu
                     </p>
                     {/* Divider for collapsed state */}
@@ -180,8 +180,8 @@ export function Sidebar() {
                                     <>
                                         <motion.button
                                             onClick={() => toggleSubmenu(item.label, item.submenu?.[0]?.href)}
-                                            className={`w-full flex items-center justify-center px-4 h-[41px] text-sm font-semibold rounded-lg transition-all duration-300 ${isActive(undefined, item.submenu)
-                                                ? "bg-primary/10 text-primary font-bold"
+                                            className={`w-full flex items-center justify-center px-4 h-[41px] text-sm font-medium rounded-lg transition-all duration-300 ${isActive(undefined, item.submenu)
+                                                ? "bg-primary/10 text-primary font-semibold"
                                                 : "text-white hover:bg-white/5"
                                                 } ${!isCollapsed ? 'xl:justify-between' : 'group-hover:justify-between'}`}
                                             whileHover={{ x: 2 }}
@@ -255,8 +255,8 @@ export function Sidebar() {
                                                                 <Link
                                                                     href={prefixHref(subItem.href)}
                                                                     onClick={handleSubmenuClick}
-                                                                    className={`block text-sm font-medium leading-none transition-colors duration-200 whitespace-nowrap ${isSubActive
-                                                                        ? "text-primary"
+                                                                    className={`block text-sm font-normal leading-none transition-colors duration-200 whitespace-nowrap ${isSubActive
+                                                                        ? "text-primary font-medium"
                                                                         : "text-white/70 hover:text-white"
                                                                         }`}
                                                                 >
@@ -278,8 +278,8 @@ export function Sidebar() {
                                         <Link
                                             href={prefixHref(item.href!)}
                                             onClick={() => setExpandedMenu(null)}
-                                            className={`flex items-center justify-center px-4 h-[41px] text-sm font-semibold rounded-lg transition-all duration-300 ${isActive(item.href)
-                                                ? "bg-primary/10 text-primary font-bold"
+                                            className={`flex items-center justify-center px-4 h-[41px] text-sm font-medium rounded-lg transition-all duration-300 ${isActive(item.href)
+                                                ? "bg-primary/10 text-primary font-semibold"
                                                 : "text-white hover:bg-white/5 hover:text-white"
                                                 } ${!isCollapsed ? 'xl:justify-start' : 'group-hover:justify-start'} gap-3`}
                                         >
