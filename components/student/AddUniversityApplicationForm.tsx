@@ -19,13 +19,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useRouter } from "next/navigation";
 import { useRolePath } from "@/hooks/use-role-path";
 import { useQueryClient } from "@tanstack/react-query";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface AddUniversityApplicationFormProps {
     studentId: string;
     studentName: string;
     studentEmail: string;
     studentPhone: string;
-    onSuccess?: () => void;
+    onSuccess?: (data?: any) => void;
     onCancel?: () => void;
 }
 
@@ -145,7 +146,8 @@ export function AddUniversityApplicationForm({
     const handleAddCountry = async (countryId: string) => {
         if (!countryId) return;
         if (blocks.find(b => b.countryId === countryId)) {
-            toast.error("Country already added");
+            toast.info("Country block already added. You can add more applications below.");
+            setSelectedCountryId("");
             return;
         }
 
@@ -173,10 +175,6 @@ export function AddUniversityApplicationForm({
 
         setBlocks(prev => prev.map(block => {
             if (block.countryId === countryId) {
-                if (block.rows.find(r => r.universityId === universityId)) {
-                    toast.error("University already added in this country block");
-                    return block;
-                }
                 return {
                     ...block,
                     rows: [...block.rows, {
@@ -234,7 +232,7 @@ export function AddUniversityApplicationForm({
 
         setIsSaving(true);
         try {
-            await axios.post("/api/applications", {
+            const res = await axios.post("/api/applications", {
                 studentId,
                 applications: allRows.map(r => ({
                     countryId: blocks.find(b => b.rows.includes(r))?.countryId,
@@ -251,13 +249,16 @@ export function AddUniversityApplicationForm({
 
             // Invalidate query cache
             queryClient.invalidateQueries({ queryKey: ["applications"] });
-            
+
             // Refresh server components
             router.refresh();
 
             toast.success("Applications saved successfully!");
-            if (onSuccess) onSuccess();
-            else router.push(prefixPath("/applications"));
+            if (onSuccess) onSuccess(res.data);
+            else {
+                const newId = res.data && res.data.length > 0 ? res.data[0].id : "";
+                router.push(prefixPath(`/applications/${newId}`));
+            }
         } catch (error: any) {
             console.error("Failed to save applications", error);
             toast.error(error.response?.data?.error || "Failed to save applications");
@@ -498,11 +499,11 @@ export function AddUniversityApplicationForm({
                                                             </div>
                                                             <div className="lg:col-span-2 space-y-2.5">
                                                                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Deadline</Label>
-                                                                <Input
-                                                                    type="date"
+                                                                <DatePicker
                                                                     value={row.deadlineDate}
-                                                                    onChange={(e) => updateRow(block.countryId, row.tempId, { deadlineDate: e.target.value })}
-                                                                    className="h-12 text-sm rounded-2xl bg-muted/20 border-none focus-visible:ring-primary/20 font-semibold px-5"
+                                                                    onChange={(val) => updateRow(block.countryId, row.tempId, { deadlineDate: val })}
+                                                                    placeholder="Select Date"
+                                                                    className="h-12 text-sm rounded-2xl bg-muted/20 border-none px-5"
                                                                 />
                                                             </div>
                                                             <div className="lg:col-span-3 space-y-2.5">

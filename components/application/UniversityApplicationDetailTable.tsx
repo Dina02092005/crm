@@ -67,7 +67,7 @@ export function UniversityApplicationDetailTable({
 
     const handleFinalize = async (appId: string) => {
         try {
-            await axios.put(`/api/applications/${appId}`, { status: "FINALIZED" });
+            await axios.patch(`/api/applications/${appId}`, { status: "FINALIZED" });
             toast.success("Application finalized successfully");
             onUpdate?.();
         } catch (error) {
@@ -123,38 +123,54 @@ export function UniversityApplicationDetailTable({
                                         <div className="flex items-center gap-1">
                                             {app.status !== "FINALIZED" && app.status !== "READY_FOR_VISA" && (
                                                 <Button
+                                                    type="button"
                                                     variant="ghost"
                                                     size="icon"
                                                     className="h-7 w-7 rounded-md text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                                                    onClick={() => handleFinalize(app.id)}
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        handleFinalize(app.id);
+                                                    }}
                                                     title="Finalize Application"
                                                 >
                                                     <CheckCircle className="h-3.5 w-3.5" />
                                                 </Button>
                                             )}
                                             <Button
+                                                type="button"
                                                 variant="ghost"
                                                 size="icon"
                                                 className="h-7 w-7 rounded-md text-muted-foreground hover:text-primary hover:bg-primary/5"
-                                                onClick={() => onEdit?.(app)}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    onEdit?.(app);
+                                                }}
                                             >
                                                 <Pencil className="h-3.5 w-3.5" />
                                             </Button>
                                             <Button
+                                                type="button"
                                                 variant="ghost"
                                                 size="icon"
                                                 className="h-7 w-7 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/5"
-                                                onClick={() => onDelete?.(app.id)}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    onDelete?.(app.id);
+                                                }}
                                             >
                                                 <Trash2 className="h-3.5 w-3.5" />
                                             </Button>
 
                                             {(app.status === "FINALIZED" || app.status === "OFFER_RECEIVED") && (
                                                 <Button
+                                                    type="button"
                                                     variant="ghost"
                                                     size="icon"
                                                     className="h-7 w-7 rounded-md text-primary hover:text-primary hover:bg-primary/5"
-                                                    onClick={() => handleMoveToVisaClick(app)}
+                                                    onClick={(e) => {
+                                                        e.preventDefault();
+                                                        handleMoveToVisaClick(app);
+                                                    }}
                                                     title="Move to Visa"
                                                 >
                                                     <Plane className="h-3.5 w-3.5" />
@@ -196,9 +212,13 @@ export function UniversityApplicationDetailTable({
                                     <TableCell className="py-3 text-right pr-6">
                                         <div className="flex items-center justify-end gap-2">
                                             <Button
+                                                type="button"
                                                 variant="outline"
                                                 size="sm"
-                                                onClick={() => setCommentsApp(app)}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    setCommentsApp(app);
+                                                }}
                                                 className="h-8 px-2 text-[10px] font-bold border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm"
                                             >
                                                 <History className="h-3.5 w-3.5 mr-1" /> History

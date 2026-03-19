@@ -40,7 +40,14 @@ export async function POST(
         // 1. Fetch the Lead
         const lead = await prisma.lead.findUnique({
             where: { id: leadId },
-            include: { documents: true }
+            include: {
+                documents: true,
+                assignments: {
+                    orderBy: { assignedAt: 'desc' },
+                    take: 1,
+                    include: { employee: true }
+                }
+            }
         });
 
         if (!lead) {
@@ -134,8 +141,16 @@ export async function POST(
             }
 
             if (student) {
-                let resolvedAgentId = bodyAgentId === "" || bodyAgentId === "__none__" ? null : (bodyAgentId || (lead as any).agentId);
-                let resolvedCounselorId = bodyCounselorId === "" || bodyCounselorId === "__none__" ? null : (bodyCounselorId || (lead as any).counselorId);
+                let defaultAgentId = null;
+                let defaultCounselorId = null;
+                if (lead.assignments && lead.assignments.length > 0) {
+                    const emp = lead.assignments[0].employee;
+                    if (emp?.role === "AGENT") defaultAgentId = emp.id;
+                    if (emp?.role === "COUNSELOR") defaultCounselorId = emp.id;
+                }
+
+                let resolvedAgentId = bodyAgentId === "" || bodyAgentId === "__none__" ? null : (bodyAgentId || defaultAgentId);
+                let resolvedCounselorId = bodyCounselorId === "" || bodyCounselorId === "__none__" ? null : (bodyCounselorId || defaultCounselorId);
 
                 if (session.user.role === "AGENT") {
                     resolvedAgentId = session.user.id;
@@ -158,9 +173,17 @@ export async function POST(
                     }
                 });
             } else {
+                let defaultAgentId = null;
+                let defaultCounselorId = null;
+                if (lead.assignments && lead.assignments.length > 0) {
+                    const emp = lead.assignments[0].employee;
+                    if (emp?.role === "AGENT") defaultAgentId = emp.id;
+                    if (emp?.role === "COUNSELOR") defaultCounselorId = emp.id;
+                }
+
                 // Determine standard assignments (fallback to session user or keep existing if omitted)
-                let resolvedAgentId = bodyAgentId === "" || bodyAgentId === "__none__" ? null : (bodyAgentId || (lead as any).agentId);
-                let resolvedCounselorId = bodyCounselorId === "" || bodyCounselorId === "__none__" ? null : (bodyCounselorId || (lead as any).counselorId);
+                let resolvedAgentId = bodyAgentId === "" || bodyAgentId === "__none__" ? null : (bodyAgentId || defaultAgentId);
+                let resolvedCounselorId = bodyCounselorId === "" || bodyCounselorId === "__none__" ? null : (bodyCounselorId || defaultCounselorId);
 
                 // Auto-assignment behavior: if an AGENT or COUNSELOR converts a lead, they assign themselves automatically.
                 if (session.user.role === "AGENT") {
@@ -190,9 +213,23 @@ export async function POST(
             }
 
             // 6. Update Lead
-            let leadDataToUpdate: any = { status: 'CONVERTED' };
+            let leadDataToUpdate: any = {
+                status: 'CONVERTED',
+                name: studentName,
+                email: studentEmail,
+                phone: studentPhone,
+                alternateNo: alternateNo || undefined,
+                dateOfBirth: parseDate(dateOfBirth),
+                gender: gender || undefined,
+                nationality: nationality || undefined,
+                highestQualification: highestQualification || undefined,
+                address: address || undefined,
+                passportNo: passportNo || undefined,
+                passportIssueDate: parseDate(passportIssueDate),
+                passportExpiryDate: parseDate(passportExpiryDate),
+            };
             if (userId) {
-                const existingLeadWithUser = await tx.lead.findUnique({ where: { userId } });
+                const existingLeadWithUser = await tx.lead.findFirst({ where: { userId } });
                 if (!existingLeadWithUser || existingLeadWithUser.id === leadId) {
                     leadDataToUpdate.userId = userId;
                 }

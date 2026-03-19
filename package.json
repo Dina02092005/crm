@@ -41,6 +41,7 @@
     "clsx": "^2.1.1",
     "country-state-city": "^3.2.1",
     "date-fns": "^4.1.0",
+    "enhanced-resolve": "^5.20.1",
     "exceljs": "^4.4.0",
     "firebase": "^12.9.0",
     "framer-motion": "^12.31.0",

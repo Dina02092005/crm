@@ -252,8 +252,7 @@ export const GET = withPermission('APPLICATIONS', 'VIEW', async (req, { permissi
                             assignedTo: { select: { id: true, name: true, role: true } },
                             _count: { select: { applicationNotes: true } }
                         },
-                        orderBy: { createdAt: 'desc' },
-                        take: 1
+                        orderBy: { createdAt: 'desc' }
                     },
                     visaApplications: {
                         where: {
@@ -264,8 +263,7 @@ export const GET = withPermission('APPLICATIONS', 'VIEW', async (req, { permissi
                             university: { select: { id: true, name: true } },
                             course: { select: { id: true, name: true } },
                         },
-                        orderBy: { createdAt: 'desc' },
-                        take: 1
+                        orderBy: { createdAt: 'desc' }
                     },
                     _count: {
                         select: { applications: true, visaApplications: true }
@@ -278,45 +276,54 @@ export const GET = withPermission('APPLICATIONS', 'VIEW', async (req, { permissi
             prisma.student.count({ where: studentWhere }),
         ]);
 
-        const mappedApplications = students.map(student => {
-            const latestUniApp = student.applications[0];
-            const latestVisaApp = student.visaApplications?.[0];
+        const mappedApplications = students.flatMap(student => {
+            const apps: any[] = [];
 
-            // Prioritize status match. If we are filtering by status, find the one that matches.
-            let displayApp = latestUniApp;
-            if (status && latestVisaApp?.status === (status as any)) {
-                displayApp = {
-                    ...latestVisaApp,
-                    status: latestVisaApp.status as any,
-                    universityApplication: latestUniApp // keep ref if exists
-                } as any;
+            // Add University Applications
+            if (student.applications && student.applications.length > 0) {
+                student.applications.forEach(uniApp => {
+                    apps.push({
+                        ...uniApp,
+                        isVisaStage: false,
+                        student: {
+                            id: student.id,
+                            name: student.name,
+                            email: student.email,
+                            phone: student.phone,
+                            imageUrl: student.imageUrl,
+                            status: student.status,
+                            passportNo: student.passportNo,
+                            _count: student._count
+                        },
+                        _count: { notes: (uniApp as any)._count?.applicationNotes || 0 }
+                    });
+                });
             }
 
-            if (!displayApp) return null;
+            // Add Visa Applications if matching
+            if (student.visaApplications && student.visaApplications.length > 0 && status && status !== "ALL" && isVisaStatus) {
+                student.visaApplications.forEach(visaApp => {
+                    apps.push({
+                        ...visaApp,
+                        status: visaApp.status as any,
+                        isVisaStage: true,
+                        student: {
+                            id: student.id,
+                            name: student.name,
+                            email: student.email,
+                            phone: student.phone,
+                            imageUrl: student.imageUrl,
+                            status: student.status,
+                            passportNo: student.passportNo,
+                            _count: student._count
+                        },
+                        _count: { notes: 0 }
+                    });
+                });
+            }
 
-            const isVisaStage = !!latestVisaApp;
-
-            return {
-                ...displayApp,
-                isVisaStage,
-                student: {
-                    id: student.id,
-                    name: student.name,
-                    email: student.email,
-                    phone: student.phone,
-                    imageUrl: student.imageUrl,
-                    status: student.status,
-                    passportNo: student.passportNo,
-                    _count: {
-                        applications: student._count.applications,
-                        visaApplications: student._count.visaApplications
-                    }
-                },
-                _count: {
-                    notes: (displayApp as any)._count?.applicationNotes || 0
-                }
-            };
-        }).filter(Boolean);
+            return apps;
+        });
 
         return NextResponse.json({
             applications: mappedApplications,
@@ -394,7 +401,7 @@ export const POST = withPermission('APPLICATIONS', 'CREATE', async (req, { permi
                         university: { select: { name: true } }
                     }
                 });
-                
+
                 if (app.student.leadId) {
                     await tx.leadActivity.create({
                         data: {

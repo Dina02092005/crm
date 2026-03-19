@@ -23,6 +23,9 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useRolePath } from "@/hooks/use-role-path";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface ConvertToApplicationDialogProps {
     isOpen: boolean;
@@ -39,12 +42,16 @@ export function ConvertToApplicationDialog({
     studentName,
     onConverted,
 }: ConvertToApplicationDialogProps) {
+    const router = useRouter();
+    const { prefixPath } = useRolePath();
     const [countries, setCountries] = useState<any[]>([]);
+    const [universities, setUniversities] = useState<any[]>([]);
     const [isLoadingCountries, setIsLoadingCountries] = useState(false);
+    const [isLoadingUniversities, setIsLoadingUniversities] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
 
     const [formData, setFormData] = useState({
-        universityName: "",
+        universityId: "",
         courseName: "",
         intake: "",
         countryId: "",
@@ -57,11 +64,19 @@ export function ConvertToApplicationDialog({
         }
     }, [isOpen]);
 
+    useEffect(() => {
+        if (formData.countryId) {
+            fetchUniversities(formData.countryId);
+        } else {
+            setUniversities([]);
+        }
+    }, [formData.countryId]);
+
     const fetchCountries = async () => {
         setIsLoadingCountries(true);
         try {
-            const response = await axios.get("/api/master/countries?status=active");
-            setCountries(response.data || []);
+            const response = await axios.get("/api/master/countries?limit=500");
+            setCountries(response.data?.countries || response.data || []);
         } catch (error) {
             console.error("Failed to load countries", error);
         } finally {
@@ -69,24 +84,47 @@ export function ConvertToApplicationDialog({
         }
     };
 
+    const fetchUniversities = async (countryId: string) => {
+        setIsLoadingUniversities(true);
+        try {
+            const response = await axios.get(`/api/master/universities?countryId=${countryId}&limit=500`);
+            setUniversities(response.data?.universities || response.data || []);
+        } catch (error) {
+            console.error("Failed to load universities", error);
+        } finally {
+            setIsLoadingUniversities(false);
+        }
+    };
+
     const handleConvert = async () => {
-        if (!formData.universityName || !formData.courseName || !formData.countryId) {
+        if (!formData.universityId || !formData.courseName || !formData.countryId) {
             toast.error("Please fill in university, course, and country");
             return;
         }
 
         setIsSaving(true);
         try {
-            await axios.post("/api/applications", {
+            const res = await axios.post("/api/applications", {
                 studentId,
-                ...formData
+                applications: [{
+                    countryId: formData.countryId,
+                    universityId: formData.universityId,
+                    courseName: formData.courseName,
+                    intake: formData.intake,
+                    notes: formData.notes
+                }]
             });
             toast.success("Converted to application successfully");
             onConverted();
             onClose();
-        } catch (error) {
+
+            // Redirect to newly created application
+            if (res.data && res.data.length > 0) {
+                router.push(prefixPath(`/applications/${res.data[0].id}`));
+            }
+        } catch (error: any) {
             console.error("Failed to convert to application", error);
-            toast.error("Failed to convert student to application");
+            toast.error(error.response?.data?.error || "Failed to convert student to application");
         } finally {
             setIsSaving(false);
         }
@@ -103,44 +141,12 @@ export function ConvertToApplicationDialog({
                 </DialogHeader>
 
                 <div className="space-y-4 py-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="universityName">University Name</Label>
-                        <Input
-                            id="universityName"
-                            placeholder="e.g. University of Toronto"
-                            value={formData.universityName}
-                            onChange={(e) => setFormData({ ...formData, universityName: e.target.value })}
-                            className="rounded-xl"
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label htmlFor="courseName">Course Name</Label>
-                        <Input
-                            id="courseName"
-                            placeholder="e.g. Masters in Computer Science"
-                            value={formData.courseName}
-                            onChange={(e) => setFormData({ ...formData, courseName: e.target.value })}
-                            className="rounded-xl"
-                        />
-                    </div>
-
                     <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="intake">Intake</Label>
-                            <Input
-                                id="intake"
-                                placeholder="e.g. Fall 2026"
-                                value={formData.intake}
-                                onChange={(e) => setFormData({ ...formData, intake: e.target.value })}
-                                className="rounded-xl"
-                            />
-                        </div>
                         <div className="space-y-2">
                             <Label>Country</Label>
                             <Select
                                 value={formData.countryId}
-                                onValueChange={(value) => setFormData({ ...formData, countryId: value })}
+                                onValueChange={(value) => setFormData({ ...formData, countryId: value, universityId: "" })}
                             >
                                 <SelectTrigger className="rounded-xl">
                                     <SelectValue placeholder={isLoadingCountries ? "Loading..." : "Select Country"} />
@@ -154,6 +160,46 @@ export function ConvertToApplicationDialog({
                                 </SelectContent>
                             </Select>
                         </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="universityId">University Name</Label>
+                            <Select
+                                value={formData.universityId}
+                                onValueChange={(value) => setFormData({ ...formData, universityId: value })}
+                                disabled={!formData.countryId || isLoadingUniversities}
+                            >
+                                <SelectTrigger className="rounded-xl">
+                                    <SelectValue placeholder={isLoadingUniversities ? "Loading..." : "Select University"} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {universities.map((uni) => (
+                                        <SelectItem key={uni.id} value={uni.id}>
+                                            {uni.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="courseName">Course Name</Label>
+                        <Input
+                            id="courseName"
+                            placeholder="e.g. Masters in Computer Science"
+                            value={formData.courseName}
+                            onChange={(e) => setFormData({ ...formData, courseName: e.target.value })}
+                            className="rounded-xl"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="intake">Intake (Optional)</Label>
+                        <DatePicker
+                            value={formData.intake}
+                            onChange={(val) => setFormData({ ...formData, intake: val })}
+                            placeholder="Select intake date"
+                            className="rounded-xl"
+                        />
                     </div>
 
                     <div className="space-y-2">

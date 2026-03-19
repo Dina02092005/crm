@@ -28,6 +28,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface AddUniversityApplicationModalProps {
     isOpen: boolean;
@@ -129,7 +130,8 @@ export function AddUniversityApplicationModal({
     const handleAddCountry = async (countryId: string) => {
         if (!countryId) return;
         if (blocks.find(b => b.countryId === countryId)) {
-            toast.error("Country already added");
+            toast.info("Country block already added. You can add more applications below.");
+            setSelectedCountryId("");
             return;
         }
 
@@ -158,11 +160,6 @@ export function AddUniversityApplicationModal({
 
         setBlocks(prev => prev.map(block => {
             if (block.countryId === countryId) {
-                // Check if already in this block
-                if (block.rows.find(r => r.universityId === universityId)) {
-                    toast.error("University already added in this country block");
-                    return block;
-                }
                 return {
                     ...block,
                     rows: [...block.rows, {
@@ -236,7 +233,7 @@ export function AddUniversityApplicationModal({
 
             // Invalidate query cache
             queryClient.invalidateQueries({ queryKey: ["applications"] });
-            
+
             // Refresh server components
             router.refresh();
 
@@ -427,10 +424,10 @@ export function AddUniversityApplicationModal({
                                                                     </div>
                                                                     <div className="xl:col-span-2 space-y-2.5">
                                                                         <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">Deadline</Label>
-                                                                        <Input
-                                                                            type="date"
+                                                                        <DatePicker
                                                                             value={row.deadlineDate}
-                                                                            onChange={(e) => updateRow(block.countryId, row.tempId, { deadlineDate: e.target.value })}
+                                                                            onChange={(val) => updateRow(block.countryId, row.tempId, { deadlineDate: val })}
+                                                                            placeholder="Select Date"
                                                                             className="h-12 text-sm rounded-none bg-slate-50/50 border-slate-200"
                                                                         />
                                                                     </div>
