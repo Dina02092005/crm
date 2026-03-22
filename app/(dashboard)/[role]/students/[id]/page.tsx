@@ -40,6 +40,7 @@ import {
 import { toast } from "sonner";
 import StudentDocumentsSection from "@/components/student/StudentDocumentsSection";
 import { AddVisaApplicationModal } from "@/components/student/AddVisaApplicationModal";
+import { UniversityApplicationsSection } from "@/components/student/UniversityApplicationsSection";
 
 function InfoField({ label, value }: { label: string; value?: string | null }) {
     if (!value) return null;
@@ -160,6 +161,7 @@ export default function StudentDetailPage() {
     const tabs = [
         { id: "overview", label: "Personal Details", icon: <User className="h-3.5 w-3.5" /> },
         { id: "documents", label: "Documents", icon: <FolderOpen className="h-3.5 w-3.5" /> },
+        { id: "applications", label: "Applications", icon: <Briefcase className="h-3.5 w-3.5" /> },
     ];
 
     if (isStudent) {
@@ -318,7 +320,13 @@ export default function StudentDetailPage() {
                                             </Button>
                                             <Button
                                                 className="w-full bg-primary hover:bg-primary/90 rounded-xl h-9 text-sm font-bold shadow-sm"
-                                                onClick={() => router.push(prefixPath(`/students/${params.id}/applications/add`))}
+                                                onClick={() => {
+                                    if (!params.id) {
+                                        toast.error("Student ID missing");
+                                        return;
+                                    }
+                                    router.push(prefixPath(`/students/${params.id}/applications/add`));
+                                }}
                                             >
                                                 <Briefcase className="h-3.5 w-3.5 mr-2" />
                                                 Move to Application
@@ -471,6 +479,16 @@ export default function StudentDetailPage() {
                             />
                         </CardContent>
                     </Card>
+                )}
+
+                {/* === APPLICATIONS TAB === */}
+                {defaultTab === "applications" && (
+                    <div className="space-y-6">
+                        <UniversityApplicationsSection 
+                            studentId={student.id} 
+                            studentName={student.name} 
+                        />
+                    </div>
                 )}
 
             <ConfirmDialog

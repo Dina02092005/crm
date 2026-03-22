@@ -21,8 +21,16 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
-import { Loader2, User, Users, Plane, Info } from "lucide-react";
+import { Loader2, User, Users, Plane, Info, Calendar as CalendarIcon } from "lucide-react";
 import { Application } from "@/types/api";
+import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import {
+    Popover,
+    PopoverContent,
+    PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 interface MoveToVisaModalProps {
     isOpen: boolean;
@@ -42,17 +50,21 @@ export function MoveToVisaModal({
     const [counselors, setCounselors] = useState<any[]>([]);
     const [isLoadingStaff, setIsLoadingStaff] = useState(false);
 
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<{
+        agentId: string;
+        counselorId: string;
+        appointmentDate: Date | undefined;
+    }>({
         agentId: "",
         counselorId: "",
-        appointmentDate: "",
+        appointmentDate: undefined,
     });
 
     useEffect(() => {
         if (isOpen) {
             fetchAllStaff();
         } else {
-            setFormData({ agentId: "", counselorId: "", appointmentDate: "" });
+            setFormData({ agentId: "", counselorId: "", appointmentDate: undefined });
             setCounselors([]);
             setAgents([]);
         }
@@ -107,7 +119,7 @@ export function MoveToVisaModal({
             await axios.post(`/api/applications/${application.id}/ready-for-visa`, {
                 agentId: formData.agentId || null,
                 counselorId: formData.counselorId || null,
-                appointmentDate: formData.appointmentDate || null
+                appointmentDate: formData.appointmentDate ? formData.appointmentDate.toISOString() : null
             });
 
             toast.success("Application moved to Visa stage!");
@@ -183,12 +195,28 @@ export function MoveToVisaModal({
 
                         <div className="space-y-2">
                             <Label className="text-xs font-bold uppercase text-muted-foreground">Appointment Date (Optional)</Label>
-                            <Input
-                                type="date"
-                                value={formData.appointmentDate}
-                                onChange={(e) => setFormData(prev => ({ ...prev, appointmentDate: e.target.value }))}
-                                className="rounded-xl h-11"
-                            />
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        className={cn(
+                                            "w-full justify-start text-left font-normal rounded-xl h-11 border-slate-200",
+                                            !formData.appointmentDate && "text-muted-foreground"
+                                        )}
+                                    >
+                                        <CalendarIcon className="mr-2 h-4 w-4 text-slate-400" />
+                                        {formData.appointmentDate ? format(formData.appointmentDate, "PPP") : <span>Pick a date</span>}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0 rounded-2xl" align="start">
+                                    <Calendar
+                                        mode="single"
+                                        selected={formData.appointmentDate}
+                                        onSelect={(date) => setFormData(prev => ({ ...prev, appointmentDate: date }))}
+                                        initialFocus
+                                    />
+                                </PopoverContent>
+                            </Popover>
                         </div>
                     </div>
                 </div>

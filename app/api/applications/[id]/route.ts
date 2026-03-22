@@ -105,19 +105,27 @@ export const PATCH = withPermission('APPLICATIONS', 'EDIT', async (req, { params
             return NextResponse.json({ error: "Application not found" }, { status: 404 });
         }
 
+        if (status === "FINALIZED") {
+            const finalUniversityId = universityId !== undefined ? universityId : previousValues.universityId;
+            const finalCountryId = countryId !== undefined ? countryId : previousValues.countryId;
+            if (!finalUniversityId || !finalCountryId) {
+                return NextResponse.json({ error: "University and Country are required before finalizing the application" }, { status: 400 });
+            }
+        }
+
         const updated = await prisma.universityApplication.update({
             where: { id },
             data: {
                 ...(status && { status }),
                 ...(universityId && { universityId }),
-                ...(courseId && { courseId }),
+                ...(courseId !== undefined && { courseId: courseId === "" ? null : courseId }),
                 ...(countryId && { countryId }),
-                ...(intake && { intake }),
-                ...(applyLevel && { applyLevel }),
-                ...(intendedCourse && { intendedCourse }),
-                ...(deadlineDate && { deadlineDate: new Date(deadlineDate) }),
-                ...(assignedToId && { assignedToId }),
-                ...(notes && { notes }),
+                ...(intake !== undefined && { intake: intake === "" ? null : intake }),
+                ...(applyLevel !== undefined && { applyLevel: applyLevel === "" ? null : applyLevel }),
+                ...(intendedCourse !== undefined && { intendedCourse: intendedCourse === "" ? null : intendedCourse }),
+                ...(deadlineDate !== undefined && { deadlineDate: !deadlineDate || deadlineDate === "" ? null : new Date(deadlineDate) }),
+                ...(assignedToId !== undefined && { assignedToId: assignedToId === "" ? null : assignedToId }),
+                ...(notes !== undefined && { notes: notes === "" ? null : notes }),
             },
             include: {
                 student: { select: { id: true, name: true, leadId: true } },

@@ -27,6 +27,7 @@ import {
     MoreHorizontal,
     Eye,
     Trash2,
+    Pencil,
     Calendar,
     Globe,
     Clock,
@@ -43,14 +44,20 @@ import {
     ArrowRightLeft,
     Users
 } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { VisaStatus } from "@/lib/enums";
-import { useUpdateVisaApplication } from "@/hooks/useApi";
+import {
+    useUpdateVisaApplication,
+    useDeleteVisaApplication,
+    useBulkDeleteVisaApplications
+} from "@/hooks/useApi";
 import { useRouter } from "next/navigation";
 import { useRolePath } from "@/hooks/use-role-path";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 
 import { AssignVisaApplicationSheet } from "./AssignVisaApplicationSheet";
 import { useState } from "react";
@@ -63,6 +70,7 @@ interface VisaApplicationsTableProps {
     onOpenComments?: (app: any) => void;
     onOpenOfferLetters?: (app: any) => void;
     onOpenNotes?: (app: any) => void;
+    onOpenEdit?: (app: any) => void;
     selectedIds?: string[];
     onSelectionChange?: (ids: string[]) => void;
     pagination?: {
@@ -82,6 +90,7 @@ export function VisaApplicationsTable({
     onOpenComments,
     onOpenOfferLetters,
     onOpenNotes,
+    onOpenEdit,
     selectedIds = [],
     onSelectionChange = () => { },
     pagination
@@ -91,17 +100,44 @@ export function VisaApplicationsTable({
     const updateMutation = useUpdateVisaApplication();
     const [assignApp, setAssignApp] = useState<any>(null);
 
+    const [selectedIdsLocal, setSelectedIdsLocal] = useState<Set<string>>(new Set());
+
+    // We handle controlled vs uncontrolled if selectedIds is passed
+    const activeSelectedIds = selectedIds.length > 0 ? new Set(selectedIds) : selectedIdsLocal;
+
+    const toggleSelectAll = () => {
+        if (activeSelectedIds.size === data.length) {
+            setSelectedIdsLocal(new Set());
+            onSelectionChange([]);
+        } else {
+            const allIds = data.map(s => s.id);
+            setSelectedIdsLocal(new Set(allIds));
+            onSelectionChange(allIds);
+        }
+    };
+
+    const toggleSelect = (id: string) => {
+        const newSelected = new Set(activeSelectedIds);
+        if (newSelected.has(id)) {
+            newSelected.delete(id);
+        } else {
+            newSelected.add(id);
+        }
+        setSelectedIdsLocal(newSelected);
+        onSelectionChange(Array.from(newSelected));
+    };
+
     const getStatusVariant = (status: VisaStatus) => {
         const variants: Record<string, string> = {
-            VISA_GRANTED: "bg-emerald-50 text-emerald-600 border-emerald-100",
-            VISA_APPROVED: "bg-emerald-50 text-emerald-600 border-emerald-100",
-            VISA_REFUSED: "bg-rose-50 text-rose-600 border-rose-100",
-            VISA_REJECTED: "bg-rose-50 text-rose-600 border-rose-100",
-            VISA_APPLICATION_SUBMITTED: "bg-blue-50 text-blue-600 border-blue-100",
-            UNDER_REVIEW: "bg-purple-50 text-purple-600 border-purple-100",
-            DOCUMENTS_PENDING: "bg-orange-50 text-orange-600 border-orange-100",
+            VISA_GRANTED: "bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800",
+            VISA_APPROVED: "bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800",
+            VISA_REFUSED: "bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800",
+            VISA_REJECTED: "bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800",
+            VISA_APPLICATION_SUBMITTED: "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800",
+            UNDER_REVIEW: "bg-purple-50 text-purple-600 border-purple-100 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800",
+            DOCUMENTS_PENDING: "bg-orange-50 text-orange-600 border-orange-100 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800",
         };
-        return variants[status] || "bg-slate-50 text-slate-500 border-slate-100";
+        return variants[status] || "bg-slate-50 text-slate-500 border-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700";
     };
 
     const handleStatusChange = async (visaId: string, newStatus: string) => {
@@ -117,17 +153,47 @@ export function VisaApplicationsTable({
         }
     };
 
+    const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+    const bulkDeleteMutation = useBulkDeleteVisaApplications();
+
+    const handleBulkDelete = async () => {
+        try {
+            await bulkDeleteMutation.mutateAsync(Array.from(activeSelectedIds));
+            onSelectionChange([]);
+            onUpdate();
+        } catch (error) {
+            // Error handled by mutation
+        } finally {
+            setBulkDeleteDialogOpen(false);
+        }
+    };
+
     return (
-        <div className="relative border rounded-xl overflow-hidden bg-background shadow-sm shadow-slate-200/50">
+        <div className="relative border rounded-xl overflow-hidden bg-card shadow-sm">
+            {activeSelectedIds.size > 0 && (
+                <div className="absolute top-0 inset-x-0 h-12 bg-primary text-primary-foreground flex items-center justify-between px-4 z-20">
+                    <span className="text-[11px] font-bold uppercase tracking-wider">{activeSelectedIds.size} applications selected</span>
+                    <div className="flex items-center gap-2">
+                        <Button variant="secondary" size="sm" onClick={() => onSelectionChange([])} className="h-8 text-[10px] font-bold uppercase">Deselect All</Button>
+                        <Button variant="destructive" size="sm" onClick={() => setBulkDeleteDialogOpen(true)} className="h-8 text-[10px] font-bold uppercase">Bulk Delete</Button>
+                    </div>
+                </div>
+            )}
             <Table>
                 <TableHeader className="bg-muted/30">
                     <TableRow>
-                        <TableHead className="w-[300px] pl-6 font-bold uppercase text-[10px] tracking-widest text-slate-400">Student & Visa Type</TableHead>
-                        <TableHead className="font-bold uppercase text-[10px] tracking-widest text-slate-400">Destination</TableHead>
-                        <TableHead className="font-bold uppercase text-[10px] tracking-widest text-slate-400">Status</TableHead>
-                        <TableHead className="font-bold uppercase text-[10px] tracking-widest text-slate-400">Team / Flow</TableHead>
-                        <TableHead className="font-bold uppercase text-[10px] tracking-widest text-slate-400">Timeline</TableHead>
-                        <TableHead className="text-right pr-6 font-bold uppercase text-[10px] tracking-widest text-slate-400">Actions</TableHead>
+                        <TableHead className="w-12 px-4 border-r dark:border-slate-800">
+                            <Checkbox 
+                                checked={data.length > 0 && activeSelectedIds.size === data.length}
+                                onCheckedChange={toggleSelectAll}
+                            />
+                        </TableHead>
+                        <TableHead className="w-[300px] pl-6 font-bold uppercase text-[10px] tracking-widest text-muted-foreground">Student & Visa Type</TableHead>
+                        <TableHead className="font-bold uppercase text-[10px] tracking-widest text-muted-foreground">Destination</TableHead>
+                        <TableHead className="font-bold uppercase text-[10px] tracking-widest text-muted-foreground">Status</TableHead>
+                        <TableHead className="font-bold uppercase text-[10px] tracking-widest text-muted-foreground">Team / Flow</TableHead>
+                        <TableHead className="font-bold uppercase text-[10px] tracking-widest text-muted-foreground">Timeline</TableHead>
+                        <TableHead className="text-right pr-6 font-bold uppercase text-[10px] tracking-widest text-muted-foreground">Actions</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -143,6 +209,12 @@ export function VisaApplicationsTable({
                                 router.push(prefixPath(`/visa-applications/${app.id}`));
                             }}
                         >
+                            <TableCell className="px-4 border-r dark:border-slate-800">
+                                <Checkbox 
+                                    checked={activeSelectedIds.has(app.id)}
+                                    onCheckedChange={() => toggleSelect(app.id)}
+                                />
+                            </TableCell>
                             <TableCell className="pl-6">
                                 <div className="flex items-center gap-4">
                                     <Avatar className="h-10 w-10 rounded-xl border-2 border-white shadow-sm shrink-0">
@@ -151,7 +223,7 @@ export function VisaApplicationsTable({
                                         </AvatarFallback>
                                     </Avatar>
                                     <div className="flex flex-col min-w-0">
-                                        <span className="font-bold text-sm text-slate-900 truncate uppercase tracking-tight">{app.student?.name || "N/A"}</span>
+                                        <span className="font-bold text-sm text-foreground truncate uppercase tracking-tight">{app.student?.name || "N/A"}</span>
                                         <div className="flex items-center gap-2 mt-0.5">
                                             <span className="text-[10px] font-black text-primary uppercase bg-primary/5 px-1.5 py-0.5 rounded border border-primary/10 tracking-widest">
                                                 {app.visaType?.replace(/_/g, ' ') || "Standard"}
@@ -162,11 +234,11 @@ export function VisaApplicationsTable({
                             </TableCell>
                             <TableCell>
                                 <div className="flex flex-col gap-1">
-                                    <div className="flex items-center gap-2 text-[11px] font-bold text-slate-700">
-                                        <Globe className="h-3 w-3 text-slate-300" />
+                                    <div className="flex items-center gap-2 text-[11px] font-bold text-foreground/80">
+                                        <Globe className="h-3 w-3 text-slate-400" />
                                         {app.university?.name || "Global University"}
                                     </div>
-                                    <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                                    <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
                                         {app.country?.name || "N/A"}
                                     </div>
                                 </div>
@@ -182,7 +254,7 @@ export function VisaApplicationsTable({
                                     )}>
                                         <SelectValue />
                                     </SelectTrigger>
-                                    <SelectContent className="rounded-xl border-slate-100 shadow-xl max-h-[300px]">
+                                    <SelectContent className="rounded-xl border-border shadow-xl max-h-[300px]">
                                         {Object.values(VisaStatus).map(s => (
                                             <SelectItem key={s} value={s} className="text-[10px] font-black uppercase py-2">
                                                 {s.replace(/_/g, ' ')}
@@ -193,20 +265,20 @@ export function VisaApplicationsTable({
                             </TableCell>
                             <TableCell>
                                 <div className="flex flex-col min-w-0 gap-1">
-                                    <div className="text-[11px] font-bold text-slate-700 truncate flex items-center gap-1.5">
-                                        <span className="text-[9px] text-slate-400 uppercase tracking-widest font-black">Couns:</span>
+                                    <div className="text-[11px] font-bold text-foreground/70 truncate flex items-center gap-1.5">
+                                        <span className="text-[9px] text-muted-foreground uppercase tracking-widest font-black">Couns:</span>
                                         {app.counselor?.name || "Unassigned"}
                                     </div>
-                                    <div className="text-[11px] font-medium text-slate-400 truncate flex items-center gap-1.5">
-                                        <span className="text-[9px] text-slate-300 uppercase tracking-widest font-black">Agent:</span>
+                                    <div className="text-[11px] font-medium text-muted-foreground/50 truncate flex items-center gap-1.5">
+                                        <span className="text-[9px] text-muted-foreground/30 uppercase tracking-widest font-black">Agent:</span>
                                         {app.agent?.name || "Direct"}
                                     </div>
                                 </div>
                             </TableCell>
                             <TableCell>
                                 <div className="flex flex-col gap-1">
-                                    <div className="flex items-center gap-2 text-[11px] font-bold text-slate-600">
-                                        <Calendar className="h-3 w-3 text-slate-300" />
+                                    <div className="flex items-center gap-2 text-[11px] font-bold text-foreground/70 dark:text-slate-300">
+                                        <Calendar className="h-3 w-3 text-slate-400" />
                                         Applied: {format(new Date(app.applicationDate), "dd MMM, yy")}
                                     </div>
                                     {app.appointmentDate && (
@@ -237,16 +309,19 @@ export function VisaApplicationsTable({
 
                                     <DropdownMenu>
                                         <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-slate-50 rounded-lg">
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-muted rounded-lg">
                                                 <MoreHorizontal className="h-4 w-4" />
                                             </Button>
                                         </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-56 rounded-xl border-slate-100 shadow-xl p-1">
+                                        <DropdownMenuContent align="end" className="w-56 rounded-xl border-border shadow-xl p-1">
                                             <DropdownMenuItem onClick={() => router.push(prefixPath(`/visa-applications/${app.id}`))}>
                                                 <Eye className="h-4 w-4 mr-2 text-slate-400" /> Detailed View
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => setAssignApp(app)}>
                                                 <Users className="h-4 w-4 mr-2 text-slate-400" /> Assign Team
+                                            </DropdownMenuItem>
+                                            <DropdownMenuItem onClick={() => onOpenEdit?.(app)}>
+                                                <Pencil className="h-4 w-4 mr-2 text-slate-400" /> Edit Details
                                             </DropdownMenuItem>
                                             <DropdownMenuItem onClick={() => onOpenHistory?.(app)}>
                                                 <History className="h-4 w-4 mr-2 text-slate-400" /> Visa History
@@ -254,7 +329,7 @@ export function VisaApplicationsTable({
                                             <DropdownMenuItem onClick={() => onOpenNotes?.(app)}>
                                                 <StickyNote className="h-4 w-4 mr-2 text-slate-400" /> Case Notes
                                             </DropdownMenuItem>
-                                            <div className="h-px bg-slate-100 my-1" />
+                                            <div className="h-px bg-border my-1" />
                                             <DropdownMenuItem onClick={async () => {
                                                 try {
                                                     await updateMutation.mutateAsync({ id: app.id, data: { status: "DEFERRED" as any } });
@@ -264,7 +339,7 @@ export function VisaApplicationsTable({
                                             }} className="text-pink-600">
                                                 <ArrowRightLeft className="h-4 w-4 mr-2" /> Defer Case
                                             </DropdownMenuItem>
-                                            <div className="h-px bg-slate-100 my-1" />
+                                            <div className="h-px bg-border my-1" />
                                             <DropdownMenuItem 
                                                 className="text-rose-600 focus:text-rose-600 focus:bg-rose-50"
                                                 onClick={() => onDelete(app.id)}
@@ -281,11 +356,11 @@ export function VisaApplicationsTable({
                         <TableRow>
                             <TableCell colSpan={6} className="h-64 text-center text-muted-foreground">
                                 <div className="flex flex-col items-center gap-2">
-                                    <div className="h-12 w-12 rounded-full bg-slate-50 flex items-center justify-center border border-slate-100 mb-2">
-                                        <Plane className="h-6 w-6 text-slate-200" />
+                                    <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center border border-border mb-2">
+                                        <Plane className="h-6 w-6 text-muted-foreground/30" />
                                     </div>
-                                    <span className="text-sm font-bold text-slate-400 uppercase tracking-widest">No visa applications</span>
-                                    <span className="text-[10px] font-medium text-slate-300">Try adjusting your filters</span>
+                                    <span className="text-sm font-bold text-muted-foreground uppercase tracking-widest">No visa applications</span>
+                                    <span className="text-[10px] font-medium text-muted-foreground/50">Try adjusting your filters</span>
                                 </div>
                             </TableCell>
                         </TableRow>
@@ -294,21 +369,21 @@ export function VisaApplicationsTable({
             </Table>
 
             {pagination && (
-                <div className="flex items-center justify-between px-6 py-4 border-t bg-slate-50/30 min-h-[64px]">
+                <div className="flex items-center justify-between px-6 py-4 border-t bg-muted/20 min-h-[64px]">
                     <div className="flex items-center gap-8">
-                        <div className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] leading-none">
-                            Page {pagination.page} / {pagination.totalPages}
+                        <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] leading-none">
+                            Page {pagination.page} <span className="text-muted-foreground/20 mx-2">/</span> {pagination.totalPages}
                         </div>
-                        <div className="flex items-center gap-3 border-l pl-8 border-slate-100">
+                        <div className="flex items-center gap-3 border-l pl-8 border-border">
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Display</span>
                             <Select
                                 value={pagination.pageSize.toString()}
                                 onValueChange={(v) => pagination.onPageSizeChange(Number(v))}
                             >
-                                <SelectTrigger className="h-8 w-[72px] text-[10px] font-black border-slate-200 bg-white shadow-sm focus:ring-1 focus:ring-primary/20 rounded-lg">
+                                <SelectTrigger className="h-8 w-[72px] text-[10px] font-black border-border bg-background shadow-sm focus:ring-1 focus:ring-primary/20 rounded-lg">
                                     <SelectValue />
                                 </SelectTrigger>
-                                <SelectContent className="min-w-[72px] rounded-xl shadow-2xl border-slate-100">
+                                <SelectContent className="min-w-[72px] rounded-xl shadow-2xl border-border">
                                     {[10, 20, 50, 100].map((size) => (
                                         <SelectItem key={size} value={size.toString()} className="text-[10px] font-black uppercase">
                                             {size}
@@ -322,20 +397,20 @@ export function VisaApplicationsTable({
                         <Button
                             variant="outline"
                             size="sm"
-                            className="h-9 px-5 text-[10px] font-black uppercase tracking-widest border-slate-200 bg-white hover:bg-slate-50 transition-all rounded-xl"
+                            className="h-9 px-5 text-[10px] font-black uppercase tracking-widest border-border bg-background hover:bg-muted transition-all rounded-xl"
                             disabled={pagination.page <= 1}
                             onClick={() => pagination.onPageChange(pagination.page - 1)}
                         >
-                            <ChevronLeft className="h-4 w-4 mr-2 text-slate-400" /> Previous
+                            <ChevronLeft className="h-4 w-4 mr-2 text-muted-foreground" /> Previous
                         </Button>
                         <Button
                             variant="outline"
                             size="sm"
-                            className="h-9 px-5 text-[10px] font-black uppercase tracking-widest border-slate-200 bg-white hover:bg-slate-50 transition-all rounded-xl"
+                            className="h-9 px-5 text-[10px] font-black uppercase tracking-widest border-border bg-background hover:bg-muted transition-all rounded-xl"
                             disabled={pagination.page >= pagination.totalPages}
                             onClick={() => pagination.onPageChange(pagination.page + 1)}
                         >
-                            Next <ChevronRight className="h-4 w-4 ml-2 text-slate-400" />
+                            Next <ChevronRight className="h-4 w-4 ml-2 text-muted-foreground" />
                         </Button>
                     </div>
                 </div>
@@ -353,6 +428,15 @@ export function VisaApplicationsTable({
                     onUpdate();
                     setAssignApp(null);
                 }}
+            />
+            <ConfirmDialog
+                isOpen={bulkDeleteDialogOpen}
+                onClose={() => setBulkDeleteDialogOpen(false)}
+                onConfirm={handleBulkDelete}
+                title="Bulk Delete Visa Applications"
+                description={`Are you sure you want to delete ${activeSelectedIds.size} selected visa applications? This action cannot be undone.`}
+                confirmText="Delete All"
+                variant="destructive"
             />
         </div>
     );

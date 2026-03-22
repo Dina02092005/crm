@@ -76,6 +76,17 @@ export function UniversityApplicationDetailTable({
         }
     };
 
+    const handleStatusUpdate = async (appId: string, newStatus: string) => {
+        try {
+            await axios.patch(`/api/applications/${appId}`, { status: newStatus });
+            toast.success("Status updated successfully");
+            onUpdate?.();
+        } catch (error) {
+            console.error("Failed to update status:", error);
+            toast.error("Failed to update status");
+        }
+    };
+
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between px-1">
@@ -176,6 +187,37 @@ export function UniversityApplicationDetailTable({
                                                     <Plane className="h-3.5 w-3.5" />
                                                 </Button>
                                             )}
+                                            
+                                            <div className="flex items-center gap-1 border-l pl-2 ml-1 border-border/50">
+                                                <Button
+                                                    variant="outline" size="sm"
+                                                    className="h-6 px-2 text-[9px] font-bold"
+                                                    onClick={(e) => { e.preventDefault(); handleStatusUpdate(app.id, "APPLIED"); }}
+                                                >
+                                                    Application
+                                                </Button>
+                                                <Button
+                                                    variant="outline" size="sm"
+                                                    className="h-6 px-2 text-[9px] font-bold"
+                                                    onClick={(e) => { e.preventDefault(); handleStatusUpdate(app.id, "VISA_PROCESS"); }}
+                                                >
+                                                    Visa
+                                                </Button>
+                                                <Button
+                                                    variant="outline" size="sm"
+                                                    className="h-6 px-2 text-[9px] font-bold text-pink-600 border-pink-200 hover:bg-pink-50"
+                                                    onClick={(e) => { e.preventDefault(); handleStatusUpdate(app.id, "DEFERRED"); }}
+                                                >
+                                                    Defer
+                                                </Button>
+                                                <Button
+                                                    variant="outline" size="sm"
+                                                    className="h-6 px-2 text-[9px] font-bold text-cyan-600 border-cyan-200 hover:bg-cyan-50"
+                                                    onClick={(e) => { e.preventDefault(); handleStatusUpdate(app.id, "ENROLLED"); }}
+                                                >
+                                                    Enrolled
+                                                </Button>
+                                            </div>
                                         </div>
                                     </TableCell>
                                     <TableCell className="py-3">

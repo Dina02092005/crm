@@ -589,6 +589,7 @@ model ApplicationNote {
 enum NoteType {
   COMMENT
   OFFER_LETTER
+  NOTE
 }
 
 model VisaApplication {
@@ -640,10 +641,12 @@ enum NotificationType {
 enum ApplicationStatus {
   PENDING
   SUBMITTED
+  APPLIED
   FINALIZED
   UNDER_REVIEW
   OFFER_RECEIVED
   READY_FOR_VISA
+  VISA_PROCESS
   ENROLLED
   DEFERRED
   REJECTED

@@ -35,27 +35,21 @@ export function ApplicationCommentsModal({ isOpen, onClose, application, onUpdat
         queryKey: ['application-comments', application?.id],
         queryFn: async () => {
             if (!application?.id) return [];
-            const response = await fetch(`/api/applications/${application.id}/notes?type=COMMENT`);
-            if (!response.ok) throw new Error('Failed to fetch comments');
-            return response.json();
+            const { data } = await axios.get(`/api/applications/${application.id}/notes?type=COMMENT`);
+            return data;
         },
         enabled: !!application?.id && isOpen
     });
 
     const addCommentMutation = useMutation({
         mutationFn: async (data: any) => {
-            const response = await fetch(`/api/applications/${application.id}/notes`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    note: data.comment,
-                    attachmentUrl: data.attachmentUrl,
-                    attachmentName: data.attachmentName,
-                    type: 'COMMENT'
-                })
+            const { data: responseData } = await axios.post(`/api/applications/${application.id}/notes`, {
+                note: data.comment,
+                attachmentUrl: data.attachmentUrl,
+                attachmentName: data.attachmentName,
+                type: 'COMMENT'
             });
-            if (!response.ok) throw new Error('Failed to add comment');
-            return response.json();
+            return responseData;
         },
         onSuccess: () => {
             setComment("");
@@ -64,8 +58,8 @@ export function ApplicationCommentsModal({ isOpen, onClose, application, onUpdat
             onUpdate?.();
             toast.success("Comment added successfully");
         },
-        onError: () => {
-            toast.error("Failed to add comment");
+        onError: (error: any) => {
+            toast.error(error.response?.data?.error || "Failed to add comment");
         }
     });
 

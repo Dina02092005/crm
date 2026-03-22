@@ -4,6 +4,8 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 import { sendEmail } from '@/lib/email';
+import { sendWelcomeEmail } from '@/lib/mail';
+
 
 export const dynamic = 'force-dynamic';
 
@@ -221,22 +223,13 @@ export async function POST(req: NextRequest) {
 
         // Send welcome email with credentials
         try {
-            await sendEmail({
-                to: email,
-                subject: 'Welcome to Inter CRM - Your Account Credentials',
-                html: `
-                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                        <h2 style="color: #6d28d9;">Welcome to Inter CRM!</h2>
-                        <p>Hello ${name},</p>
-                        <p>Your employee account has been successfully created. You can now login to the dashboard using the following credentials:</p>
-                        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                            <p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p>
-                            <p style="margin: 5px 0;"><strong>Password:</strong> ${password}</p>
-                        </div>
-                        <p>Please login and change your password immediately for security.</p>
-                        <p>Best regards,<br>The Inter CRM Team</p>
-                    </div>
-                `,
+            const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/login`;
+            await sendWelcomeEmail({
+                email,
+                name,
+                password,
+                loginUrl,
+                role: 'Employee'
             });
         } catch (emailError) {
             console.error("Failed to send welcome email:", emailError);

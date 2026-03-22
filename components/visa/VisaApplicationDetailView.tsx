@@ -23,6 +23,8 @@ import { useRolePath } from "@/hooks/use-role-path";
 import StudentDocumentsSection from "@/components/student/StudentDocumentsSection";
 import { UniversityApplicationDetailTable } from "@/components/application/UniversityApplicationDetailTable";
 import { VisaApplicationDetailTable } from "./VisaApplicationDetailTable";
+import { EditVisaCaseModal } from "./EditVisaCaseModal";
+import { useState } from "react";
 
 interface VisaApplicationDetailViewProps {
     visaApplication: any;
@@ -51,6 +53,7 @@ export function VisaApplicationDetailView({
 }: VisaApplicationDetailViewProps) {
     const router = useRouter();
     const { prefixPath } = useRolePath();
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const student = visaApplication.student;
     const lead = student?.lead;
 

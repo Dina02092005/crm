@@ -73,8 +73,14 @@ export const GET = withPermission('APPLICATIONS', 'VIEW', async (req, { permissi
                 prisma.universityApplication.count({ where: studentAppWhere })
             ]);
 
+            // Map _count.applicationNotes to _count.notes for frontend consistency
+            const mappedApps = applications.map(app => ({
+                ...app,
+                _count: { notes: app._count?.applicationNotes || 0 }
+            }));
+
             return NextResponse.json({
-                applications,
+                applications: mappedApps,
                 pagination: {
                     total,
                     page,
@@ -102,6 +108,9 @@ export const GET = withPermission('APPLICATIONS', 'VIEW', async (req, { permissi
                 // we should filter for a non-existent status to return empty results.
                 appWhere.status = "INVALID_STATUS_FILTER";
             }
+        } else {
+            // Default: Hide applications already in Visa process
+            appWhere.status = { notIn: ["READY_FOR_VISA", "VISA_PROCESS"] };
         }
         if (countryId) appWhere.countryId = countryId;
         if (universityId) appWhere.universityId = universityId;

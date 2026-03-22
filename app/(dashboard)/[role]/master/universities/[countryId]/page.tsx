@@ -38,6 +38,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { useSession } from "next-auth/react";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -45,7 +46,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { useUniversities } from "@/hooks/use-masters";
+import { useUniversities, useBulkDeleteUniversities } from "@/hooks/use-masters";
 import { useDebounce } from "@/hooks/use-debounce";
 import {
     Select,
@@ -97,6 +98,44 @@ export default function UniversityDetailPage() {
         imageUrl: ""
     });
     const [submitting, setSubmitting] = useState(false);
+
+    // Multi-select state
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const bulkDeleteMutation = useBulkDeleteUniversities();
+    const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+
+    const toggleSelectAll = () => {
+        if (selectedIds.size === universities.length && universities.length > 0) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(universities.map((u: any) => u.id)));
+        }
+    };
+
+    const toggleSelect = (id: string) => {
+        const newSelected = new Set(selectedIds);
+        if (newSelected.has(id)) {
+            newSelected.delete(id);
+        } else {
+            newSelected.add(id);
+        }
+        setSelectedIds(newSelected);
+    };
+
+    const handleBulkDelete = async () => {
+        try {
+            setSubmitting(true);
+            await bulkDeleteMutation.mutateAsync(Array.from(selectedIds));
+            toast.success("Universities deleted successfully");
+            setSelectedIds(new Set());
+            setIsBulkDeleteOpen(false);
+            refetch();
+        } catch (error) {
+            toast.error("Failed to delete universities");
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     useEffect(() => {
         const fetchCountry = async () => {
@@ -224,12 +263,45 @@ export default function UniversityDetailPage() {
                 </div>
             </div>
 
+            {/* Multi-select Action Bar */}
+            {selectedIds.size > 0 && (
+                <div className="bg-primary text-primary-foreground px-6 py-3 rounded-lg flex items-center justify-between shadow-lg animate-in fade-in slide-in-from-top-4 duration-300">
+                    <div className="flex items-center gap-4">
+                        <span className="text-[11px] font-black uppercase tracking-widest">{selectedIds.size} Institutions Selected</span>
+                        <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            onClick={() => setSelectedIds(new Set())}
+                            className="h-8 text-[10px] font-black uppercase tracking-wider bg-white/20 hover:bg-white/30 text-white border-none"
+                        >
+                            Clear
+                        </Button>
+                    </div>
+                    {canEdit && (
+                        <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            onClick={() => setIsBulkDeleteOpen(true)}
+                            className="h-8 text-[10px] font-black uppercase tracking-wider bg-white text-destructive hover:bg-white/90 border-none px-6"
+                        >
+                            Delete Selected
+                        </Button>
+                    )}
+                </div>
+            )}
+
             {/* Data Table Section */}
             <div className="bg-background rounded-lg border shadow-sm overflow-hidden">
                 <Table>
                     <TableHeader className="bg-muted/30">
                         <TableRow className="hover:bg-transparent">
-                            <TableHead className="w-12 px-4 border-r text-[10px] font-black uppercase tracking-widest text-muted-foreground">#</TableHead>
+                            <TableHead className="w-12 px-4 border-r">
+                                <Checkbox 
+                                    checked={universities.length > 0 && selectedIds.size === universities.length}
+                                    onCheckedChange={toggleSelectAll}
+                                />
+                            </TableHead>
+                            <TableHead className="w-12 px-4 border-r text-[10px] font-black uppercase tracking-widest text-muted-foreground text-center">#</TableHead>
                             <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Institution Name</TableHead>
                             <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Portal / Link</TableHead>
                             <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Location</TableHead>
@@ -261,7 +333,13 @@ export default function UniversityDetailPage() {
                         ) : (
                             universities.map((uni: any, idx: number) => (
                                 <TableRow key={uni.id} className="group hover:bg-muted/30 border-b last:border-0 transition-colors">
-                                    <TableCell className="px-4 border-r font-mono text-[10px] text-muted-foreground/60">
+                                    <TableCell className="px-4 border-r">
+                                        <Checkbox 
+                                            checked={selectedIds.has(uni.id)}
+                                            onCheckedChange={() => toggleSelect(uni.id)}
+                                        />
+                                    </TableCell>
+                                    <TableCell className="px-4 border-r font-mono text-[10px] text-muted-foreground/60 text-center">
                                         {(page - 1) * limit + idx + 1}
                                     </TableCell>
                                     <TableCell>
@@ -464,6 +542,17 @@ export default function UniversityDetailPage() {
                 title="Deauthorizing Institution"
                 description={`This will permanently remove ${selectedUni?.name} from the registry. This action is terminal and cannot be reversed.`}
                 confirmText="Yes, Proceed"
+                variant="destructive"
+                isLoading={submitting}
+            />
+
+            <ConfirmDialog
+                isOpen={isBulkDeleteOpen}
+                onClose={() => setIsBulkDeleteOpen(false)}
+                onConfirm={handleBulkDelete}
+                title="Bulk Deauthorizing Institutions"
+                description={`This will permanently remove ${selectedIds.size} selected institutions from the registry. This action is terminal and cannot be reversed.`}
+                confirmText="Yes, Proceed All"
                 variant="destructive"
                 isLoading={submitting}
             />

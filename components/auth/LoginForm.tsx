@@ -89,13 +89,16 @@ function LoginFormContent({ loginType = 'student' }: LoginFormProps) {
     setError("");
 
     try {
-      // For students: validate phone; for others: validate email
+      // For students: validate email OR phone; for others: validate email
       if (isStudent) {
-        const cleanPhone = formData.identifier.replace(/\D/g, '');
-        if (cleanPhone.length < 10) {
-          setError("Please enter a valid mobile number");
-          setIsLoading(false);
-          return;
+        const isEmail = formData.identifier.includes('@');
+        if (!isEmail) {
+          const cleanPhone = formData.identifier.replace(/\D/g, '');
+          if (cleanPhone.length < 10) {
+            setError("Please enter a valid mobile number or email");
+            setIsLoading(false);
+            return;
+          }
         }
       } else {
         if (!formData.identifier.includes("@")) {
@@ -164,13 +167,13 @@ function LoginFormContent({ loginType = 'student' }: LoginFormProps) {
           <div className="space-y-4">
             <div className="space-y-1.5">
               <Label htmlFor="login-identifier" className="text-[11px] font-bold uppercase tracking-wider text-gray-700 ml-1">
-                {isStudent ? 'Mobile Number' : loginType === 'agent' ? 'Agent ID / Email' : 'Email Address'}
+                {isStudent ? 'Email or Mobile Number' : loginType === 'agent' ? 'Agent ID / Email' : 'Email Address'}
               </Label>
               <div className="relative group">
                 <div className={`absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 ${clr.groupFocus} transition-colors`}>
                   {isStudent ? (
                     <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="w-4 h-4">
-                      <path d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                      <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                   ) : (
                     <svg fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" className="w-4 h-4">
@@ -180,9 +183,9 @@ function LoginFormContent({ loginType = 'student' }: LoginFormProps) {
                 </div>
                 <Input
                   id="login-identifier"
-                  type={isStudent ? "tel" : "email"}
-                  placeholder={isStudent ? "+91 98765 43210" : loginType === 'admin' ? "Enter your Admin ID" : "enter your email address"}
-                  autoComplete={isStudent ? "tel" : "email"}
+                  type="text"
+                  placeholder={isStudent ? "Email or Mobile Number" : loginType === 'admin' ? "Enter your Admin ID" : "enter your email address"}
+                  autoComplete="username"
                   required
                   value={formData.identifier}
                   onChange={(e) => setFormData({ ...formData, identifier: e.target.value })}

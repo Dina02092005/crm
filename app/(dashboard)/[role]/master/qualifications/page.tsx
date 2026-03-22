@@ -23,8 +23,10 @@ import {
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, Plus, Trash2, Pencil, Search } from "lucide-react";
-import { useQualifications } from "@/hooks/use-masters";
+import { useQualifications, useBulkDeleteQualifications } from "@/hooks/use-masters";
 import { useDebounce } from "@/hooks/use-debounce";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface Qualification {
     id: string;
@@ -56,6 +58,41 @@ export default function QualificationsPage() {
     useEffect(() => {
         setPage(1);
     }, [debouncedSearch]);
+
+    // Multi-select state
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const bulkDeleteMutation = useBulkDeleteQualifications();
+    const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+
+    const toggleSelectAll = () => {
+        if (selectedIds.size === qualifications.length && qualifications.length > 0) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(qualifications.map((q: any) => q.id)));
+        }
+    };
+
+    const toggleSelect = (id: string) => {
+        const newSelected = new Set(selectedIds);
+        if (newSelected.has(id)) {
+            newSelected.delete(id);
+        } else {
+            newSelected.add(id);
+        }
+        setSelectedIds(newSelected);
+    };
+
+    const handleBulkDelete = async () => {
+        try {
+            await bulkDeleteMutation.mutateAsync(Array.from(selectedIds));
+            toast.success("Qualifications deleted successfully");
+            setSelectedIds(new Set());
+            setIsBulkDeleteOpen(false);
+            refetch();
+        } catch (error) {
+            toast.error("Failed to delete qualifications");
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -161,6 +198,33 @@ export default function QualificationsPage() {
                 )}
             </div>
 
+            {/* Multi-select Action Bar */}
+            {selectedIds.size > 0 && (
+                <div className="bg-primary text-primary-foreground px-6 py-4 rounded-2xl flex items-center justify-between shadow-lg animate-in fade-in slide-in-from-top-4 duration-300">
+                    <div className="flex items-center gap-4">
+                        <span className="text-sm font-bold uppercase tracking-widest">{selectedIds.size} Qualifications Selected</span>
+                        <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            onClick={() => setSelectedIds(new Set())}
+                            className="h-9 text-[10px] font-black uppercase tracking-wider bg-white/20 hover:bg-white/30 text-white rounded-xl border-none"
+                        >
+                            Deselect
+                        </Button>
+                    </div>
+                    {can("MASTERS", "DELETE") && (
+                        <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            onClick={() => setIsBulkDeleteOpen(true)}
+                            className="h-9 text-[10px] font-black uppercase tracking-wider bg-white text-destructive hover:bg-white/90 rounded-xl border-none px-8"
+                        >
+                            Delete Selected
+                        </Button>
+                    )}
+                </div>
+            )}
+
             {/* Search Bar */}
             <div className="flex items-center gap-4">
                 <div className="relative flex-1 max-w-sm">
@@ -178,7 +242,13 @@ export default function QualificationsPage() {
                 <Table>
                     <TableHeader className="bg-muted/50">
                         <TableRow className="border-border/50">
-                            <TableHead className="w-[50px] font-bold py-4 px-6 text-[11px] uppercase tracking-widest text-muted-foreground">#</TableHead>
+                            <TableHead className="w-[50px] px-6">
+                                <Checkbox 
+                                    checked={qualifications.length > 0 && selectedIds.size === qualifications.length}
+                                    onCheckedChange={toggleSelectAll}
+                                />
+                            </TableHead>
+                            <TableHead className="w-[50px] font-bold py-4 text-[11px] uppercase tracking-widest text-muted-foreground">#</TableHead>
                             <TableHead className="font-bold py-4 text-[11px] uppercase tracking-widest text-muted-foreground">Name</TableHead>
                             <TableHead className="font-bold py-4 text-[11px] uppercase tracking-widest text-muted-foreground">Status</TableHead>
                             <TableHead className="font-bold py-4 text-right px-6 text-[11px] uppercase tracking-widest text-muted-foreground">Actions</TableHead>
@@ -203,7 +273,13 @@ export default function QualificationsPage() {
                         ) : (
                             qualifications.map((q: any, idx: number) => (
                                 <TableRow key={q.id} className="border-border/40 hover:bg-primary/[0.02] transition-colors">
-                                    <TableCell className="font-medium py-4 px-6 text-xs text-muted-foreground">
+                                    <TableCell className="px-6">
+                                        <Checkbox 
+                                            checked={selectedIds.has(q.id)}
+                                            onCheckedChange={() => toggleSelect(q.id)}
+                                        />
+                                    </TableCell>
+                                    <TableCell className="font-medium py-4 text-xs text-muted-foreground">
                                         {(page - 1) * limit + idx + 1}
                                     </TableCell>
                                     <TableCell className="font-semibold py-4 text-sm">{q.name}</TableCell>
@@ -271,6 +347,17 @@ export default function QualificationsPage() {
                     </div>
                 )}
             </div>
+
+            <ConfirmDialog
+                isOpen={isBulkDeleteOpen}
+                onClose={() => setIsBulkDeleteOpen(false)}
+                onConfirm={handleBulkDelete}
+                title="Bulk Delete Qualifications"
+                description={`Are you sure you want to delete ${selectedIds.size} selected qualifications? This action cannot be undone.`}
+                confirmText="Yes, Delete All"
+                variant="destructive"
+                isLoading={bulkDeleteMutation.isPending}
+            />
         </div>
     );
 }

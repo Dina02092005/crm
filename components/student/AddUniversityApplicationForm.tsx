@@ -48,6 +48,7 @@ interface ApplicationRow {
 }
 
 interface CountryBlock {
+    id: string;
     countryId: string;
     countryName: string;
     rows: ApplicationRow[];
@@ -145,16 +146,12 @@ export function AddUniversityApplicationForm({
 
     const handleAddCountry = async (countryId: string) => {
         if (!countryId) return;
-        if (blocks.find(b => b.countryId === countryId)) {
-            toast.info("Country block already added. You can add more applications below.");
-            setSelectedCountryId("");
-            return;
-        }
 
         const country = countries.find(c => c.id === countryId);
         if (!country) return;
 
         setBlocks(prev => [...prev, {
+            id: Math.random().toString(36).substr(2, 9),
             countryId,
             countryName: country.name,
             rows: []
@@ -164,17 +161,17 @@ export function AddUniversityApplicationForm({
         setSelectedCountryId("");
     };
 
-    const handleRemoveBlock = (countryId: string) => {
-        setBlocks(prev => prev.filter(b => b.countryId !== countryId));
+    const handleRemoveBlock = (blockId: string) => {
+        setBlocks(prev => prev.filter(b => b.id !== blockId));
     };
 
-    const handleAddUniversity = async (countryId: string, universityId: string) => {
+    const handleAddUniversity = async (blockId: string, countryId: string, universityId: string) => {
         const universities = universitiesCache[countryId] || [];
         const university = universities.find(u => u.id === universityId);
         if (!university) return;
 
         setBlocks(prev => prev.map(block => {
-            if (block.countryId === countryId) {
+            if (block.id === blockId) {
                 return {
                     ...block,
                     rows: [...block.rows, {
@@ -193,9 +190,9 @@ export function AddUniversityApplicationForm({
         }));
     };
 
-    const updateRow = (countryId: string, tempId: string, data: Partial<ApplicationRow>) => {
+    const updateRow = (blockId: string, tempId: string, data: Partial<ApplicationRow>) => {
         setBlocks(prev => prev.map(block => {
-            if (block.countryId === countryId) {
+            if (block.id === blockId) {
                 return {
                     ...block,
                     rows: block.rows.map(row => row.tempId === tempId ? { ...row, ...data } : row)
@@ -205,9 +202,9 @@ export function AddUniversityApplicationForm({
         }));
     };
 
-    const removeRow = (countryId: string, tempId: string) => {
+    const removeRow = (blockId: string, tempId: string) => {
         setBlocks(prev => prev.map(block => {
-            if (block.countryId === countryId) {
+            if (block.id === blockId) {
                 return {
                     ...block,
                     rows: block.rows.filter(row => row.tempId !== tempId)
@@ -256,8 +253,7 @@ export function AddUniversityApplicationForm({
             toast.success("Applications saved successfully!");
             if (onSuccess) onSuccess(res.data);
             else {
-                const newId = res.data && res.data.length > 0 ? res.data[0].id : "";
-                router.push(prefixPath(`/applications/${newId}`));
+                router.push(prefixPath(`/students/${studentId}?tab=applications`));
             }
         } catch (error: any) {
             console.error("Failed to save applications", error);
@@ -328,7 +324,8 @@ export function AddUniversityApplicationForm({
                                     </SelectTrigger>
                                     <SelectContent className="rounded-2xl">
                                         {countries.map(c => (
-                                            <SelectItem key={c.id} value={c.id} disabled={blocks.some(b => b.countryId === c.id)}>
+                                            // Disable option only if we want to restrict. Now we allow multiples.
+                                            <SelectItem key={c.id} value={c.id}>
                                                 {c.name}
                                             </SelectItem>
                                         ))}
@@ -407,7 +404,7 @@ export function AddUniversityApplicationForm({
                     ) : (
                         <div className="space-y-8">
                             {blocks.map(block => (
-                                <Card key={block.countryId} className="border-none shadow-sm rounded-[32px] overflow-hidden bg-card hover:shadow-xl hover:shadow-primary/5 transition-all duration-500">
+                                <Card key={block.id} className="border-none shadow-sm rounded-[32px] overflow-hidden bg-card hover:shadow-xl hover:shadow-primary/5 transition-all duration-500">
                                     {/* Block Header */}
                                     <div className="bg-muted/30 p-5 px-8 flex flex-col md:flex-row md:items-center justify-between gap-4">
                                         <div className="flex items-center gap-4">
@@ -424,7 +421,7 @@ export function AddUniversityApplicationForm({
                                             </div>
                                         </div>
                                         <div className="flex items-center flex-1 md:max-w-md gap-4">
-                                            <Select onValueChange={(val) => handleAddUniversity(block.countryId, val)}>
+                                            <Select onValueChange={(val) => handleAddUniversity(block.id, block.countryId, val)}>
                                                 <SelectTrigger className="h-12 flex-1 rounded-2xl bg-white border-none shadow-sm text-xs font-bold px-5">
                                                     <div className="flex items-center gap-3 text-muted-foreground">
                                                         <Search className="h-4 w-4" />
@@ -443,7 +440,7 @@ export function AddUniversityApplicationForm({
                                                 variant="ghost"
                                                 size="icon"
                                                 className="h-10 w-10 text-muted-foreground/40 hover:text-destructive hover:bg-destructive/5 transition-all rounded-xl"
-                                                onClick={() => handleRemoveBlock(block.countryId)}
+                                                onClick={() => handleRemoveBlock(block.id)}
                                             >
                                                 <X className="h-5 w-5" />
                                             </Button>
@@ -468,12 +465,12 @@ export function AddUniversityApplicationForm({
                                                                 </div>
                                                                 <span className="font-black text-sm tracking-tight text-foreground/80">{row.universityName}</span>
                                                             </div>
-                                                            <Button
-                                                                variant="ghost"
-                                                                size="icon"
-                                                                className="h-8 w-8 text-muted-foreground/30 hover:text-destructive hover:bg-destructive/5 rounded-lg"
-                                                                onClick={() => removeRow(block.countryId, row.tempId)}
-                                                            >
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-8 w-8 text-muted-foreground/30 hover:text-destructive hover:bg-destructive/5 rounded-lg"
+                                                                    onClick={() => removeRow(block.id, row.tempId)}
+                                                                >
                                                                 <Trash2 className="h-4 w-4" />
                                                             </Button>
                                                         </div>
@@ -481,37 +478,37 @@ export function AddUniversityApplicationForm({
                                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-5 items-end">
                                                             <div className="lg:col-span-5 space-y-2.5">
                                                                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Course Name *</Label>
-                                                                <Input
-                                                                    value={row.courseName}
-                                                                    onChange={(e) => updateRow(block.countryId, row.tempId, { courseName: e.target.value })}
-                                                                    placeholder="e.g. MSc International Business"
+                                                                    <Input
+                                                                        value={row.courseName}
+                                                                        onChange={(e) => updateRow(block.id, row.tempId, { courseName: e.target.value })}
+                                                                        placeholder="e.g. MSc International Business"
                                                                     className="h-12 text-sm rounded-2xl bg-muted/20 border-none focus-visible:ring-primary/20 placeholder:text-muted-foreground/30 font-semibold px-5"
                                                                 />
                                                             </div>
                                                             <div className="lg:col-span-2 space-y-2.5">
                                                                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Intake</Label>
-                                                                <Input
-                                                                    value={row.intake}
-                                                                    onChange={(e) => updateRow(block.countryId, row.tempId, { intake: e.target.value })}
-                                                                    placeholder="Sep 2025"
+                                                                    <Input
+                                                                        value={row.intake}
+                                                                        onChange={(e) => updateRow(block.id, row.tempId, { intake: e.target.value })}
+                                                                        placeholder="Sep 2025"
                                                                     className="h-12 text-sm rounded-2xl bg-muted/20 border-none focus-visible:ring-primary/20 font-semibold px-5"
                                                                 />
                                                             </div>
                                                             <div className="lg:col-span-2 space-y-2.5">
                                                                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Deadline</Label>
-                                                                <DatePicker
-                                                                    value={row.deadlineDate}
-                                                                    onChange={(val) => updateRow(block.countryId, row.tempId, { deadlineDate: val })}
-                                                                    placeholder="Select Date"
+                                                                    <DatePicker
+                                                                        value={row.deadlineDate}
+                                                                        onChange={(val) => updateRow(block.id, row.tempId, { deadlineDate: val })}
+                                                                        placeholder="Select Date"
                                                                     className="h-12 text-sm rounded-2xl bg-muted/20 border-none px-5"
                                                                 />
                                                             </div>
                                                             <div className="lg:col-span-3 space-y-2.5">
                                                                 <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60 ml-1">Expert</Label>
-                                                                <Select
-                                                                    value={row.associateId}
-                                                                    onValueChange={(val) => updateRow(block.countryId, row.tempId, { associateId: val })}
-                                                                >
+                                                                    <Select
+                                                                        value={row.associateId}
+                                                                        onValueChange={(val) => updateRow(block.id, row.tempId, { associateId: val })}
+                                                                    >
                                                                     <SelectTrigger className="h-12 text-sm rounded-2xl bg-muted/20 border-none px-5 font-semibold">
                                                                         <SelectValue placeholder="Assign Expert" />
                                                                     </SelectTrigger>

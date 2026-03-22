@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import { toast } from "sonner";
 import { Lead } from '@/lib/prisma';
 
 interface LeadsResponse {
@@ -134,6 +135,21 @@ export function useDeleteLead() {
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["leads"] });
             queryClient.invalidateQueries({ queryKey: ["lead-stats"] });
+        },
+    });
+}
+
+export function useBulkDeleteLeads() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async (ids: string[]) => {
+            await axios.delete("/api/leads/bulk", { data: { ids } });
+        },
+        onSuccess: (data, variables) => {
+            queryClient.invalidateQueries({ queryKey: ["leads"] });
+            queryClient.invalidateQueries({ queryKey: ["lead-stats"] });
+            toast.success(`${variables.length} leads deleted successfully`);
         },
     });
 }

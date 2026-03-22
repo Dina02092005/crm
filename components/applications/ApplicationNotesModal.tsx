@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
+import axios from "axios";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export function ApplicationNotesModal({ isOpen, onClose, application, onUpdate }: any) {
@@ -29,37 +30,38 @@ export function ApplicationNotesModal({ isOpen, onClose, application, onUpdate }
         queryKey: ['application-notes', application?.id],
         queryFn: async () => {
             if (!application?.id) return [];
-            const response = await fetch(`/api/applications/${application.id}/notes`);
-            if (!response.ok) throw new Error('Failed to fetch notes');
-            return response.json();
+            const { data } = await axios.get(`/api/applications/${application.id}/notes?type=NOTE`);
+            return data;
         },
         enabled: !!application?.id && isOpen
     });
 
     const addNoteMutation = useMutation({
         mutationFn: async (content: string) => {
-            const response = await fetch(`/api/applications/${application.id}/notes`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ note: content })
+            const { data } = await axios.post(`/api/applications/${application.id}/notes`, {
+                note: content,
+                type: 'NOTE'
             });
-            if (!response.ok) throw new Error('Failed to add note');
-            return response.json();
+            return data;
         },
         onSuccess: () => {
             setNewNote("");
             queryClient.invalidateQueries({ queryKey: ['application-notes', application?.id] });
-            onUpdate(); // To refresh note count in table
+            onUpdate?.(); // To refresh note count in table
             toast.success("Note added successfully");
         },
-        onError: () => {
-            toast.error("Failed to add note");
+        onError: (error: any) => {
+            toast.error(error.response?.data?.error || "Failed to add note");
         }
     });
 
-    const handleAddNote = () => {
+    const handleAddNote = async () => {
         if (!newNote.trim()) return;
-        addNoteMutation.mutate(newNote);
+        try {
+            await addNoteMutation.mutateAsync(newNote);
+        } catch (error) {
+            // Error handled by mutation
+        }
     };
 
     return (

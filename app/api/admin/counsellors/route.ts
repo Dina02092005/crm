@@ -3,6 +3,8 @@ import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
+import { sendWelcomeEmail } from '@/lib/mail';
+
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +16,7 @@ export async function POST(req: NextRequest) {
         }
 
         const body = await req.json();
-        const { firstName, lastName, email, phone, password, roleId, status } = body;
+        const { firstName, lastName, email, phone, password, roleId, status, agentId } = body;
 
         // Basic validation
         if (!firstName || !lastName || !email || !password) {
@@ -40,6 +42,7 @@ export async function POST(req: NextRequest) {
                 counselorProfile: {
                     create: {
                         phone,
+                        agentId: agentId || null,
                         // Defaults for department/designation since they were requested as optional or simple fields
                         department: body.department || "General",
                         designation: body.designation || "Counselor",
@@ -48,6 +51,20 @@ export async function POST(req: NextRequest) {
             },
             include: { counselorProfile: true },
         });
+
+        // Send welcome email with credentials
+        try {
+            const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/login`;
+            await sendWelcomeEmail({
+                email,
+                name: counsellor.name,
+                password,
+                loginUrl,
+                role: 'Counselor'
+            });
+        } catch (emailError) {
+            console.error("Failed to send welcome email:", emailError);
+        }
 
         return NextResponse.json(counsellor, { status: 201 });
     } catch (error: any) {

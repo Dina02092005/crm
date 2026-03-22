@@ -42,7 +42,7 @@ interface DashboardData {
 
 function StandardDashboard() {
     const { prefixPath } = useRolePath();
-    const { data, isLoading } = useQuery<DashboardData>({
+    const { data, isLoading, refetch } = useQuery<DashboardData>({
         queryKey: ["dashboard-stats"],
         queryFn: async () => {
             const { data } = await axios.get("/api/dashboard");
@@ -158,7 +158,7 @@ function StandardDashboard() {
                         <Skeleton className="h-[300px] w-full rounded-xl" />
                     ) : (
                         <div className="border border-border/50 rounded-xl overflow-hidden bg-card">
-                            <RecentLeadsTable data={recentLeads} />
+                            <RecentLeadsTable data={recentLeads} onUpdate={refetch} />
                         </div>
                     )}
                 </div>

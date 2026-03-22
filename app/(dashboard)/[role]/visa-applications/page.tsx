@@ -15,6 +15,7 @@ import { ApplicationNotesModal } from "@/components/applications/ApplicationNote
 import { OfferLetterModal } from "@/components/applications/OfferLetterModal";
 import { ApplicationCommentsModal } from "@/components/applications/ApplicationCommentsModal";
 import { StudentVisaView } from "@/components/visa/StudentVisaView";
+import { EditVisaCaseModal } from "@/components/visa/EditVisaCaseModal";
 
 function VisaApplicationsPageContent({ role }: { role: string }) {
     const [search, setSearch] = useState("");
@@ -30,6 +31,7 @@ function VisaApplicationsPageContent({ role }: { role: string }) {
     const [notesApp, setNotesApp] = useState<any>(null);
     const [offerLetterApp, setOfferLetterApp] = useState<any>(null);
     const [commentsApp, setCommentsApp] = useState<any>(null);
+    const [editVisaApp, setEditVisaApp] = useState<any>(null);
 
     const { data, isLoading, refetch } = useVisaApplications(role === "student" ? "STUDENT" : undefined, page, limit, debouncedSearch, status);
     const deleteMutation = useDeleteVisaApplication();
@@ -128,6 +130,7 @@ function VisaApplicationsPageContent({ role }: { role: string }) {
                         onOpenComments={(app) => setCommentsApp(app)}
                         onOpenOfferLetters={(app) => setOfferLetterApp(app)}
                         onOpenNotes={(app) => setNotesApp(app)}
+                        onOpenEdit={(app) => setEditVisaApp(app)}
                         pagination={{
                             page: pagination.page,
                             totalPages: pagination.totalPages,
@@ -143,14 +146,13 @@ function VisaApplicationsPageContent({ role }: { role: string }) {
             <ApplicationHistoryModal
                 isOpen={!!historyApp}
                 onClose={() => setHistoryApp(null)}
-                applicationId={historyApp?.id}
                 application={historyApp}
             />
 
             <ApplicationNotesModal
                 isOpen={!!notesApp}
                 onClose={() => setNotesApp(null)}
-                applicationId={notesApp?.id}
+                application={notesApp}
                 onUpdate={refetch}
             />
 
@@ -166,6 +168,13 @@ function VisaApplicationsPageContent({ role }: { role: string }) {
                 onClose={() => setCommentsApp(null)}
                 application={commentsApp}
                 onUpdate={refetch}
+            />
+            
+            <EditVisaCaseModal
+                isOpen={!!editVisaApp}
+                onClose={() => setEditVisaApp(null)}
+                visaApplication={editVisaApp}
+                onSuccess={refetch}
             />
         </div>
     );

@@ -1,8 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
+import { sendWelcomeEmail } from '@/lib/mail';
 
 import { withPermission } from '@/lib/permissions';
 
@@ -10,7 +11,6 @@ export const dynamic = 'force-dynamic';
 
 export const GET = withPermission('AGENTS', 'VIEW', async (req) => {
     try {
-
         const { searchParams } = new URL(req.url);
         const search = searchParams.get("search") || "";
         const status = searchParams.get("status") || "active";
@@ -100,6 +100,20 @@ export const POST = withPermission('AGENTS', 'CREATE', async (req) => {
             },
             include: { agentProfile: true },
         });
+
+        // Send welcome email with credentials
+        try {
+            const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/login`;
+            await sendWelcomeEmail({
+                email,
+                name,
+                password,
+                loginUrl,
+                role: 'Agent'
+            });
+        } catch (emailError) {
+            console.error("Failed to send welcome email:", emailError);
+        }
 
         return NextResponse.json(agent, { status: 201 });
     } catch (error) {

@@ -116,9 +116,27 @@ export async function PATCH(
         const body = await req.json();
         const { name, email, role, phone, department, isActive, password } = body;
 
-        // Only admins can change roles or active status
-        if ((role || isActive !== undefined) && session.user.role !== "ADMIN") {
-            return NextResponse.json({ error: "Only admins can change roles or status" }, { status: 403 });
+        // RBAC: Only admins can change roles or active status, 
+        // OR an AGENT can toggle isActive for their own COUNSELOR
+        if (role && session.user.role !== "ADMIN") {
+            return NextResponse.json({ error: "Only admins can change roles" }, { status: 403 });
+        }
+
+        if (isActive !== undefined && session.user.role !== "ADMIN") {
+            const isAgent = session.user.role === "AGENT";
+            if (isAgent) {
+                const agent = await prisma.agentProfile.findUnique({ where: { userId: session.user.id } });
+                const counselor = await prisma.counselorProfile.findUnique({ 
+                    where: { userId: id },
+                    select: { agentId: true }
+                });
+                
+                if (!counselor || counselor.agentId !== agent?.id) {
+                    return NextResponse.json({ error: "You can only change status for your own counselors" }, { status: 403 });
+                }
+            } else {
+                return NextResponse.json({ error: "Only admins can change status" }, { status: 403 });
+            }
         }
 
         const updateData: any = {};

@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
+import { sendWelcomeEmail } from '@/lib/mail';
 
 import { withPermission } from '@/lib/permissions';
 
@@ -137,6 +138,20 @@ export const POST = withPermission('COUNSELORS', 'CREATE', async (req, { permiss
             },
             include: { counselorProfile: true },
         });
+
+        // Send welcome email with credentials
+        try {
+            const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/login`;
+            await sendWelcomeEmail({
+                email,
+                name,
+                password,
+                loginUrl,
+                role: 'Counselor'
+            });
+        } catch (emailError) {
+            console.error("Failed to send welcome email:", emailError);
+        }
 
         return NextResponse.json(counselor, { status: 201 });
     } catch (error: any) {
