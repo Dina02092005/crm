@@ -140,8 +140,8 @@ export function AssignStudentSheet({
 
     return (
         <Sheet open={isOpen} onOpenChange={onClose}>
-            <SheetContent className="sm:max-w-md border-l-0 shadow-2xl p-0 flex flex-col h-full bg-white">
-                <div className="p-6 border-b bg-slate-50/50">
+            <SheetContent className="sm:max-w-md border-l border-border shadow-2xl p-0 flex flex-col h-full bg-background">
+                <div className="p-6 border-b border-border bg-muted/40">
                     <SheetHeader className="space-y-1">
                         <div className="flex items-center gap-2 mb-2">
                             <div className="p-2 bg-primary/10 rounded-lg">
@@ -166,12 +166,12 @@ export function AssignStudentSheet({
                             {isAdmin && (
                                 <>
                                     <div className="space-y-2">
-                                        <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Agent / Manager (Optional)</Label>
+                                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Agent / Manager (Optional)</Label>
                                         <Select value={selectedAgentId} onValueChange={handleAgentChange}>
-                                            <SelectTrigger className="w-full h-12 rounded-xl bg-slate-50 border-slate-200 focus:ring-primary/20">
+                                            <SelectTrigger className="w-full h-12 rounded-xl bg-muted/20 border-border focus:ring-primary/20">
                                                 <SelectValue placeholder="Select Agent" />
                                             </SelectTrigger>
-                                            <SelectContent className="rounded-xl shadow-xl border-slate-200">
+                                            <SelectContent className="rounded-xl shadow-xl border-border">
                                                 <SelectItem value="none" className="py-2">None (Independent Counselor)</SelectItem>
                                                 {agents.map((agent) => (
                                                     <SelectItem key={agent.id} value={agent.id} className="cursor-pointer py-3 rounded-lg focus:bg-primary/5">
@@ -193,20 +193,20 @@ export function AssignStudentSheet({
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Counselor (Optional)</Label>
+                                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Counselor (Optional)</Label>
                                         <Select value={selectedCounselorId} onValueChange={setSelectedCounselorId}>
-                                            <SelectTrigger className="w-full h-12 rounded-xl bg-slate-50 border-slate-200 focus:ring-primary/20">
+                                            <SelectTrigger className="w-full h-12 rounded-xl bg-muted/20 border-border focus:ring-primary/20">
                                                 <SelectValue placeholder={loadingAgentsMap[selectedAgentId] ? "Loading..." : "Select Counselor"} />
                                             </SelectTrigger>
-                                            <SelectContent className="rounded-xl shadow-xl border-slate-200">
+                                            <SelectContent className="rounded-xl shadow-xl border-border">
                                                 <SelectItem value="none" className="py-2">No Counselor</SelectItem>
                                                 {((selectedAgentId && selectedAgentId !== "none") 
                                                     ? agentCounselors[selectedAgentId] 
                                                     : agentCounselors["all"])?.map((counselor) => (
                                                     <SelectItem key={counselor.id} value={counselor.id} className="cursor-pointer py-3 rounded-lg focus:bg-primary/5">
                                                         <div className="flex items-center gap-3">
-                                                            <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center">
-                                                                <User className="h-4 w-4 text-slate-400" />
+                                                            <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
+                                                                <User className="h-4 w-4 text-muted-foreground" />
                                                             </div>
                                                             <span className="text-sm font-medium">{counselor.name}</span>
                                                         </div>
@@ -220,12 +220,12 @@ export function AssignStudentSheet({
 
                             {isAgent && (
                                 <div className="space-y-2">
-                                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Counselor</Label>
+                                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Counselor</Label>
                                     <Select value={selectedCounselorId} onValueChange={setSelectedCounselorId}>
-                                        <SelectTrigger className="w-full h-12 rounded-xl bg-slate-50 border-slate-200 focus:ring-primary/20">
+                                        <SelectTrigger className="w-full h-12 rounded-xl bg-muted/20 border-border focus:ring-primary/20">
                                             <SelectValue placeholder="Select Counselor" />
                                         </SelectTrigger>
-                                        <SelectContent className="rounded-xl shadow-xl border-slate-200">
+                                        <SelectContent className="rounded-xl shadow-xl border-border">
                                             <SelectItem value="none" className="py-2">Assign to Myself</SelectItem>
                                             {agentCounselors["direct"]?.map((counselor) => (
                                                 <SelectItem key={counselor.id} value={counselor.id} className="py-3">
@@ -240,18 +240,18 @@ export function AssignStudentSheet({
                     )}
                 </div>
 
-                <div className="p-6 border-t bg-slate-50/50 mt-auto">
+                <div className="p-6 border-t border-border bg-muted/40 mt-auto">
                     <div className="flex gap-3">
                         <Button
                             variant="outline"
-                            className="flex-1 h-12 rounded-xl border-slate-200 hover:bg-white hover:border-slate-300"
+                            className="flex-1 h-12 rounded-xl border-border hover:bg-muted"
                             onClick={onClose}
                             disabled={isSubmitting}
                         >
                             Cancel
                         </Button>
                         <Button
-                            className="flex-1 h-12 rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20"
+                            className="flex-1 h-12 rounded-xl bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 text-primary-foreground"
                             onClick={handleAssign}
                             disabled={isSubmitting || isLoadingOptions}
                         >

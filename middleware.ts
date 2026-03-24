@@ -56,6 +56,8 @@ export default withAuth(
             const token = req.nextauth.token as any;
             const role = token?.role as string | undefined;
             const prefix = (role && ROLE_PREFIX[role]) || "/admin";
+            console.log(`[Proxy] Request: ${pathname} | Role: ${role} | Prefix: ${prefix}`);
+
 
             // Redirect root to role-appropriate dashboard
             if (pathname === "/" || pathname === "/dashboard") {

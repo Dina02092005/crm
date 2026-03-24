@@ -5,6 +5,8 @@ import { authOptions } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 import { sendEmail } from '@/lib/email';
 import { sendWelcomeEmail } from '@/lib/mail';
+import { validateRoleUpdate } from '@/lib/user-auth';
+import { Role } from '@prisma/client';
 
 
 export const dynamic = 'force-dynamic';
@@ -25,7 +27,7 @@ export async function GET(req: NextRequest) {
         // The previous code restricted to ADMIN only.
 
         const userRole = session.user.role;
-        const allowedRoles = ['ADMIN', 'MANAGER', 'AGENT', 'SALES_REP', 'COUNSELOR', 'SUPPORT_AGENT']; // All staff
+        const allowedRoles = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'AGENT', 'SALES_REP', 'COUNSELOR', 'SUPPORT_AGENT']; // All staff
 
         if (!allowedRoles.includes(userRole)) {
             return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
@@ -164,9 +166,18 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // Only admins can create employees (for now)
-        if (session.user.role !== "ADMIN") {
-            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        // Restricted Role Creation: Only Super Admin can create Admin/Super Admin
+        const roleToAssign = (role || "EMPLOYEE") as Role;
+        const { allowed, message } = validateRoleUpdate(session.user.role as Role, roleToAssign);
+
+        if (!allowed) {
+            return NextResponse.json({ error: message || "Forbidden" }, { status: 403 });
+        }
+
+        // Only staff can create other users
+        const canCreateUser = ["SUPER_ADMIN", "ADMIN"].includes(session.user.role);
+        if (!canCreateUser) {
+            return NextResponse.json({ error: "Unauthorized to create users" }, { status: 403 });
         }
 
         if (!name || !email || !password) {
@@ -191,7 +202,8 @@ export async function POST(req: NextRequest) {
                 name,
                 email,
                 passwordHash,
-                role: role || "EMPLOYEE",
+                role: roleToAssign,
+                createdById: session.user.id,
                 roleId: body.roleId || null,
                 imageUrl, // Save profile picture
                 emailVerified: new Date(), // Auto-verify employees created by admin

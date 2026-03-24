@@ -18,6 +18,7 @@ import StudentDocumentsSection from "@/components/student/StudentDocumentsSectio
 import { FolderOpen } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { DatePicker } from "@/components/ui/date-picker";
 
 export default function ProfilePage() {
     const { data: session } = useSession();
@@ -171,7 +172,7 @@ export default function ProfilePage() {
                 {/* Profile Details Tab */}
                 <TabsContent value="details" className="mt-4 w-full">
                     <Card className="border border-border rounded-3xl bg-card shadow-sm overflow-hidden">
-                        <CardHeader className="pb-6 border-b border-border/50 bg-slate-50/30">
+                        <CardHeader className="pb-6 border-b border-border/50 bg-muted/30">
                             <CardTitle className="text-base font-bold flex items-center gap-2">
                                 <User className="h-4 w-4 text-primary" /> Personal Information
                             </CardTitle>
@@ -211,7 +212,7 @@ export default function ProfilePage() {
                                             <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest pl-1">Email Address</Label>
                                             <div className="relative">
                                                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                                <Input value={profile.email ?? ""} disabled className="pl-10 h-11 text-sm rounded-xl bg-slate-50 border-dashed text-muted-foreground cursor-not-allowed" />
+                                                <Input value={profile.email ?? ""} disabled className="pl-10 h-11 text-sm rounded-xl bg-muted/40 border-dashed text-muted-foreground cursor-not-allowed" />
                                             </div>
                                         </div>
 
@@ -240,15 +241,12 @@ export default function ProfilePage() {
                                             <>
                                                 <div className="space-y-2">
                                                     <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest pl-1">Date of Birth</Label>
-                                                    <div className="relative group">
-                                                        <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                                                        <Input
-                                                            type="date"
-                                                            value={profile.dateOfBirth ?? ""}
-                                                            onChange={(e) => setProfile({ ...profile, dateOfBirth: e.target.value })}
-                                                            className="pl-10 h-11 text-sm rounded-xl border-border/60 bg-muted/20 focus:bg-background"
-                                                        />
-                                                    </div>
+                                                    <DatePicker
+                                                        value={profile.dateOfBirth ?? ""}
+                                                        onChange={(date) => setProfile({ ...profile, dateOfBirth: date })}
+                                                        placeholder="Select birth date"
+                                                        className="h-11 rounded-xl border-border/60 bg-muted/20 focus:bg-background"
+                                                    />
                                                 </div>
 
                                                 <div className="space-y-2">
@@ -297,20 +295,20 @@ export default function ProfilePage() {
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Issue Date</Label>
-                                                    <Input
-                                                        type="date"
+                                                    <DatePicker
                                                         value={profile.passportIssueDate ?? ""}
-                                                        onChange={(e) => setProfile({ ...profile, passportIssueDate: e.target.value })}
-                                                        className="h-11 text-sm rounded-xl bg-muted/20"
+                                                        onChange={(date) => setProfile({ ...profile, passportIssueDate: date })}
+                                                        placeholder="Select issue date"
+                                                        className="h-11 rounded-xl bg-muted/20"
                                                     />
                                                 </div>
                                                 <div className="space-y-2">
                                                     <Label className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Expiry Date</Label>
-                                                    <Input
-                                                        type="date"
+                                                    <DatePicker
                                                         value={profile.passportExpiryDate ?? ""}
-                                                        onChange={(e) => setProfile({ ...profile, passportExpiryDate: e.target.value })}
-                                                        className="h-11 text-sm rounded-xl bg-muted/20"
+                                                        onChange={(date) => setProfile({ ...profile, passportExpiryDate: date })}
+                                                        placeholder="Select expiry date"
+                                                        className="h-11 rounded-xl bg-muted/20"
                                                     />
                                                 </div>
                                             </div>

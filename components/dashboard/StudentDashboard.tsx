@@ -72,7 +72,7 @@ export function StudentDashboard() {
     return (
         <div className="space-y-6 px-1 py-1">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <Card className="border border-border/60 rounded-2xl bg-gradient-to-br from-white to-slate-50 shadow-sm">
+                <Card className="border border-border/60 rounded-2xl bg-card shadow-sm">
                     <CardHeader className="p-3 pb-1">
                         <CardTitle className="text-[10px] sm:text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
                             <Clock className="h-3 w-3 text-blue-500" /> Total Applications
@@ -85,7 +85,7 @@ export function StudentDashboard() {
                     </CardContent>
                 </Card>
 
-                <Card className="border border-border/60 rounded-2xl bg-gradient-to-br from-white to-slate-50 shadow-sm">
+                <Card className="border border-border/60 rounded-2xl bg-card shadow-sm">
                     <CardHeader className="p-3 pb-1">
                         <CardTitle className="text-[10px] sm:text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
                             <CheckCircle2 className="h-3 w-3 text-emerald-500" /> App Status
@@ -98,7 +98,7 @@ export function StudentDashboard() {
                     </CardContent>
                 </Card>
 
-                <Card className="border border-border/60 rounded-2xl bg-gradient-to-br from-white to-slate-50 shadow-sm">
+                <Card className="border border-border/60 rounded-2xl bg-card shadow-sm">
                     <CardHeader className="p-3 pb-1">
                         <CardTitle className="text-[10px] sm:text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
                             <GraduationCap className="h-3 w-3 text-indigo-500" /> Visa Status
@@ -111,7 +111,7 @@ export function StudentDashboard() {
                     </CardContent>
                 </Card>
 
-                <Card className="border border-border/60 rounded-2xl bg-gradient-to-br from-white to-slate-50 shadow-sm">
+                <Card className="border border-border/60 rounded-2xl bg-card shadow-sm">
                     <CardHeader className="p-3 pb-1">
                         <CardTitle className="text-[10px] sm:text-[11px] font-bold text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
                             <FileText className="h-3 w-3 text-rose-500" /> Pending Docs

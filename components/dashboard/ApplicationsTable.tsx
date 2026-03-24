@@ -331,8 +331,9 @@ export function ApplicationsTable({
                                             router.push(prefixPath(`/applications/${app.id}`));
                                         }}
                                     >
+                                        <TableCell className="w-12 px-4 border-r dark:border-slate-800" />
                                         <TableCell className="pl-6">
-                                            <div className="flex flex-col min-w-0 pl-14 relative before:absolute before:left-6 before:top-[-20px] before:bottom-1/2 before:w-px before:bg-border after:absolute after:left-6 after:top-1/2 after:w-5 after:h-px after:bg-border">
+                                            <div className="flex flex-col min-w-0 pl-10 relative before:absolute before:left-6 before:top-[-20px] before:bottom-1/2 before:w-px before:bg-border after:absolute after:left-6 after:top-1/2 after:w-5 after:h-px after:bg-border">
                                                 <span className="font-bold text-[13px] text-foreground/90 truncate uppercase tracking-tight">{app.course?.name || app.intendedCourse || "General Course"}</span>
                                                 <span className="text-[10px] font-bold text-muted-foreground uppercase flex items-center gap-1.5 mt-0.5 truncate">
                                                     <GraduationCap className="h-3 w-3 text-slate-400" />
@@ -479,7 +480,7 @@ export function ApplicationsTable({
                     })}
                     {data.length === 0 && (
                         <TableRow>
-                            <TableCell colSpan={6} className="h-64 text-center text-muted-foreground">
+                            <TableCell colSpan={7} className="h-64 text-center text-muted-foreground">
                                 <div className="flex flex-col items-center gap-2">
                                     <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center border border-border mb-2">
                                         <Users className="h-6 w-6 text-muted-foreground/30" />

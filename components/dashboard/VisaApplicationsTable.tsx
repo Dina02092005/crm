@@ -100,31 +100,20 @@ export function VisaApplicationsTable({
     const updateMutation = useUpdateVisaApplication();
     const [assignApp, setAssignApp] = useState<any>(null);
 
-    const [selectedIdsLocal, setSelectedIdsLocal] = useState<Set<string>>(new Set());
-
-    // We handle controlled vs uncontrolled if selectedIds is passed
-    const activeSelectedIds = selectedIds.length > 0 ? new Set(selectedIds) : selectedIdsLocal;
-
     const toggleSelectAll = () => {
-        if (activeSelectedIds.size === data.length) {
-            setSelectedIdsLocal(new Set());
+        if (selectedIds.length === data.length) {
             onSelectionChange([]);
         } else {
             const allIds = data.map(s => s.id);
-            setSelectedIdsLocal(new Set(allIds));
             onSelectionChange(allIds);
         }
     };
 
     const toggleSelect = (id: string) => {
-        const newSelected = new Set(activeSelectedIds);
-        if (newSelected.has(id)) {
-            newSelected.delete(id);
-        } else {
-            newSelected.add(id);
-        }
-        setSelectedIdsLocal(newSelected);
-        onSelectionChange(Array.from(newSelected));
+        const newSelected = selectedIds.includes(id)
+            ? selectedIds.filter(i => i !== id)
+            : [...selectedIds, id];
+        onSelectionChange(newSelected);
     };
 
     const getStatusVariant = (status: VisaStatus) => {
@@ -158,7 +147,7 @@ export function VisaApplicationsTable({
 
     const handleBulkDelete = async () => {
         try {
-            await bulkDeleteMutation.mutateAsync(Array.from(activeSelectedIds));
+            await bulkDeleteMutation.mutateAsync(selectedIds);
             onSelectionChange([]);
             onUpdate();
         } catch (error) {
@@ -170,21 +159,12 @@ export function VisaApplicationsTable({
 
     return (
         <div className="relative border rounded-xl overflow-hidden bg-card shadow-sm">
-            {activeSelectedIds.size > 0 && (
-                <div className="absolute top-0 inset-x-0 h-12 bg-primary text-primary-foreground flex items-center justify-between px-4 z-20">
-                    <span className="text-[11px] font-bold uppercase tracking-wider">{activeSelectedIds.size} applications selected</span>
-                    <div className="flex items-center gap-2">
-                        <Button variant="secondary" size="sm" onClick={() => onSelectionChange([])} className="h-8 text-[10px] font-bold uppercase">Deselect All</Button>
-                        <Button variant="destructive" size="sm" onClick={() => setBulkDeleteDialogOpen(true)} className="h-8 text-[10px] font-bold uppercase">Bulk Delete</Button>
-                    </div>
-                </div>
-            )}
             <Table>
                 <TableHeader className="bg-muted/30">
                     <TableRow>
                         <TableHead className="w-12 px-4 border-r dark:border-slate-800">
                             <Checkbox 
-                                checked={data.length > 0 && activeSelectedIds.size === data.length}
+                                checked={data.length > 0 && selectedIds.length === data.length}
                                 onCheckedChange={toggleSelectAll}
                             />
                         </TableHead>
@@ -211,7 +191,7 @@ export function VisaApplicationsTable({
                         >
                             <TableCell className="px-4 border-r dark:border-slate-800">
                                 <Checkbox 
-                                    checked={activeSelectedIds.has(app.id)}
+                                    checked={selectedIds.includes(app.id)}
                                     onCheckedChange={() => toggleSelect(app.id)}
                                 />
                             </TableCell>
@@ -434,7 +414,7 @@ export function VisaApplicationsTable({
                 onClose={() => setBulkDeleteDialogOpen(false)}
                 onConfirm={handleBulkDelete}
                 title="Bulk Delete Visa Applications"
-                description={`Are you sure you want to delete ${activeSelectedIds.size} selected visa applications? This action cannot be undone.`}
+                description={`Are you sure you want to delete ${selectedIds.length} selected visa applications? This action cannot be undone.`}
                 confirmText="Delete All"
                 variant="destructive"
             />

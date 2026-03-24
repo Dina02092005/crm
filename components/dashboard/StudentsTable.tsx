@@ -55,6 +55,8 @@ interface StudentsTableProps {
     data: Student[];
     onUpdate: () => void;
     onDelete: (id: string) => void;
+    selectedIds?: string[];
+    onSelectionChange?: (ids: string[]) => void;
     pagination?: {
         page: number;
         totalPages: number;
@@ -64,31 +66,41 @@ interface StudentsTableProps {
     }
 }
 
-export function StudentsTable({ data, onUpdate, onDelete, pagination }: StudentsTableProps) {
+export function StudentsTable({ 
+    data, 
+    onUpdate, 
+    onDelete, 
+    selectedIds = [], 
+    onSelectionChange = () => { }, 
+    pagination 
+}: StudentsTableProps) {
     const router = useRouter();
     const { prefixPath } = useRolePath();
     const updateMutation = useUpdateStudent();
     const [assignSheetOpen, setAssignSheetOpen] = useState(false);
     const [selectedStudent, setSelectedStudent] = useState<{ id: string, name: string, agentId?: string, counselorId?: string } | null>(null);
 
-    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [localSelectedIds, setLocalSelectedIds] = useState<string[]>([]);
+    const activeSelectedIds = (selectedIds && selectedIds.length > 0) ? selectedIds : localSelectedIds;
 
     const toggleSelectAll = () => {
-        if (selectedIds.size === data.length) {
-            setSelectedIds(new Set());
+        if (activeSelectedIds.length === data.length) {
+            if (onSelectionChange) onSelectionChange([]);
+            else setLocalSelectedIds([]);
         } else {
-            setSelectedIds(new Set(data.map(s => s.id)));
+            const allIds = data.map(s => s.id);
+            if (onSelectionChange) onSelectionChange(allIds);
+            else setLocalSelectedIds(allIds);
         }
     };
 
     const toggleSelect = (id: string) => {
-        const newSelected = new Set(selectedIds);
-        if (newSelected.has(id)) {
-            newSelected.delete(id);
-        } else {
-            newSelected.add(id);
-        }
-        setSelectedIds(newSelected);
+        const newSelected = activeSelectedIds.includes(id)
+            ? activeSelectedIds.filter(i => i !== id)
+            : [...activeSelectedIds, id];
+        
+        if (onSelectionChange) onSelectionChange(newSelected);
+        else setLocalSelectedIds(newSelected);
     };
 
     const STUDENT_STATUSES = [
@@ -134,8 +146,9 @@ export function StudentsTable({ data, onUpdate, onDelete, pagination }: Students
 
     const handleBulkDelete = async () => {
         try {
-            await bulkDeleteMutation.mutateAsync(Array.from(selectedIds));
-            setSelectedIds(new Set());
+            await bulkDeleteMutation.mutateAsync(activeSelectedIds);
+            setLocalSelectedIds([]);
+            onSelectionChange([]);
             onUpdate();
         } catch (error) {
             // Error handled by mutation
@@ -146,11 +159,12 @@ export function StudentsTable({ data, onUpdate, onDelete, pagination }: Students
 
     return (
         <div className="relative border rounded-xl overflow-hidden bg-card shadow-sm">
-            {selectedIds.size > 0 && (
+            {/* The overlay is now partially redundant if we have the top toolbar, but keeping it for now as a double-check */}
+            {activeSelectedIds.length > 0 && (
                 <div className="absolute top-0 inset-x-0 h-12 bg-primary text-primary-foreground flex items-center justify-between px-4 z-20">
-                    <span className="text-[11px] font-bold uppercase tracking-wider">{selectedIds.size} students selected</span>
+                    <span className="text-[11px] font-bold uppercase tracking-wider">{activeSelectedIds.length} students selected</span>
                     <div className="flex items-center gap-2">
-                        <Button variant="secondary" size="sm" onClick={() => setSelectedIds(new Set())} className="h-8 text-[10px] font-bold uppercase">Deselect All</Button>
+                        <Button variant="secondary" size="sm" onClick={() => { setLocalSelectedIds([]); onSelectionChange([]); }} className="h-8 text-[10px] font-bold uppercase">Deselect All</Button>
                         <Button variant="destructive" size="sm" onClick={() => setBulkDeleteDialogOpen(true)} className="h-8 text-[10px] font-bold uppercase">Bulk Delete</Button>
                     </div>
                 </div>
@@ -160,7 +174,7 @@ export function StudentsTable({ data, onUpdate, onDelete, pagination }: Students
                     <TableRow>
                         <TableHead className="w-12 px-4 border-r dark:border-slate-800">
                             <Checkbox 
-                                checked={data.length > 0 && selectedIds.size === data.length}
+                                checked={data.length > 0 && activeSelectedIds.length === data.length}
                                 onCheckedChange={toggleSelectAll}
                             />
                         </TableHead>
@@ -187,7 +201,7 @@ export function StudentsTable({ data, onUpdate, onDelete, pagination }: Students
                         >
                             <TableCell className="px-4 border-r dark:border-slate-800">
                                 <Checkbox 
-                                    checked={selectedIds.has(student.id)}
+                                    checked={activeSelectedIds.includes(student.id)}
                                     onCheckedChange={() => toggleSelect(student.id)}
                                 />
                             </TableCell>
@@ -268,7 +282,7 @@ export function StudentsTable({ data, onUpdate, onDelete, pagination }: Students
                                     <Button
                                         variant="ghost"
                                         size="icon"
-                                        onClick={() => router.push(prefixPath(`/students/${student.id}/applications/add`))}
+                                         onClick={() => router.push(prefixPath(`/students/${student.id}/applications/add`))}
                                         className="h-8 w-8 text-primary/60 hover:text-primary hover:bg-primary/5 rounded-lg"
                                         title="Move to Application"
                                     >
@@ -395,7 +409,7 @@ export function StudentsTable({ data, onUpdate, onDelete, pagination }: Students
                 onClose={() => setBulkDeleteDialogOpen(false)}
                 onConfirm={handleBulkDelete}
                 title="Bulk Delete Students"
-                description={`Are you sure you want to delete ${selectedIds.size} selected students? This action cannot be undone.`}
+                description={`Are you sure you want to delete ${activeSelectedIds.length} selected students? This action cannot be undone.`}
                 confirmText="Delete All"
                 variant="destructive"
             />

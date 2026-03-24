@@ -3,7 +3,18 @@
 import { useState, useEffect, use, Suspense } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, Plane, Filter, SlidersHorizontal } from "lucide-react";
+import { 
+    Search, 
+    Plane, 
+    Filter, 
+    SlidersHorizontal, 
+    FileSpreadsheet, 
+    Trash2, 
+    UserPlus, 
+    Mail, 
+    MessageCircle,
+    Globe
+} from "lucide-react";
 import { toast } from "sonner";
 import { VisaApplicationsTable } from "@/components/dashboard/VisaApplicationsTable";
 import { useVisaApplications, useDeleteVisaApplication } from "@/hooks/useApi";
@@ -16,6 +27,11 @@ import { OfferLetterModal } from "@/components/applications/OfferLetterModal";
 import { ApplicationCommentsModal } from "@/components/applications/ApplicationCommentsModal";
 import { StudentVisaView } from "@/components/visa/StudentVisaView";
 import { EditVisaCaseModal } from "@/components/visa/EditVisaCaseModal";
+import axios from "axios";
+import { AssignApplicationsModal } from "@/components/applications/AssignApplicationsModal";
+import { EmailComposeModal } from "@/components/applications/EmailComposeModal";
+import { WhatsappMessageModal } from "@/components/applications/WhatsappMessageModal";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 function VisaApplicationsPageContent({ role }: { role: string }) {
     const [search, setSearch] = useState("");
@@ -25,6 +41,14 @@ function VisaApplicationsPageContent({ role }: { role: string }) {
     const debouncedSearch = useDebounce(search, 500);
 
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    
+    // Bulk action states
+    const [showAssignModal, setShowAssignModal] = useState(false);
+    const [showEmailModal, setShowEmailModal] = useState(false);
+    const [showWhatsappModal, setShowWhatsappModal] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
+    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+    const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
 
     // Modal states
     const [historyApp, setHistoryApp] = useState<any>(null);
@@ -36,7 +60,7 @@ function VisaApplicationsPageContent({ role }: { role: string }) {
     const { data, isLoading, refetch } = useVisaApplications(role === "student" ? "STUDENT" : undefined, page, limit, debouncedSearch, status);
     const deleteMutation = useDeleteVisaApplication();
 
-    const visaApplications = data?.visaApplications || [];
+    const visaApplications = (data?.visaApplications || []) as any[];
     const pagination = data?.pagination || { page: 1, limit: 10, totalPages: 1, total: 0 };
 
     // Reset page on search/filter changes
@@ -50,6 +74,43 @@ function VisaApplicationsPageContent({ role }: { role: string }) {
             refetch();
         } catch (error) {
             console.error(error);
+        }
+    };
+
+    const handleExportExcel = async () => {
+        try {
+            setIsExporting(true);
+            const response = await axios.get('/api/visa-applications/export', {
+                params: { search: debouncedSearch, status: status === "ALL" ? "" : status },
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `visa_applications_export_${new Date().toISOString()}.xlsx`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            toast.success("Excel exported successfully");
+        } catch (error) {
+            toast.error("Failed to export Excel");
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        try {
+            setIsBulkDeleting(true);
+            await axios.delete('/api/visa-applications/bulk', { data: { ids: selectedIds } });
+            toast.success(`${selectedIds.length} applications deleted`);
+            setSelectedIds([]);
+            refetch();
+        } catch (error) {
+            toast.error("Failed to delete applications");
+        } finally {
+            setIsBulkDeleting(false);
+            setShowBulkDeleteConfirm(false);
         }
     };
 
@@ -67,7 +128,79 @@ function VisaApplicationsPageContent({ role }: { role: string }) {
 
     return (
         <div className="flex flex-col gap-3 p-3 sm:p-4 bg-slate-50/50 min-h-screen">
-            <Card className="border-0 rounded-3xl overflow-hidden bg-card">
+            {/* Bulk Actions Toolbar */}
+            <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-slate-100 shadow-sm mb-2">
+                <div className="flex items-center gap-3">
+                     <div className="h-10 w-10 bg-indigo-50 rounded-2xl flex items-center justify-center">
+                        <Plane className="h-5 w-5 text-indigo-600" />
+                     </div>
+                     <div>
+                        <h2 className="text-lg font-bold text-slate-800 tracking-tight">Visa Applications</h2>
+                        <p className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Total {pagination.total} Records</p>
+                     </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExportExcel}
+                        disabled={isExporting}
+                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold"
+                    >
+                        <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+                        {isExporting ? "Exporting..." : "Excel"}
+                    </Button>
+
+                    <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowAssignModal(true)}
+                        disabled={selectedIds.length === 0}
+                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold disabled:opacity-50"
+                    >
+                        <UserPlus className="h-4 w-4 text-blue-600" />
+                        Assign
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowEmailModal(true)}
+                        disabled={selectedIds.length === 0}
+                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold disabled:opacity-50"
+                    >
+                        <Mail className="h-4 w-4 text-amber-600" />
+                        Email
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowWhatsappModal(true)}
+                        disabled={selectedIds.length === 0}
+                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold disabled:opacity-50"
+                    >
+                        <MessageCircle className="h-4 w-4 text-green-600" />
+                        Whatsapp
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowBulkDeleteConfirm(true)}
+                        disabled={selectedIds.length === 0}
+                        className="h-9 rounded-xl border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 gap-2 text-[12px] font-bold disabled:opacity-50"
+                    >
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                        Delete
+                    </Button>
+                </div>
+            </div>
+
+            <Card className="border-0 rounded-3xl overflow-hidden bg-card shadow-sm">
                 <CardContent className="p-4">
                     {/* Integrated Header Row */}
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
@@ -143,6 +276,48 @@ function VisaApplicationsPageContent({ role }: { role: string }) {
             </Card>
 
             {/* Modals */}
+            <AssignApplicationsModal
+                isOpen={showAssignModal}
+                onClose={() => setShowAssignModal(false)}
+                selectedIds={selectedIds}
+                selectedNames={visaApplications.filter(a => selectedIds.includes(a.id)).map(a => a.student?.name || "N/A")}
+                onSuccess={() => {
+                    setSelectedIds([]);
+                    refetch();
+                }}
+                apiEndpoint="/api/visa-applications/bulk-assign"
+                title="Visa Applications"
+                moduleName="visa"
+            />
+
+            <EmailComposeModal
+                isOpen={showEmailModal}
+                onClose={() => setShowEmailModal(false)}
+                selectedEmails={visaApplications.filter(a => selectedIds.includes(a.id)).map(a => a.student?.email).filter(Boolean)}
+                apiEndpoint="/api/applications/email"
+            />
+
+            <WhatsappMessageModal
+                isOpen={showWhatsappModal}
+                onClose={() => setShowWhatsappModal(false)}
+                selectedLeads={visaApplications.filter(a => selectedIds.includes(a.id)).map(a => ({
+                    id: a.id,
+                    name: a.student?.name || "N/A",
+                    phone: a.student?.phone || ""
+                }))}
+                apiEndpoint="/api/applications/whatsapp"
+            />
+
+            <ConfirmDialog
+                isOpen={showBulkDeleteConfirm}
+                onClose={() => setShowBulkDeleteConfirm(false)}
+                onConfirm={handleBulkDelete}
+                title="Bulk Delete Visa Applications"
+                description={`Are you sure you want to delete ${selectedIds.length} selected visa applications? This action cannot be undone.`}
+                confirmText={isBulkDeleting ? "Deleting..." : "Delete All"}
+                variant="destructive"
+            />
+
             <ApplicationHistoryModal
                 isOpen={!!historyApp}
                 onClose={() => setHistoryApp(null)}

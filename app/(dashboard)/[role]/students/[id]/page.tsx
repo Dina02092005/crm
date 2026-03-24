@@ -186,7 +186,7 @@ export default function StudentDetailPage() {
     return (
         <div className="flex flex-col min-h-screen bg-background">
             {/* Top Navigation Tabs - Using the pill style from Leads page */}
-            <div className="bg-background px-4 sm:px-8 py-3 overflow-x-auto scrollbar-hide border-b">
+            <div className="bg-card/50 dark:bg-slate-900/40 backdrop-blur-md px-4 sm:px-8 py-3 overflow-x-auto scrollbar-hide border-b border-border/50 sticky top-0 z-10">
                 <div className="flex items-center gap-2 min-w-max">
                     {tabs.map((tab) => (
                         <button
@@ -231,15 +231,15 @@ export default function StudentDetailPage() {
                 {defaultTab === "overview" && (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
                         <div className="col-span-1 space-y-6">
-                            <Card className="border border-border rounded-2xl bg-card shadow-none">
-                                <CardHeader className="pb-2 border-b border-border/50">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary text-xl font-bold">
+                            <Card className="border border-border/50 rounded-2xl bg-card shadow-xl overflow-hidden ring-1 ring-border/50">
+                                <CardHeader className="pb-4 border-b border-border/50 bg-muted/30 dark:bg-slate-900/40">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-14 h-14 rounded-2xl bg-primary/10 dark:bg-primary/20 flex items-center justify-center text-primary text-2xl font-black shadow-inner">
                                             {student.name.charAt(0).toUpperCase()}
                                         </div>
                                         <div className="space-y-0.5">
-                                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Student</p>
-                                            <CardTitle className="text-lg font-bold">{student.name}</CardTitle>
+                                            <p className="text-[10px] font-black text-primary uppercase tracking-widest">Student Profile</p>
+                                            <CardTitle className="text-xl font-bold tracking-tight">{student.name}</CardTitle>
                                         </div>
                                     </div>
                                 </CardHeader>
@@ -319,25 +319,25 @@ export default function StudentDetailPage() {
                                                 {isCalling ? 'Calling...' : 'Call Student'}
                                             </Button>
                                             <Button
-                                                className="w-full bg-primary hover:bg-primary/90 rounded-xl h-9 text-sm font-bold shadow-sm"
+                                                className="w-full bg-primary hover:bg-primary/90 text-white rounded-xl h-10 text-xs font-black uppercase tracking-wider shadow-lg shadow-primary/20 transition-all active:scale-[0.98]"
                                                 onClick={() => {
-                                    if (!params.id) {
-                                        toast.error("Student ID missing");
-                                        return;
-                                    }
-                                    router.push(prefixPath(`/students/${params.id}/applications/add`));
-                                }}
+                                                    if (!params.id) {
+                                                        toast.error("Student ID missing");
+                                                        return;
+                                                    }
+                                                    router.push(prefixPath(`/students/${params.id}/applications/add`));
+                                                }}
                                             >
-                                                <Briefcase className="h-3.5 w-3.5 mr-2" />
+                                                <Briefcase className="h-4 w-4 mr-2" />
                                                 Move to Application
                                             </Button>
                                             <Button
                                                 variant="outline"
-                                                className="w-full border-primary/20 hover:bg-primary/5 rounded-xl h-9 text-sm font-semibold"
+                                                className="w-full border-border bg-background/50 hover:bg-muted rounded-xl h-10 text-xs font-black uppercase tracking-wider transition-all"
                                                 onClick={() => router.push(prefixPath(`/students/${params.id}/edit`))}
                                             >
-                                                <Pencil className="h-3.5 w-3.5 mr-2" />
-                                                Edit Student
+                                                <Pencil className="h-4 w-4 mr-2" />
+                                                Edit Profile
                                             </Button>
                                             {session?.user?.role === "ADMIN" && (
                                                 <Button

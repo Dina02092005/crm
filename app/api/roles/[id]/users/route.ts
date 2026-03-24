@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { validateRoleUpdate, canManageUser } from "@/lib/user-auth";
+import { Role } from "@prisma/client";
 
 // GET /api/roles/[id]/users - List users assigned to this role
 export async function GET(
@@ -10,7 +12,7 @@ export async function GET(
 ) {
     try {
         const session = await getServerSession(authOptions) as any;
-        if (!session?.user || !["ADMIN"].includes(session.user.role)) {
+        if (!session?.user || !["SUPER_ADMIN", "ADMIN"].includes(session.user.role)) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
@@ -44,7 +46,7 @@ export async function POST(
 ) {
     try {
         const session = await getServerSession(authOptions) as any;
-        if (!session?.user || session.user.role !== "ADMIN") {
+        if (!session?.user || !["SUPER_ADMIN", "ADMIN"].includes(session.user.role)) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
@@ -58,6 +60,12 @@ export async function POST(
         const role = await prisma.userRole.findUnique({ where: { id } });
         if (!role) {
             return NextResponse.json({ error: "Role not found" }, { status: 404 });
+        }
+
+        // RBAC: Check if the role being assigned is protected
+        const { allowed, message } = validateRoleUpdate(session.user.role as Role, role.name as Role);
+        if (!allowed) {
+            return NextResponse.json({ error: message || "Forbidden" }, { status: 403 });
         }
 
         const updated = await prisma.user.update({
@@ -80,7 +88,7 @@ export async function DELETE(
 ) {
     try {
         const session = await getServerSession(authOptions) as any;
-        if (!session?.user || session.user.role !== "ADMIN") {
+        if (!session?.user || !["SUPER_ADMIN", "ADMIN"].includes(session.user.role)) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 

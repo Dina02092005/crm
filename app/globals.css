@@ -111,59 +111,51 @@
 }
 
 .dark {
-  /* Dark Mode Colors - Unified to Sidebar Theme (Near Black) */
-  --background: hsl(195 95% 0.5%);
-  --foreground: hsl(195 30% 90%);
+  /* Dark Mode Colors - Premium Deep Navy/Slate theme */
+  --background: hsl(222 47% 4%); /* Deepest Navy */
+  --foreground: hsl(210 40% 98%); /* Off-white */
 
-  /* Primary - Teal Blue */
-  --primary: hsl(195 80% 45%);
-  --primary-foreground: hsl(195 90% 10%);
+  /* Primary - Vivid Cyan-Blue */
+  --primary: hsl(199 89% 48%);
+  --primary-foreground: hsl(222 47% 4%);
 
-  /* Secondary */
-  --secondary: hsl(195 50% 10%);
-  --secondary-foreground: hsl(195 30% 90%);
+  /* Secondary - Muted Navy */
+  --secondary: hsl(217 33% 14%);
+  --secondary-foreground: hsl(210 40% 98%);
 
   /* Muted */
-  --muted: hsl(195 50% 10%);
-  --muted-foreground: hsl(195 20% 70%);
+  --muted: hsl(217 33% 12%);
+  --muted-foreground: hsl(215 20% 65%);
 
   /* Accent */
-  --accent: hsl(195 50% 10%);
-  --accent-foreground: hsl(195 30% 90%);
+  --accent: hsl(217 33% 14%);
+  --accent-foreground: hsl(210 40% 98%);
 
   /* Destructive */
-  --destructive: hsl(0 62.8% 30.6%);
-  --destructive-foreground: hsl(195 30% 90%);
+  --destructive: hsl(0 63% 31%);
+  --destructive-foreground: hsl(210 40% 98%);
 
-  /* Border & Input */
-  --border: hsl(195 30% 15%);
-  --input: hsl(195 30% 15%);
-  --ring: hsl(195 80% 45%);
+  /* Better contrast for Borders & Inputs */
+  --border: hsl(217 33% 13%);
+  --input: hsl(217 33% 13%);
+  --ring: hsl(199 89% 48%);
 
-  /* Card */
-  --card: hsl(195 95% 0.5%);
-  --card-foreground: hsl(195 30% 90%);
+  /* Card and Popover matching the deep background */
+  --card: hsl(222 47% 4%);
+  --card-foreground: hsl(210 40% 98%);
 
-  /* Popover */
-  --popover: hsl(195 95% 0.5%);
-  --popover-foreground: hsl(195 30% 90%);
+  --popover: hsl(222 47% 4%);
+  --popover-foreground: hsl(210 40% 98%);
 
-  /* Chart Colors - Adjusted for dark mode */
-  --chart-1: hsl(195 80% 45%);
-  --chart-2: hsl(217.2 91.2% 59.8%);
-  --chart-3: hsl(262.1 83.3% 57.8%);
-  --chart-4: hsl(291.4 84.1% 60.6%);
-  --chart-5: hsl(24.6 95% 53.1%);
-
-  /* Sidebar - Same dark theme */
-  --sidebar: hsl(195 95% 0.5%);
-  --sidebar-foreground: hsl(195 30% 90%);
-  --sidebar-primary: hsl(195 80% 45%);
-  --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(195 50% 10%);
-  --sidebar-accent-foreground: hsl(195 30% 90%);
-  --sidebar-border: hsl(195 30% 15%);
-  --sidebar-ring: hsl(195 80% 45%);
+  /* Sidebar - Dark theme matching the main background */
+  --sidebar: hsl(222 47% 4%);
+  --sidebar-foreground: hsl(210 40% 98%);
+  --sidebar-primary: hsl(199 89% 48%);
+  --sidebar-primary-foreground: hsl(222 47% 4%);
+  --sidebar-accent: hsl(217 33% 12%);
+  --sidebar-accent-foreground: hsl(210 40% 98%);
+  --sidebar-border: hsl(217 33% 11%);
+  --sidebar-ring: hsl(199 89% 48%);
 }
 
 @layer base {

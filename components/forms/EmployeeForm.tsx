@@ -22,7 +22,7 @@ const employeeSchema = z.object({
     email: z.string().email("Invalid email address"),
     password: z.string().min(6, "Password must be at least 6 characters").optional().or(z.literal("")),
     phone: z.string().min(10, "Phone number must be at least 10 digits"),
-    role: z.enum(["ADMIN", "MANAGER", "SALES_REP", "SUPPORT_AGENT", "EMPLOYEE", "AGENT", "COUNSELOR"]).optional(),
+    role: z.enum(["SUPER_ADMIN", "ADMIN", "MANAGER", "SALES_REP", "SUPPORT_AGENT", "EMPLOYEE", "AGENT", "COUNSELOR"]).optional(),
     roleId: z.string().optional().nullable(),
     department: z.string().min(2, "Department is required"),
     salary: z.coerce.number().min(0, "Salary must be a positive number"),
@@ -262,7 +262,7 @@ export default function EmployeeForm({ employee, onSuccess, formId, defaultRole 
                     />
                 </div>
 
-                {(session?.user?.role === 'ADMIN') && (
+                {(session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN') && (
                     <div className="grid grid-cols-2 gap-4">
                         <form.Field
                             name="role"
@@ -275,6 +275,10 @@ export default function EmployeeForm({ employee, onSuccess, formId, defaultRole 
                                         value={field.state.value || "EMPLOYEE"}
                                         onBlur={field.handleBlur}
                                         onChange={(e) => field.handleChange(e.target.value as any)}
+                                        disabled={
+                                            (employee?.role === "SUPER_ADMIN" || employee?.role === "ADMIN") && 
+                                            session?.user?.role !== "SUPER_ADMIN"
+                                        }
                                         className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                         <option value="EMPLOYEE">Staff / Employee</option>
@@ -283,7 +287,15 @@ export default function EmployeeForm({ employee, onSuccess, formId, defaultRole 
                                         <option value="SALES_REP">Sales Rep</option>
                                         <option value="SUPPORT_AGENT">Support Agent</option>
                                         <option value="MANAGER">Manager</option>
-                                        <option value="ADMIN">Admin</option>
+                                        {session?.user?.role === "SUPER_ADMIN" && (
+                                            <>
+                                                <option value="ADMIN">Admin</option>
+                                                <option value="SUPER_ADMIN">Super Admin</option>
+                                            </>
+                                        )}
+                                        {session?.user?.role === "ADMIN" && employee?.role === "ADMIN" && (
+                                            <option value="ADMIN">Admin</option>
+                                        )}
                                     </select>
                                     <ErrorMessage field={field} />
                                 </div>
@@ -375,7 +387,7 @@ export default function EmployeeForm({ employee, onSuccess, formId, defaultRole 
                     </div>
                 )}
 
-                {form.state.values.role === 'COUNSELOR' && session?.user?.role === 'ADMIN' && (
+                {form.state.values.role === 'COUNSELOR' && (session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN') && (
                     <div className="grid grid-cols-2 gap-4">
                         <form.Field
                             name="agentId"

@@ -62,6 +62,7 @@ export async function PATCH(
                 name,
                 email,
                 isActive,
+                updatedById: session.user.id,
                 agentProfile: {
                     update: {
                         companyName,

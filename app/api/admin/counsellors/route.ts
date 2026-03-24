@@ -11,9 +11,10 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions) as any;
-        if (!session || session.user.role !== 'ADMIN') {
+        if (!session || !["SUPER_ADMIN", "ADMIN"].includes(session.user.role)) {
             return NextResponse.json({ error: "Unauthorized: Admin access required" }, { status: 401 });
         }
+        const createdById = session.user.id;
 
         const body = await req.json();
         const { firstName, lastName, email, phone, password, roleId, status, agentId } = body;
@@ -38,6 +39,7 @@ export async function POST(req: NextRequest) {
                 role: "COUNSELOR",
                 isActive: status === "ACTIVE",
                 roleId: roleId || null,
+                createdById,
                 emailVerified: new Date(),
                 counselorProfile: {
                     create: {
@@ -76,7 +78,7 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions) as any;
-        if (!session || session.user.role !== 'ADMIN') {
+        if (!session || !["SUPER_ADMIN", "ADMIN"].includes(session.user.role)) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 

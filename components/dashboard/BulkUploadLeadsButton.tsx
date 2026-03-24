@@ -3,11 +3,12 @@
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog";
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetDescription,
+    SheetTitle,
+} from "@/components/ui/sheet";
 import {
     Upload,
     FileSpreadsheet,
@@ -17,9 +18,12 @@ import {
     Loader2,
     Download,
     X,
+    LayoutGrid,
+    History
 } from "lucide-react";
 import { toast } from "sonner";
 import { CSV_TEMPLATE_HEADER } from "@/lib/bulk-lead-parser";
+import { cn } from "@/lib/utils";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface UploadError { row: number; reason: string }
@@ -65,16 +69,14 @@ export function BulkUploadLeadsButton({ onSuccess }: BulkUploadLeadsButtonProps)
     const [result, setResult] = useState<UploadResult | null>(null);
     const [fileName, setFileName] = useState("");
     const [progress, setProgress] = useState(0);
-    const [dialogOpen, setDialogOpen] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        // Reset input so the same file can be re-selected
         e.target.value = "";
 
-        // Client-side guards
         if (file.size > 10 * 1024 * 1024) {
             toast.error("File is too large. Maximum allowed size is 10 MB.");
             return;
@@ -89,9 +91,8 @@ export function BulkUploadLeadsButton({ onSuccess }: BulkUploadLeadsButtonProps)
         setPhase("uploading");
         setProgress(0);
         setResult(null);
-        setDialogOpen(true);
+        setIsOpen(true);
 
-        // Fake progress animation while uploading (XHR would give real progress)
         const timer = setInterval(() => {
             setProgress((p) => (p < 85 ? p + 5 : p));
         }, 400);
@@ -132,12 +133,11 @@ export function BulkUploadLeadsButton({ onSuccess }: BulkUploadLeadsButtonProps)
         setResult(null);
         setProgress(0);
         setFileName("");
-        setDialogOpen(false);
+        setIsOpen(false);
     };
 
     return (
         <>
-            {/* Hidden file input */}
             <input
                 ref={fileRef}
                 type="file"
@@ -146,158 +146,167 @@ export function BulkUploadLeadsButton({ onSuccess }: BulkUploadLeadsButtonProps)
                 onChange={handleFileChange}
             />
 
-            {/* Trigger button */}
             <Button
                 variant="outline"
                 onClick={() => fileRef.current?.click()}
-                className="h-9 rounded-xl px-4 text-[13px] font-semibold flex items-center gap-2 border-dashed border-muted-foreground/40 hover:border-primary hover:text-primary transition-colors"
+                className="h-10 rounded-xl px-4 text-[13px] font-bold flex items-center gap-2 border-slate-200 hover:border-primary hover:bg-primary/5 transition-all shadow-sm"
             >
-                <Upload className="h-4 w-4" />
-                Bulk Upload
+                <Upload className="h-4 w-4 text-primary" />
+                Bulk Import
             </Button>
 
-            {/* Template download link */}
-            <Button
-                variant="ghost"
-                size="sm"
-                onClick={downloadTemplate}
-                className="h-9 rounded-xl px-3 text-[12px] text-muted-foreground hover:text-primary gap-1.5"
-                title="Download CSV template"
-            >
-                <FileSpreadsheet className="h-3.5 w-3.5" />
-                Template
-            </Button>
-
-            {/* Progress / Result dialog */}
-            <Dialog open={dialogOpen} onOpenChange={(o) => { if (!o && phase !== "uploading") reset(); }}>
-                <DialogContent className="sm:max-w-[480px] p-0 gap-0 rounded-2xl overflow-hidden border-0 shadow-2xl">
-                    {/* Header */}
-                    <div className={`px-6 pt-6 pb-5 ${phase === "done" && result && result.failed === 0
-                            ? "bg-gradient-to-br from-emerald-600 to-teal-500"
-                            : phase === "done"
-                                ? "bg-gradient-to-br from-amber-500 to-orange-500"
-                                : phase === "error"
-                                    ? "bg-gradient-to-br from-rose-600 to-red-500"
-                                    : "bg-gradient-to-br from-blue-600 to-cyan-500"
-                        }`}>
-                        <DialogHeader>
-                            <DialogTitle className="text-white text-lg font-bold flex items-center gap-2">
-                                {phase === "uploading" && <><Loader2 className="h-5 w-5 animate-spin" /> Processing File…</>}
-                                {phase === "done" && <><CheckCircle2 className="h-5 w-5" /> Upload Complete</>}
-                                {phase === "error" && <><XCircle className="h-5 w-5" /> Upload Failed</>}
-                            </DialogTitle>
-                            <p className="text-white/70 text-xs mt-1 truncate">{fileName}</p>
-                        </DialogHeader>
+            <Sheet open={isOpen} onOpenChange={(o) => { if (!o && phase !== "uploading") reset(); }}>
+                <SheetContent className="sm:max-w-md border-l border-border shadow-2xl p-0 flex flex-col h-full bg-background ring-1 ring-border/50">
+                    {/* Dynamic Header based on Phase */}
+                    <div className={cn(
+                        "p-8 border-b border-border/10 relative overflow-hidden transition-all duration-500",
+                        phase === "uploading" ? "bg-blue-600/10" :
+                        phase === "done" ? (result?.failed === 0 ? "bg-emerald-600/10" : "bg-amber-600/10") :
+                        phase === "error" ? "bg-rose-600/10" : "bg-muted/40"
+                    )}>
+                        <div className="absolute top-0 right-0 p-12 bg-primary/10 blur-3xl opacity-20 -mr-8 -mt-8" />
+                        
+                        <SheetHeader className="relative z-10">
+                            <div className="flex items-center gap-4 mb-3">
+                                <div className={cn(
+                                    "p-3 rounded-2xl shadow-lg transition-all duration-500",
+                                    phase === "uploading" ? "bg-blue-600 text-white animate-pulse" :
+                                    phase === "done" ? (result?.failed === 0 ? "bg-emerald-600 text-white" : "bg-amber-600 text-white") :
+                                    phase === "error" ? "bg-rose-600 text-white" : "bg-primary text-white"
+                                )}>
+                                    {phase === "uploading" ? <Loader2 className="h-6 w-6 animate-spin" /> :
+                                     phase === "done" ? <CheckCircle2 className="h-6 w-6" /> :
+                                     phase === "error" ? <XCircle className="h-6 w-6" /> :
+                                     <FileSpreadsheet className="h-6 w-6" />}
+                                </div>
+                                <div>
+                                    <SheetTitle className="text-2xl font-black tracking-tight text-foreground">
+                                        {phase === "uploading" ? "Importing Leads" :
+                                         phase === "done" ? "Import Complete" :
+                                         phase === "error" ? "Import Failed" : "Bulk Import"}
+                                    </SheetTitle>
+                                    <SheetDescription className="text-[10px] font-black uppercase tracking-[0.2em] text-muted-foreground mt-1">
+                                        {fileName || "Lead processing engine"}
+                                    </SheetDescription>
+                                </div>
+                            </div>
+                        </SheetHeader>
                     </div>
 
-                    <div className="px-6 py-5 space-y-4">
-                        {/* Uploading phase */}
+                    <div className="flex-1 overflow-y-auto p-6 space-y-6">
                         {phase === "uploading" && (
-                            <div className="space-y-3">
-                                <div className="flex justify-between text-xs text-muted-foreground">
-                                    <span>Uploading and processing…</span>
-                                    <span>{progress}%</span>
+                            <div className="space-y-6 py-10">
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-end">
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Uploading & Processing</p>
+                                        <p className="text-2xl font-black text-primary font-mono">{progress}%</p>
+                                    </div>
+                                    <div className="h-3 w-full bg-muted/30 rounded-full overflow-hidden border border-border/50">
+                                        <div 
+                                            className="h-full bg-primary transition-all duration-500 relative"
+                                            style={{ width: `${progress}%` }}
+                                        >
+                                            <div className="absolute inset-0 bg-white/20 animate-[shimmer_2s_infinite]" />
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="w-full bg-muted rounded-full h-2">
-                                    <div
-                                        className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                                        style={{ width: `${progress}%` }}
-                                    />
+                                
+                                <div className="grid grid-cols-1 gap-3 pt-4">
+                                    <div className="p-4 rounded-2xl bg-card border border-border/50 flex items-center gap-4">
+                                        <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                                        <p className="text-xs font-medium text-muted-foreground italic">Validating lead records...</p>
+                                    </div>
                                 </div>
-                                <p className="text-xs text-muted-foreground text-center">
-                                    Validating, deduplicating and inserting records…
-                                </p>
                             </div>
                         )}
 
-                        {/* Done phase */}
                         {phase === "done" && result && (
-                            <div className="space-y-4">
-                                {/* Stats grid */}
+                            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                {/* Dashboard Style Stats */}
                                 <div className="grid grid-cols-2 gap-3">
-                                    {[
-                                        { label: "Total Rows", value: result.total, color: "text-foreground", bg: "bg-muted/50" },
-                                        { label: "Inserted", value: result.inserted, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-950/30" },
-                                        { label: "Duplicates Skipped", value: result.skipped, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-950/30" },
-                                        { label: "Failed", value: result.failed, color: "text-rose-600", bg: "bg-rose-50 dark:bg-rose-950/30" },
-                                    ].map(({ label, value, color, bg }) => (
-                                        <div key={label} className={`${bg} rounded-xl px-4 py-3 text-center`}>
-                                            <p className={`text-2xl font-bold ${color}`}>{value.toLocaleString()}</p>
-                                            <p className="text-[11px] text-muted-foreground mt-0.5">{label}</p>
+                                    <div className="bg-card border border-border/50 p-4 rounded-2xl shadow-sm group hover:border-primary/50 transition-colors">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">Total Rows</p>
+                                            <LayoutGrid className="h-3.5 w-3.5 text-muted-foreground/40" />
                                         </div>
-                                    ))}
+                                        <p className="text-3xl font-black text-foreground">{result.total}</p>
+                                    </div>
+                                    <div className="bg-emerald-500/5 border border-emerald-500/20 p-4 rounded-2xl shadow-sm group hover:bg-emerald-500/10 transition-colors">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className="text-[10px] font-black text-emerald-600/80 uppercase tracking-widest">Inserted</p>
+                                            <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500/40" />
+                                        </div>
+                                        <p className="text-3xl font-black text-emerald-600">{result.inserted}</p>
+                                    </div>
+                                    <div className="bg-amber-500/5 border border-amber-500/20 p-4 rounded-2xl shadow-sm group hover:bg-amber-500/10 transition-colors">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className="text-[10px] font-black text-amber-600/80 uppercase tracking-widest">Skipped</p>
+                                            <History className="h-3.5 w-3.5 text-amber-500/40" />
+                                        </div>
+                                        <p className="text-3xl font-black text-amber-600">{result.skipped}</p>
+                                    </div>
+                                    <div className="bg-rose-500/5 border border-rose-500/20 p-4 rounded-2xl shadow-sm group hover:bg-rose-500/10 transition-colors">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className="text-[10px] font-black text-rose-600/80 uppercase tracking-widest">Failed</p>
+                                            <AlertTriangle className="h-3.5 w-3.5 text-rose-500/40" />
+                                        </div>
+                                        <p className="text-3xl font-black text-rose-600">{result.failed}</p>
+                                    </div>
                                 </div>
 
-                                {/* Warning about failures */}
                                 {result.failed > 0 && (
-                                    <div className="flex items-start gap-2 p-3 bg-amber-50 dark:bg-amber-950/30 rounded-xl border border-amber-200 dark:border-amber-800">
-                                        <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-                                        <div className="text-xs text-amber-800 dark:text-amber-300">
-                                            <p className="font-semibold">{result.failed} rows could not be inserted.</p>
-                                            <p className="mt-0.5">Download the error report to review and fix them.</p>
+                                    <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-2xl space-y-3">
+                                        <div className="flex items-center gap-3">
+                                            <AlertTriangle className="h-5 w-5 text-rose-500" />
+                                            <p className="text-sm font-bold text-rose-700 dark:text-rose-400">Issues Detected</p>
                                         </div>
-                                    </div>
-                                )}
-
-                                {/* Error sample */}
-                                {result.errors.length > 0 && (
-                                    <div className="rounded-xl border overflow-hidden">
-                                        <div className="bg-muted/50 px-3 py-2 text-[11px] font-semibold text-muted-foreground uppercase tracking-wide">
-                                            Sample Errors
-                                        </div>
-                                        <div className="divide-y max-h-32 overflow-y-auto">
-                                            {result.errors.slice(0, 5).map((e, i) => (
-                                                <div key={i} className="flex gap-3 px-3 py-2 text-[11px]">
-                                                    <span className="text-muted-foreground shrink-0">Row {e.row}</span>
-                                                    <span className="text-rose-600 truncate">{e.reason}</span>
-                                                </div>
-                                            ))}
-                                        </div>
+                                        <p className="text-xs text-rose-700/70 leading-relaxed font-medium">
+                                            Some rows could not be imported. Download the error report to see detailed reasons for each failure.
+                                        </p>
+                                        <Button 
+                                            variant="outline" 
+                                            size="sm" 
+                                            onClick={() => downloadErrorCsv(result.errors)}
+                                            className="w-full rounded-xl border-rose-500/30 bg-rose-500/5 hover:bg-rose-500/10 text-rose-600 font-bold gap-2 text-[10px] uppercase tracking-widest"
+                                        >
+                                            <Download className="h-3.5 w-3.5" />
+                                            Download Error Log
+                                        </Button>
                                     </div>
                                 )}
                             </div>
                         )}
+                    </div>
 
-                        {/* Error phase */}
-                        {phase === "error" && (
-                            <p className="text-sm text-muted-foreground text-center py-4">
-                                Something went wrong. Please check the file and try again.
-                            </p>
-                        )}
-
-                        {/* Actions */}
-                        <div className="flex gap-2 justify-end pt-1">
-                            {phase === "done" && result && result.errors.length > 0 && (
+                    <div className="p-6 border-t border-border bg-muted/40 backdrop-blur-md flex items-center justify-between gap-3">
+                        <Button
+                            variant="ghost"
+                            onClick={reset}
+                            className="rounded-xl px-4 text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-foreground"
+                        >
+                            Cancel
+                        </Button>
+                        <div className="flex gap-2">
+                            {phase === "done" && (
                                 <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => downloadErrorCsv(result.errors)}
-                                    className="rounded-xl gap-1.5 text-xs"
-                                >
-                                    <Download className="h-3.5 w-3.5" />
-                                    Error Report
-                                </Button>
-                            )}
-                            {phase !== "uploading" && (
-                                <Button
-                                    size="sm"
                                     onClick={() => { reset(); fileRef.current?.click(); }}
                                     variant="outline"
-                                    className="rounded-xl gap-1.5 text-xs"
+                                    className="rounded-xl px-4 text-[10px] font-black uppercase tracking-widest border-slate-200 hover:bg-background"
                                 >
-                                    <Upload className="h-3.5 w-3.5" />
-                                    Upload Another
+                                    Try Another
                                 </Button>
                             )}
-                            {phase !== "uploading" && (
-                                <Button size="sm" onClick={reset} className="rounded-xl text-xs">
-                                    Done
-                                </Button>
-                            )}
+                            <Button 
+                                onClick={reset} 
+                                className="rounded-xl px-8 text-[10px] font-black uppercase tracking-widest bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20"
+                                disabled={phase === "uploading"}
+                            >
+                                {phase === "done" ? "Finish" : "Close"}
+                            </Button>
                         </div>
                     </div>
-                </DialogContent>
-            </Dialog>
+                </SheetContent>
+            </Sheet>
         </>
     );
 }

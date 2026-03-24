@@ -9,7 +9,9 @@ export async function GET(
 ) {
     try {
         const session = await getServerSession(authOptions) as any;
-        if (!session) return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+        if (!session || !["SUPER_ADMIN", "ADMIN"].includes(session.user.role)) {
+            return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+        }
 
         const { id } = await params;
         const counselor = await prisma.user.findUnique({
@@ -56,7 +58,7 @@ export async function PATCH(
         const { name, email, isActive, phone, department, designation, salary, joiningDate, agentId } = body;
 
         // Check permissions
-        if (session.user.role !== 'ADMIN' && session.user.id !== id) {
+        if (!["SUPER_ADMIN", "ADMIN"].includes(session.user.role) && session.user.id !== id) {
             // Agents can potentially edit their counselors? Let's restrict to Admin for sensitivity if needed.
             // But if it's the counselor themselves editing their profile:
             if (session.user.role !== 'AGENT') return NextResponse.json({ message: 'Forbidden' }, { status: 403 });
@@ -68,6 +70,7 @@ export async function PATCH(
                 name,
                 email,
                 isActive,
+                updatedById: session.user.id,
                 counselorProfile: {
                     update: {
                         phone,
@@ -94,7 +97,7 @@ export async function DELETE(
 ) {
     try {
         const session = await getServerSession(authOptions) as any;
-        if (!session || session.user.role !== 'ADMIN') {
+        if (!session || !["SUPER_ADMIN", "ADMIN"].includes(session.user.role)) {
             return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
         }
 

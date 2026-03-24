@@ -104,8 +104,8 @@ export function AddUniversityApplicationModal({
                 axios.get("/api/master/countries"),
                 axios.get("/api/master/associates")
             ]);
-            setCountries(countriesRes.data || []);
-            setAssociates(associatesRes.data || []);
+            setCountries(Array.isArray(countriesRes.data) ? countriesRes.data : (countriesRes.data.countries || []));
+            setAssociates(Array.isArray(associatesRes.data) ? associatesRes.data : (associatesRes.data.associates || []));
         } catch (error) {
             console.error("Failed to load master data", error);
             toast.error("Failed to load dropdown data");

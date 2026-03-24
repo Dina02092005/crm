@@ -18,6 +18,12 @@ model User {
   roleProfile             UserRole?               @relation(fields: [roleId], references: [id])
   createdAt               DateTime                @default(now())
   updatedAt               DateTime                @updatedAt
+  createdById             String?
+  updatedById             String?
+  createdBy               User?                   @relation("UserCreator", fields: [createdById], references: [id])
+  updatedBy               User?                   @relation("UserUpdater", fields: [updatedById], references: [id])
+  createdUsers            User[]                  @relation("UserCreator")
+  updatedUsers            User[]                  @relation("UserUpdater")
   otp                     String?
   otpExpiresAt            DateTime?
   emailVerified           DateTime?

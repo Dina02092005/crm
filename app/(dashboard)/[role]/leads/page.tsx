@@ -2,14 +2,23 @@
 
 import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { 
+    Search, 
+    Plus, 
+    FileSpreadsheet, 
+    Mail, 
+    Trash2, 
+    UserPlus, 
+    MessageCircle, 
+    FilterX,
+    TrendingUp
+} from "lucide-react";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useLeads, useLeadStats } from "@/hooks/use-leads";
 import { LeadsTable } from "@/components/dashboard/LeadsTable";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
-import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRolePath } from "@/hooks/use-role-path";
 import { useSession } from "next-auth/react";
@@ -22,8 +31,13 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { FilterX } from "lucide-react";
 import { cn } from "@/lib/utils";
+import axios from "axios";
+import { toast } from "sonner";
+import { AssignApplicationsModal } from "@/components/applications/AssignApplicationsModal";
+import { EmailComposeModal } from "@/components/applications/EmailComposeModal";
+import { WhatsappMessageModal } from "@/components/applications/WhatsappMessageModal";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export default function LeadsPage() {
     const [search, setSearch] = useState("");
@@ -40,6 +54,14 @@ export default function LeadsPage() {
     const { data: session } = useSession() as any;
     const role = session?.user?.role;
     const { prefixPath } = useRolePath();
+
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [showAssignModal, setShowAssignModal] = useState(false);
+    const [showEmailModal, setShowEmailModal] = useState(false);
+    const [showWhatsappModal, setShowWhatsappModal] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
+    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+    const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
 
     const debouncedSearch = useDebounce(search, 500);
 
@@ -75,6 +97,43 @@ export default function LeadsPage() {
         return leadStats[id as keyof typeof leadStats] || 0;
     };
 
+    const handleExportExcel = async () => {
+        try {
+            setIsExporting(true);
+            const response = await axios.get('/api/leads/export', {
+                params: { search: debouncedSearch, status: status === "ALL" ? "" : status },
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `leads_export_${new Date().toISOString()}.xlsx`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            toast.success("Excel exported successfully");
+        } catch (error) {
+            toast.error("Failed to export Excel");
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
+    const handleBulkDelete = async () => {
+        try {
+            setIsBulkDeleting(true);
+            await axios.delete('/api/leads/bulk', { data: { ids: selectedIds } });
+            toast.success(`${selectedIds.length} leads deleted`);
+            setSelectedIds([]);
+            refetch();
+        } catch (error) {
+            toast.error("Failed to delete leads");
+        } finally {
+            setIsBulkDeleting(false);
+            setShowBulkDeleteConfirm(false);
+        }
+    };
+
     const hasFilters = assignedTo !== "ALL" || interestedCountry !== "ALL" || highestQualification !== "ALL" || interest !== "ALL" || source !== "ALL" || fromDate || toDate;
 
     return (
@@ -94,6 +153,78 @@ export default function LeadsPage() {
                             <Plus className="h-4 w-4" /> Add Lead
                         </Button>
                     </Link>
+                </div>
+            </div>
+
+            {/* Bulk Actions Toolbar */}
+            <div className="flex flex-wrap items-center justify-between gap-4 bg-slate-50/50 p-4 rounded-2xl border border-slate-100/50">
+                <div className="flex items-center gap-2">
+                     <div className="h-10 w-10 bg-primary/10 rounded-xl flex items-center justify-center">
+                        <TrendingUp className="h-5 w-5 text-primary" />
+                     </div>
+                     <div>
+                        <h2 className="text-lg font-bold text-slate-800 tracking-tight">Lead Management</h2>
+                        <p className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Total {totalLeads} Leads</p>
+                     </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExportExcel}
+                        disabled={isExporting}
+                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold"
+                    >
+                        <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+                        {isExporting ? "Exporting..." : "Excel"}
+                    </Button>
+
+                    <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowAssignModal(true)}
+                        disabled={selectedIds.length === 0}
+                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold disabled:opacity-50"
+                    >
+                        <UserPlus className="h-4 w-4 text-blue-600" />
+                        Assign
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowEmailModal(true)}
+                        disabled={selectedIds.length === 0}
+                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold disabled:opacity-50"
+                    >
+                        <Mail className="h-4 w-4 text-amber-600" />
+                        Email
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowWhatsappModal(true)}
+                        disabled={selectedIds.length === 0}
+                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold disabled:opacity-50"
+                    >
+                        <MessageCircle className="h-4 w-4 text-green-600" />
+                        Whatsapp
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowBulkDeleteConfirm(true)}
+                        disabled={selectedIds.length === 0}
+                        className="h-9 rounded-xl border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 gap-2 text-[12px] font-bold disabled:opacity-50"
+                    >
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                        Delete
+                    </Button>
                 </div>
             </div>
 
@@ -220,6 +351,8 @@ export default function LeadsPage() {
                     <LeadsTable
                         data={leads}
                         onUpdate={refetch}
+                        selectedIds={selectedIds}
+                        onSelectionChange={setSelectedIds}
                         pagination={{
                             page,
                             totalPages,
@@ -233,6 +366,49 @@ export default function LeadsPage() {
                     />
                 )}
             </div>
+
+            {/* Modals */}
+            <AssignApplicationsModal
+                isOpen={showAssignModal}
+                onClose={() => setShowAssignModal(false)}
+                selectedIds={selectedIds}
+                selectedNames={leads.filter(l => selectedIds.includes(l.id)).map(l => l.name)}
+                onSuccess={() => {
+                    setSelectedIds([]);
+                    refetch();
+                }}
+                apiEndpoint="/api/leads/bulk-assign"
+                title="Leads"
+                moduleName="leads"
+            />
+
+            <EmailComposeModal
+                isOpen={showEmailModal}
+                onClose={() => setShowEmailModal(false)}
+                selectedEmails={leads.filter(l => selectedIds.includes(l.id)).map(l => l.email).filter(Boolean)}
+                apiEndpoint="/api/applications/email"
+            />
+
+            <WhatsappMessageModal
+                isOpen={showWhatsappModal}
+                onClose={() => setShowWhatsappModal(false)}
+                selectedLeads={leads.filter(l => selectedIds.includes(l.id)).map(l => ({
+                    id: l.id,
+                    name: l.name,
+                    phone: l.phone
+                }))}
+                apiEndpoint="/api/applications/whatsapp"
+            />
+
+            <ConfirmDialog
+                isOpen={showBulkDeleteConfirm}
+                onClose={() => setShowBulkDeleteConfirm(false)}
+                onConfirm={handleBulkDelete}
+                title="Bulk Delete Leads"
+                description={`Are you sure you want to delete ${selectedIds.length} selected leads? This action cannot be undone.`}
+                confirmText={isBulkDeleting ? "Deleting..." : "Delete All"}
+                variant="destructive"
+            />
         </div>
     );
 }
