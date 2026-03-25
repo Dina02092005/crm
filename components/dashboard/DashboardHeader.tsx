@@ -57,6 +57,8 @@ export function DashboardHeader({ title, description, action }: DashboardHeaderP
         if (pathname.includes("/master/qualifications")) return "Qualification Management";
         if (pathname.includes("/master/websites")) return "Website Management";
         if (pathname.includes("/profile")) return "Account Profile";
+        if (pathname.includes("/visa-applications")) return "Visa Application Management";
+        if (pathname.includes("/students")) return "Student Records Management";
         if (pathname.includes("/dashboard")) return `${getGreeting()}, ${session?.user?.name || 'User'}`;
         return "Control Panel";
     };

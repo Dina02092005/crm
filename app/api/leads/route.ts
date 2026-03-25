@@ -150,13 +150,26 @@ export const GET = withPermission('LEADS', 'VIEW', async (req, { permission }) =
 
 export const POST = withPermission('LEADS', 'CREATE', async (req, { permission }) => {
     try {
-        const body = await req.json();
+        const rawBody = await req.json();
+        const { followUp, appointment, ...body } = rawBody;
 
         // -- Null-coerce optional enum + date fields -------------------------
         // These must be null (not "") so Prisma/DB doesn't reject enum/date constraints
-        if (!body.interest || body.interest === "") body.interest = null;
-        if (!body.dateOfBirth || body.dateOfBirth === "") body.dateOfBirth = null;
-        if (!body.email || body.email === "") body.email = null;
+        const keysToNull = ['interest', 'dateOfBirth', 'passportIssueDate', 'passportExpiryDate', 'email', 'intake', 'gender', 'nationality', 'maritalStatus', 'address', 'highestQualification', 'testName', 'testScore', 'interestedCourse', 'interestedCountry'];
+
+        keysToNull.forEach(key => {
+            if (body[key] === "" || body[key] === undefined) {
+                body[key] = null;
+            }
+        });
+
+        if (body.dateOfBirth) body.dateOfBirth = new Date(body.dateOfBirth);
+        if (body.passportIssueDate) body.passportIssueDate = new Date(body.passportIssueDate);
+        if (body.passportExpiryDate) body.passportExpiryDate = new Date(body.passportExpiryDate);
+
+        if (Array.isArray(body.intake)) {
+            body.intake = body.intake.join(', ');
+        }
 
         // -- Build name from firstName + lastName if not supplied explicitly --
         if (!body.name || body.name === "") {
@@ -174,11 +187,33 @@ export const POST = withPermission('LEADS', 'CREATE', async (req, { permission }
                 status: body.status || 'NEW',
                 temperature: body.temperature || 'COLD',
                 // Automatically assign leads created by Counselors or Agents to themselves
-                ...( (permission.user.role === 'COUNSELOR' || permission.user.role === 'AGENT') ? {
+                ...((permission.user.role === 'COUNSELOR' || permission.user.role === 'AGENT') ? {
                     assignments: {
                         create: {
                             assignedTo: permission.user.id,
                             assignedBy: permission.user.id,
+                        }
+                    }
+                } : {}),
+                ...(followUp?.nextFollowUpAt ? {
+                    followUps: {
+                        create: {
+                            userId: permission.user.id,
+                            type: "INITIAL",
+                            status: "PENDING",
+                            nextFollowUpAt: new Date(followUp.nextFollowUpAt),
+                            remark: followUp.remark,
+                        }
+                    }
+                } : {}),
+                ...(appointment?.startTime ? {
+                    appointments: {
+                        create: {
+                            userId: permission.user.id,
+                            title: appointment.title || "Initial Consultation",
+                            startTime: new Date(appointment.startTime),
+                            endTime: new Date(new Date(appointment.startTime).getTime() + 30 * 60000), // Default 30 min duration
+                            description: appointment.remark,
                         }
                     }
                 } : {})

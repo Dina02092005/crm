@@ -18,6 +18,12 @@ model User {
   roleProfile             UserRole?               @relation(fields: [roleId], references: [id])
   createdAt               DateTime                @default(now())
   updatedAt               DateTime                @updatedAt
+  createdById             String?
+  updatedById             String?
+  createdBy               User?                   @relation("UserCreator", fields: [createdById], references: [id])
+  updatedBy               User?                   @relation("UserUpdater", fields: [updatedById], references: [id])
+  createdUsers            User[]                  @relation("UserCreator")
+  updatedUsers            User[]                  @relation("UserUpdater")
   otp                     String?
   otpExpiresAt            DateTime?
   emailVerified           DateTime?
@@ -589,6 +595,7 @@ model ApplicationNote {
 enum NoteType {
   COMMENT
   OFFER_LETTER
+  NOTE
 }
 
 model VisaApplication {
@@ -640,10 +647,12 @@ enum NotificationType {
 enum ApplicationStatus {
   PENDING
   SUBMITTED
+  APPLIED
   FINALIZED
   UNDER_REVIEW
   OFFER_RECEIVED
   READY_FOR_VISA
+  VISA_PROCESS
   ENROLLED
   DEFERRED
   REJECTED

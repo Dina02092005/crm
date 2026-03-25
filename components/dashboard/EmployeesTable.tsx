@@ -14,6 +14,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
 import { MoreHorizontal, Eye, Pencil, Trash2, Mail, Phone, Briefcase, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -24,6 +25,9 @@ import { Employee } from "@/types/api";
 import { ExotelAccountButton } from "@/components/dashboard/ExotelAccountButton";
 import { useSession } from "next-auth/react";
 import { useRolePath } from "@/hooks/use-role-path";
+import { useBulkDeleteEmployees } from "@/hooks/useApi";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { toast } from "sonner";
 
 interface EmployeesTableProps {
     data: any[];
@@ -45,9 +49,47 @@ export function EmployeesTable({ data, onUpdate, onDelete, onToggleStatus, pagin
     const [editingEmployee, setEditingEmployee] = useState<Employee | undefined>(undefined);
     const { data: session } = useSession() as any;
     const { prefixPath } = useRolePath();
-    const isAdmin = session?.user?.role === "ADMIN";
+    const isAdmin = ["ADMIN", "SUPER_ADMIN", "MANAGER"].includes(session?.user?.role);
+    const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+    const bulkDeleteMutation = useBulkDeleteEmployees();
+
+    const handleBulkDelete = async () => {
+        const selectedIds = table.getSelectedRowModel().rows.map(row => row.original.id);
+        try {
+            await bulkDeleteMutation.mutateAsync(selectedIds);
+            table.toggleAllRowsSelected(false);
+            onUpdate();
+        } catch (error) {
+            // Error handled by mutation
+        } finally {
+            setBulkDeleteDialogOpen(false);
+        }
+    };
 
     const columns: ColumnDef<any>[] = [
+        {
+            id: "select",
+            header: ({ table }) => (
+                <Checkbox
+                    checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+                    onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+                    aria-label="Select all"
+                    className="translate-y-[2px]"
+                />
+            ),
+            cell: ({ row }) => (
+                <div onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                        checked={row.getIsSelected()}
+                        onCheckedChange={(value) => row.toggleSelected(!!value)}
+                        aria-label="Select row"
+                        className="translate-y-[2px]"
+                    />
+                </div>
+            ),
+            enableSorting: false,
+            enableHiding: false,
+        },
         {
             accessorKey: "name",
             header: title,
@@ -221,27 +263,43 @@ export function EmployeesTable({ data, onUpdate, onDelete, onToggleStatus, pagin
     ];
 
     const router = useRouter();
+    const [rowSelection, setRowSelection] = useState({});
 
     const table = useReactTable({
         data,
         columns,
         getCoreRowModel: getCoreRowModel(),
+        onRowSelectionChange: setRowSelection,
+        state: {
+            rowSelection,
+        },
     });
 
+    const selectedCount = Object.keys(rowSelection).length;
+
     return (
-        <div className="w-full overflow-hidden">
+        <div className="w-full relative overflow-hidden border rounded-xl bg-background shadow-sm shadow-slate-200/50">
+            {selectedCount > 0 && (
+                <div className="absolute top-0 inset-x-0 h-12 bg-primary text-primary-foreground flex items-center justify-between px-4 z-20">
+                    <span className="text-[11px] font-bold uppercase tracking-wider">{selectedCount} {title.toLowerCase()}s selected</span>
+                    <div className="flex items-center gap-2">
+                        <Button variant="secondary" size="sm" onClick={() => table.toggleAllRowsSelected(false)} className="h-8 text-[10px] font-bold uppercase text-slate-900 bg-white hover:bg-slate-100">Deselect All</Button>
+                        <Button variant="destructive" size="sm" onClick={() => setBulkDeleteDialogOpen(true)} className="h-8 text-[10px] font-bold uppercase">Bulk Delete</Button>
+                    </div>
+                </div>
+            )}
             <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                     <thead>
-                        <tr className="border-b border-border">
+                        <tr className="border-b border-muted/30 bg-muted/30">
                             {table.getHeaderGroups().map((headerGroup) =>
                                 headerGroup.headers.map((header, index) => (
                                     <th
                                         key={header.id}
                                         className={`
-                                            py-2 px-4 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground
-                                            ${index === 0 ? "pl-6" : ""}
-                                            ${index === headerGroup.headers.length - 1 ? "pr-6" : ""}
+                                            py-3 px-4 text-left text-[10px] font-bold uppercase tracking-widest text-slate-400
+                                            ${index === 1 ? "pl-6" : ""}
+                                            ${index === headerGroup.headers.length - 1 ? "pr-6 text-right" : ""}
                                         `}
                                     >
                                         {flexRender(header.column.columnDef.header, header.getContext())}
@@ -261,15 +319,15 @@ export function EmployeesTable({ data, onUpdate, onDelete, onToggleStatus, pagin
                                     }
                                     router.push(prefixPath(`/employees/${row.original.id}`));
                                 }}
-                                className="group hover:bg-muted/50 transition-colors border-b border-border last:border-0 cursor-pointer"
+                                className="group hover:bg-muted/30 transition-colors border-b border-slate-100/50 last:border-0 cursor-pointer"
                             >
                                 {row.getVisibleCells().map((cell, index) => (
                                     <td
                                         key={cell.id}
                                         className={`
                                             py-3 px-4 align-middle 
-                                            ${index === 0 ? "pl-6" : ""}
-                                            ${index === row.getVisibleCells().length - 1 ? "pr-6" : ""}
+                                            ${index === 1 ? "pl-6" : ""}
+                                            ${index === row.getVisibleCells().length - 1 ? "pr-6 text-right" : ""}
                                         `}
                                     >
                                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -365,6 +423,15 @@ export function EmployeesTable({ data, onUpdate, onDelete, onToggleStatus, pagin
                     </SheetFooter>
                 </SheetContent>
             </Sheet>
+            <ConfirmDialog
+                isOpen={bulkDeleteDialogOpen}
+                onClose={() => setBulkDeleteDialogOpen(false)}
+                onConfirm={handleBulkDelete}
+                title={`Bulk Delete ${title}s`}
+                description={`Are you sure you want to delete ${selectedCount} selected ${title.toLowerCase()}s? This action cannot be undone.`}
+                confirmText="Delete All"
+                variant="destructive"
+            />
         </div >
     );
 }

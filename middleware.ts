@@ -10,6 +10,7 @@ import type { NextRequest } from "next/server";
 // Role → URL namespace prefix
 const ROLE_PREFIX: Record<string, string> = {
     ADMIN: "/admin",
+    SUPER_ADMIN: "/admin",
     MANAGER: "/admin",
     AGENT: "/agent",
     COUNSELOR: "/counselor",
@@ -20,7 +21,7 @@ const ROLE_PREFIX: Record<string, string> = {
 
 // Which roles are allowed in each namespace
 const NAMESPACE_ROLES: Record<string, string[]> = {
-    "/admin": ["ADMIN", "MANAGER"],
+    "/admin": ["ADMIN", "MANAGER", "SUPER_ADMIN"],
     "/agent": ["AGENT", "SALES_REP", "SUPPORT_AGENT"],
     "/counselor": ["COUNSELOR"],
     "/student": ["STUDENT"],
@@ -56,6 +57,8 @@ export default withAuth(
             const token = req.nextauth.token as any;
             const role = token?.role as string | undefined;
             const prefix = (role && ROLE_PREFIX[role]) || "/admin";
+            console.log(`[Proxy] Request: ${pathname} | Role: ${role} | Prefix: ${prefix}`);
+
 
             // Redirect root to role-appropriate dashboard
             if (pathname === "/" || pathname === "/dashboard") {
@@ -106,13 +109,15 @@ export default withAuth(
                     if (pathname === targetPath || pathname.startsWith(targetPath)) {
                         return NextResponse.next();
                     }
-                    console.log('Middleware redirecting unauthorized role:', { role, pathname, namespace, allowedRoles, correctPrefix });
+                    console.log('Middleware redirecting unauthorized role:', { role, pathname, namespace, allowedRoles, correctPrefix, targetPath });
                     return NextResponse.redirect(new URL(targetPath, req.url));
                 }
             }
 
+            console.log(`[Proxy] Allowing request: ${pathname} for role: ${role}`);
             return NextResponse.next();
         } catch (e) {
+            console.error('[Proxy] Middleware error:', e);
             return NextResponse.next();
         }
     },

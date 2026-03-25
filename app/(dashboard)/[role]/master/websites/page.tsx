@@ -23,8 +23,10 @@ import {
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, Plus, Trash2, Pencil, Search, ExternalLink, Globe } from "lucide-react";
-import { useWebsites } from "@/hooks/use-masters";
+import { useWebsites, useBulkDeleteWebsites } from "@/hooks/use-masters";
 import { useDebounce } from "@/hooks/use-debounce";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 interface Website {
     id: string;
@@ -57,6 +59,41 @@ export default function WebsitesPage() {
     useEffect(() => {
         setPage(1);
     }, [debouncedSearch]);
+
+    // Multi-select state
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const bulkDeleteMutation = useBulkDeleteWebsites();
+    const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+
+    const toggleSelectAll = () => {
+        if (selectedIds.size === websites.length && websites.length > 0) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(websites.map((w: any) => w.id)));
+        }
+    };
+
+    const toggleSelect = (id: string) => {
+        const newSelected = new Set(selectedIds);
+        if (newSelected.has(id)) {
+            newSelected.delete(id);
+        } else {
+            newSelected.add(id);
+        }
+        setSelectedIds(newSelected);
+    };
+
+    const handleBulkDelete = async () => {
+        try {
+            await bulkDeleteMutation.mutateAsync(Array.from(selectedIds));
+            toast.success("Websites deleted successfully");
+            setSelectedIds(new Set());
+            setIsBulkDeleteOpen(false);
+            refetch();
+        } catch (error) {
+            toast.error("Failed to delete websites");
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -172,6 +209,33 @@ export default function WebsitesPage() {
                 )}
             </div>
 
+            {/* Multi-select Action Bar */}
+            {selectedIds.size > 0 && (
+                <div className="bg-primary text-primary-foreground px-6 py-4 rounded-2xl flex items-center justify-between shadow-lg animate-in fade-in slide-in-from-top-4 duration-300">
+                    <div className="flex items-center gap-4">
+                        <span className="text-sm font-bold uppercase tracking-widest">{selectedIds.size} Websites Selected</span>
+                        <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            onClick={() => setSelectedIds(new Set())}
+                            className="h-9 text-[10px] font-black uppercase tracking-wider bg-white/20 hover:bg-white/30 text-white rounded-xl border-none"
+                        >
+                            Deselect
+                        </Button>
+                    </div>
+                    {can("MASTERS", "DELETE") && (
+                        <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            onClick={() => setIsBulkDeleteOpen(true)}
+                            className="h-9 text-[10px] font-black uppercase tracking-wider bg-white text-destructive hover:bg-white/90 rounded-xl border-none px-8"
+                        >
+                            Delete Selected
+                        </Button>
+                    )}
+                </div>
+            )}
+
             {/* Filters */}
             <div className="flex items-center gap-4">
                 <div className="relative flex-1 max-w-sm">
@@ -189,7 +253,13 @@ export default function WebsitesPage() {
                 <Table>
                     <TableHeader className="bg-gray-50">
                         <TableRow className="border-gray-200">
-                            <TableHead className="w-[50px] font-bold py-4 px-6 text-[10px] uppercase tracking-widest text-gray-500">#</TableHead>
+                            <TableHead className="w-[50px] px-6">
+                                <Checkbox 
+                                    checked={websites.length > 0 && selectedIds.size === websites.length}
+                                    onCheckedChange={toggleSelectAll}
+                                />
+                            </TableHead>
+                            <TableHead className="w-[50px] font-bold py-4 text-[10px] uppercase tracking-widest text-gray-500">#</TableHead>
                             <TableHead className="font-bold py-4 text-[10px] uppercase tracking-widest text-gray-500">Website Info</TableHead>
                             <TableHead className="font-bold py-4 text-[10px] uppercase tracking-widest text-gray-500">Status</TableHead>
                             <TableHead className="font-bold py-4 text-right px-6 text-[10px] uppercase tracking-widest text-gray-500">Actions</TableHead>
@@ -214,7 +284,13 @@ export default function WebsitesPage() {
                         ) : (
                             websites.map((w: any, idx: number) => (
                                 <TableRow key={w.id} className="border-gray-100 hover:bg-gray-50/50 transition-colors">
-                                    <TableCell className="font-medium py-4 px-6 text-xs text-gray-400">
+                                    <TableCell className="px-6">
+                                        <Checkbox 
+                                            checked={selectedIds.has(w.id)}
+                                            onCheckedChange={() => toggleSelect(w.id)}
+                                        />
+                                    </TableCell>
+                                    <TableCell className="font-medium py-4 text-xs text-gray-400">
                                         {(page - 1) * limit + idx + 1}
                                     </TableCell>
                                     <TableCell className="py-4">
@@ -297,6 +373,17 @@ export default function WebsitesPage() {
                     </div>
                 )}
             </div>
+
+            <ConfirmDialog
+                isOpen={isBulkDeleteOpen}
+                onClose={() => setIsBulkDeleteOpen(false)}
+                onConfirm={handleBulkDelete}
+                title="Bulk Delete Websites"
+                description={`Are you sure you want to delete ${selectedIds.size} selected websites? This action cannot be undone.`}
+                confirmText="Yes, Delete All"
+                variant="destructive"
+                isLoading={bulkDeleteMutation.isPending}
+            />
         </div>
     );
 }

@@ -49,7 +49,7 @@ import { useState } from "react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { LeadForm } from "./LeadForm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { useUpdateLead, useDeleteLead } from "@/hooks/use-leads";
+import { useUpdateLead, useDeleteLead, useBulkDeleteLeads } from "@/hooks/use-leads";
 import type { Lead as PrismaLead } from '@/lib/prisma';
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -68,10 +68,14 @@ interface Lead extends Omit<PrismaLead, "createdAt" | "updatedAt"> {
 export function LeadsTable({
     data,
     onUpdate,
+    selectedIds: propsSelectedIds,
+    onSelectionChange,
     pagination
 }: {
     data: Lead[];
     onUpdate: () => void;
+    selectedIds?: string[];
+    onSelectionChange?: (ids: string[]) => void;
     pagination?: {
         page: number;
         totalPages: number;
@@ -90,32 +94,34 @@ export function LeadsTable({
     const [convertModalOpen, setConvertModalOpen] = useState(false);
     const [convertingLead, setConvertingLead] = useState<any>(null);
 
-    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [localSelectedIds, setLocalSelectedIds] = useState<string[]>([]);
+    const activeSelectedIds = propsSelectedIds || localSelectedIds;
     const [isCalling, setIsCalling] = useState<string | null>(null);
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [leadToDelete, setLeadToDelete] = useState<string | null>(null);
 
     const updateLeadMutation = useUpdateLead();
     const deleteLeadMutation = useDeleteLead();
+    const bulkDeleteLeadsMutation = useBulkDeleteLeads();
 
     const toggleSelectAll = () => {
-        if (selectedIds.size === data.length) {
-            setSelectedIds(new Set());
+        if (activeSelectedIds.length === data.length) {
+            if (onSelectionChange) onSelectionChange([]);
+            else setLocalSelectedIds([]);
         } else {
-            setSelectedIds(new Set(data.map(l => l.id)));
+            const allIds = data.map(l => l.id);
+            if (onSelectionChange) onSelectionChange(allIds);
+            else setLocalSelectedIds(allIds);
         }
     };
 
-    const toggleSelect = (id: string, e: React.MouseEvent | React.ChangeEvent) => {
-        // @ts-ignore
-        if (e.stopPropagation) e.stopPropagation();
-        const newSelected = new Set(selectedIds);
-        if (newSelected.has(id)) {
-            newSelected.delete(id);
-        } else {
-            newSelected.add(id);
-        }
-        setSelectedIds(newSelected);
+    const toggleSelect = (id: string) => {
+        const newSelected = activeSelectedIds.includes(id)
+            ? activeSelectedIds.filter(i => i !== id)
+            : [...activeSelectedIds, id];
+        
+        if (onSelectionChange) onSelectionChange(newSelected);
+        else setLocalSelectedIds(newSelected);
     };
 
     const handleCall = async (lead: Lead) => {
@@ -194,24 +200,30 @@ export function LeadsTable({
         return variants[status] || "outline";
     };
 
+    const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+
+    const confirmBulkDelete = async () => {
+        try {
+            await bulkDeleteLeadsMutation.mutateAsync(activeSelectedIds);
+            if (onSelectionChange) onSelectionChange([]);
+            else setLocalSelectedIds([]);
+            onUpdate();
+        } catch (error) {
+            // Error handled by mutation
+        } finally {
+            setBulkDeleteDialogOpen(false);
+        }
+    };
+
     return (
-        <div className="relative border rounded-md overflow-hidden bg-background">
-            {selectedIds.size > 0 && (
-                <div className="absolute top-0 inset-x-0 h-12 bg-primary text-primary-foreground flex items-center justify-between px-4 z-20">
-                    <span className="text-sm font-medium">{selectedIds.size} leads selected</span>
-                    <div className="flex items-center gap-2">
-                        <Button variant="secondary" size="sm" onClick={() => setSelectedIds(new Set())}>Deselect</Button>
-                        <Button variant="destructive" size="sm" onClick={() => {}}>Delete</Button>
-                    </div>
-                </div>
-            )}
+        <div className="relative border dark:border-white/5 rounded-md overflow-hidden bg-white dark:bg-transparent shadow-sm">
 
             <Table>
-                <TableHeader className="bg-muted/30">
+                <TableHeader className="bg-muted/30 dark:bg-white/5">
                     <TableRow>
                         <TableHead className="w-12 px-4 border-r">
                             <Checkbox 
-                                checked={data.length > 0 && selectedIds.size === data.length}
+                                checked={data.length > 0 && activeSelectedIds.length === data.length}
                                 onCheckedChange={toggleSelectAll}
                             />
                         </TableHead>
@@ -227,7 +239,7 @@ export function LeadsTable({
                     {data.map((lead) => (
                         <TableRow 
                             key={lead.id} 
-                            className="group cursor-pointer hover:bg-muted/30 border-b last:border-0"
+                            className="group cursor-pointer hover:bg-muted/30 dark:hover:bg-white/5 transition-colors border-b last:border-0"
                             onClick={(e) => {
                                 // If the click landed on an interactive element (button, checkbox, select), don't navigate
                                 const target = e.target as HTMLElement;
@@ -239,20 +251,19 @@ export function LeadsTable({
                         >
                             <TableCell className="px-4 border-r">
                                 <Checkbox 
-                                    checked={selectedIds.has(lead.id)}
-                                    // @ts-ignore
-                                    onCheckedChange={(checked) => toggleSelect(lead.id, e)}
+                                    checked={activeSelectedIds.includes(lead.id)}
+                                    onCheckedChange={() => toggleSelect(lead.id)}
                                 />
                             </TableCell>
                             <TableCell>
                                 <div className="flex items-center gap-3">
-                                    <Avatar className="h-8 w-8 rounded-md bg-muted border">
+                                    <Avatar className="h-8 w-8 rounded-md bg-muted dark:bg-white/5 border dark:border-white/5">
                                         <AvatarFallback className="rounded-md text-[10px] font-bold">
                                             {lead.name.charAt(0).toUpperCase()}
                                         </AvatarFallback>
                                     </Avatar>
                                     <div className="flex flex-col min-w-0">
-                                        <span className="font-semibold text-sm truncate">{lead.name}</span>
+                                        <span className="font-semibold text-sm text-foreground truncate">{lead.name}</span>
                                         <span className="text-[11px] text-muted-foreground truncate">{lead.phone}</span>
                                     </div>
                                 </div>
@@ -263,11 +274,11 @@ export function LeadsTable({
                                     onValueChange={(v) => handleStatusChange(lead.id, v)}
                                 >
                                     <SelectTrigger className={cn(
-                                        "h-7 w-[140px] px-2 py-0 text-[10px] font-bold uppercase border bg-background hover:bg-muted/50 transition-colors focus:ring-1 focus:ring-primary/20 select-trigger",
-                                        getStatusVariant(lead.status) === "outline" && "text-slate-600 bg-slate-100",
-                                        getStatusVariant(lead.status) === "secondary" && "text-blue-600 bg-blue-50",
-                                        getStatusVariant(lead.status) === "default" && "text-green-600 bg-green-50",
-                                        getStatusVariant(lead.status) === "destructive" && "text-rose-600 bg-rose-50"
+                                        "h-7 w-[140px] px-2 py-0 text-[10px] font-bold uppercase border-0 dark:border dark:border-white/10 bg-transparent hover:bg-muted/50 dark:hover:bg-white/5 transition-colors focus:ring-1 focus:ring-primary/20 select-trigger",
+                                        getStatusVariant(lead.status) === "outline" && "text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-transparent",
+                                        getStatusVariant(lead.status) === "secondary" && "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30",
+                                        getStatusVariant(lead.status) === "default" && "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30",
+                                        getStatusVariant(lead.status) === "destructive" && "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30"
                                     )}>
                                         <SelectValue>
                                             <Badge variant={getStatusVariant(lead.status)} className="capitalize px-2 py-0 text-[10px] font-bold border-0 bg-transparent shadow-none pointer-events-none">
@@ -285,7 +296,7 @@ export function LeadsTable({
                                 </Select>
                             </TableCell>
                             <TableCell>
-                                <span className="text-xs font-medium">
+                                <span className="text-xs font-medium text-foreground/80">
                                     {lead.assignments?.[0]?.employee.name || "—"}
                                 </span>
                             </TableCell>
@@ -361,18 +372,18 @@ export function LeadsTable({
             </Table>
 
             {pagination && (
-                <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/5 min-h-[56px]">
+                <div className="flex items-center justify-between px-4 py-3 border-t dark:border-white/5 bg-muted/20 dark:bg-white/5 min-h-[56px]">
                     <div className="flex items-center gap-6">
                         <div className="text-[11px] font-black text-muted-foreground uppercase tracking-widest leading-none">
-                            Page {pagination.page} / {pagination.totalPages}
+                            Page {pagination.page} <span className="text-muted-foreground/20">/</span> {pagination.totalPages}
                         </div>
-                        <div className="flex items-center gap-2 border-l pl-6 border-muted/30">
+                        <div className="flex items-center gap-2 border-l pl-6 border-border">
                             <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Show</span>
                             <Select
                                 value={pagination.pageSize.toString()}
                                 onValueChange={(v) => pagination.onPageSizeChange(Number(v))}
                             >
-                                <SelectTrigger className="h-7 w-[70px] text-[10px] font-bold border-muted/30 bg-background focus:ring-1 focus:ring-primary/20">
+                                <SelectTrigger className="h-7 w-[70px] text-[10px] font-bold border-muted/30 dark:border-white/10 bg-white dark:bg-transparent focus:ring-1 focus:ring-primary/20">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent className="min-w-[70px]">
@@ -389,7 +400,7 @@ export function LeadsTable({
                         <Button
                             variant="outline"
                             size="sm"
-                            className="h-8 text-[10px] font-black uppercase px-4 border-muted/30 hover:bg-muted/50 transition-colors"
+                            className="h-8 text-[10px] font-black uppercase px-4 border-muted/30 dark:border-white/10 bg-white dark:bg-transparent hover:bg-muted/50 dark:hover:bg-white/5 transition-colors"
                             disabled={pagination.page <= 1}
                             onClick={() => pagination.onPageChange(pagination.page - 1)}
                         >
@@ -398,7 +409,7 @@ export function LeadsTable({
                         <Button
                             variant="outline"
                             size="sm"
-                            className="h-8 text-[10px] font-black uppercase px-4 border-muted/30 hover:bg-muted/50 transition-colors"
+                            className="h-8 text-[10px] font-black uppercase px-4 border-muted/30 dark:border-white/10 bg-white dark:bg-transparent hover:bg-muted/50 dark:hover:bg-white/5 transition-colors"
                             disabled={pagination.page >= pagination.totalPages}
                             onClick={() => pagination.onPageChange(pagination.page + 1)}
                         >
@@ -454,6 +465,16 @@ export function LeadsTable({
                     toast.success("Lead converted successfully");
                     router.push(prefixPath(`/students/${studentId}`));
                 }}
+            />
+
+            <ConfirmDialog
+                isOpen={bulkDeleteDialogOpen}
+                onClose={() => setBulkDeleteDialogOpen(false)}
+                onConfirm={confirmBulkDelete}
+                title="Bulk Delete Leads"
+                description={`Are you sure you want to delete ${activeSelectedIds.length} selected leads? This action cannot be undone.`}
+                confirmText="Delete All"
+                variant="destructive"
             />
         </div>
     );

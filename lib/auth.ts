@@ -28,31 +28,41 @@ export const authOptions: NextAuthOptions = {
 
                     let user: Awaited<ReturnType<typeof prisma.user.findUnique>> | null = null;
 
-                    // ── For students: identifier is a phone number → look up via Lead ──
+                    // ── For students: identifier can be email OR a phone number ──
                     if (loginType === 'student') {
-                        // Normalise: strip spaces/dashes, keep digits and leading +
-                        const cleanPhone = identifier.replace(/[\s\-().]/g, '');
-                        const digitOnly = cleanPhone.replace(/\D/g, '');
+                        // Check if it's an email
+                        if (identifier.includes('@') && identifier.includes('.')) {
+                            user = await prisma.user.findUnique({
+                                where: { email: identifier },
+                            });
+                        } else {
+                            // Normalise: strip spaces/dashes, keep digits and leading +
+                            const cleanPhone = identifier.replace(/[\s\-().]/g, '');
+                            const digitOnly = cleanPhone.replace(/\D/g, '');
 
-                        // Try looking up Lead by phone (stored as-is or with country code)
-                        const lead = await prisma.lead.findFirst({
-                            where: {
-                                OR: [
-                                    { phone: cleanPhone },
-                                    { phone: identifier },
-                                    // also try without country code prefix (last 10 digits)
-                                    ...(digitOnly.length >= 10 ? [{ phone: digitOnly.slice(-10) }] : []),
-                                    // and with +91 prepended
-                                    ...(digitOnly.length === 10 ? [{ phone: `+91${digitOnly}` }, { phone: `91${digitOnly}` }] : []),
-                                ],
-                            },
-                            include: { user: true },
-                        });
+                            // Try looking up Lead by phone (stored as-is or with country code)
+                            const lead = await prisma.lead.findFirst({
+                                where: {
+                                    OR: [
+                                        { phone: cleanPhone },
+                                        { phone: identifier },
+                                        // also try without country code prefix (last 10 digits)
+                                        ...(digitOnly.length >= 10 ? [{ phone: digitOnly.slice(-10) }] : []),
+                                        // and with +91 prepended
+                                        ...(digitOnly.length === 10 ? [{ phone: `+91${digitOnly}` }, { phone: `91${digitOnly}` }] : []),
+                                    ],
+                                },
+                                include: { user: true },
+                            });
 
-                        if (!lead?.user) {
-                            throw new Error('No student account found for this mobile number');
+                            if (lead?.user) {
+                                user = lead.user;
+                            }
                         }
-                        user = lead.user;
+
+                        if (!user) {
+                            throw new Error('No student account found for this credential');
+                        }
                     } else {
                         // ── For other roles: identifier is email ──
                         user = await prisma.user.findUnique({
@@ -94,7 +104,7 @@ export const authOptions: NextAuthOptions = {
 
                     // Role-based access control
                     if (loginType === 'admin') {
-                        if (user.role !== 'ADMIN' && user.role !== 'MANAGER') {
+                        if (user.role !== 'ADMIN' && user.role !== 'MANAGER' && user.role !== 'SUPER_ADMIN') {
                             throw new Error('Access denied. Admin privileges required.');
                         }
                     } else if (loginType === 'agent') {
@@ -102,9 +112,13 @@ export const authOptions: NextAuthOptions = {
                         if (!allowedRoles.includes(user.role)) {
                             throw new Error('Access denied. Agent privileges required.');
                         }
+                    } else if (loginType === 'counselor') {
+                        if (user.role !== 'COUNSELOR') {
+                            throw new Error('Access denied. Counselor privileges required.');
+                        }
                     } else if (loginType === 'student') {
                         if (user.role !== 'STUDENT') {
-                            if (user.role === 'ADMIN' || user.role === 'MANAGER') {
+                            if (user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'SUPER_ADMIN') {
                                 throw new Error('Please use the Admin login page at /admin/login');
                             }
                             const allowedAgentRoles = ['AGENT', 'COUNSELOR', 'SALES_REP', 'SUPPORT_AGENT'];

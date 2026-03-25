@@ -218,13 +218,19 @@ export default function ChecklistPage() {
 
         setIsLoading(true);
         try {
-            // Sequential deletion as we don't have a bulk API yet
-            for (const id of selectedIds) {
-                await fetch(`/api/master/checklist/${id}`, { method: "DELETE" });
+            const res = await fetch("/api/master/checklist/bulk", {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ ids: selectedIds }),
+            });
+
+            if (res.ok) {
+                toast.success("Selected documents deleted");
+                setSelectedIds([]);
+                fetchChecklist();
+            } else {
+                toast.error("Failed to delete documents");
             }
-            toast.success("Selected documents deleted");
-            setSelectedIds([]);
-            fetchChecklist();
         } catch (error) {
             toast.error("Error during bulk deletion");
         } finally {

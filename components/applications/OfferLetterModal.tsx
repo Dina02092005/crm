@@ -36,27 +36,21 @@ export function OfferLetterModal({ isOpen, onClose, application, onUpdate }: any
         queryKey: ['application-offer-letters', application?.id],
         queryFn: async () => {
             if (!application?.id) return [];
-            const response = await fetch(`/api/applications/${application.id}/notes?type=OFFER_LETTER`);
-            if (!response.ok) throw new Error('Failed to fetch offer letters');
-            return response.json();
+            const { data } = await axios.get(`/api/applications/${application.id}/notes?type=OFFER_LETTER`);
+            return data;
         },
         enabled: !!application?.id && isOpen
     });
 
     const addOfferLetterMutation = useMutation({
         mutationFn: async (data: any) => {
-            const response = await fetch(`/api/applications/${application.id}/notes`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    note: data.remark,
-                    attachmentUrl: data.attachmentUrl,
-                    attachmentName: data.attachmentName,
-                    type: 'OFFER_LETTER'
-                })
+            const { data: responseData } = await axios.post(`/api/applications/${application.id}/notes`, {
+                note: data.remark,
+                attachmentUrl: data.attachmentUrl,
+                attachmentName: data.attachmentName,
+                type: 'OFFER_LETTER'
             });
-            if (!response.ok) throw new Error('Failed to add offer letter');
-            return response.json();
+            return responseData;
         },
         onSuccess: () => {
             setRemark("");
@@ -65,8 +59,8 @@ export function OfferLetterModal({ isOpen, onClose, application, onUpdate }: any
             onUpdate?.();
             toast.success("Offer letter added successfully");
         },
-        onError: () => {
-            toast.error("Failed to add offer letter");
+        onError: (error: any) => {
+            toast.error(error.response?.data?.error || "Failed to add offer letter");
         }
     });
 

@@ -146,10 +146,76 @@ function ApplicationsPageContent({ role }: { role: string }) {
     };
 
     return (
-        <div className="flex flex-col gap-3 p-3 sm:p-4 bg-slate-50/50 min-h-screen">
-            <Card className="border-0 rounded-3xl overflow-hidden bg-card">
+        <div className="flex flex-col gap-3 p-3 sm:p-4 bg-slate-50/50 dark:bg-transparent min-h-screen">
+            {/* Header Section - Detached */}
+            <div className="flex flex-col md:flex-row gap-4 mb-0 bg-white dark:bg-transparent p-4 rounded-xl border border-slate-200 dark:border-white/5 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)]">
+                <div className="flex items-center gap-3">
+                     <div className="h-10 w-10 bg-indigo-50 rounded-2xl flex items-center justify-center">
+                        <FileSpreadsheet className="h-5 w-5 text-indigo-600" />
+                     </div>
+                     <div>
+                        <h2 className="text-lg font-bold text-foreground tracking-tight">Applications</h2>
+                        <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Total {pagination.total} Records</p>
+                     </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={handleExportExcel} className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold">
+                        <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+                        Excel
+                    </Button>
+
+                    <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setDeleteConfirmOpen(true)}
+                        disabled={selectedIds.length === 0}
+                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold disabled:opacity-50"
+                    >
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                        Delete
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setAssignModalOpen(true)}
+                        disabled={selectedIds.length === 0}
+                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold disabled:opacity-50"
+                    >
+                        <UserPlus className="h-4 w-4 text-blue-600" />
+                        Assign
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEmailModalOpen(true)}
+                        disabled={selectedIds.length === 0}
+                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold disabled:opacity-50"
+                    >
+                        <Mail className="h-4 w-4 text-amber-600" />
+                        Email
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setWhatsappModalOpen(true)}
+                        disabled={selectedIds.length === 0}
+                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold disabled:opacity-50"
+                    >
+                        <MessageSquare className="h-4 w-4 text-green-600" />
+                        Whatsapp
+                    </Button>
+                </div>
+            </div>
+
+            <Card className="border-0 dark:border dark:border-white/5 rounded-3xl overflow-hidden bg-white dark:bg-transparent shadow-sm dark:shadow-none">
                 <CardContent className="p-4">
-                    {/* Header Row */}
+                    {/* Integrated Header Row */}
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
                         <div className="relative max-w-sm w-full">
                             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground/40" />
@@ -161,57 +227,8 @@ function ApplicationsPageContent({ role }: { role: string }) {
                             />
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-2">
-                            <Button variant="outline" size="sm" onClick={handleExportExcel} className="h-9 gap-2 border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl shadow-sm">
-                                <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-                                <span className="hidden lg:inline">Excel</span>
-                            </Button>
-
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setDeleteConfirmOpen(true)}
-                                disabled={selectedIds.length === 0}
-                                className="h-9 gap-2 border-slate-200 hover:bg-red-50 text-red-600 disabled:opacity-50 rounded-xl shadow-sm"
-                            >
-                                <Trash2 className="h-4 w-4" />
-                                <span className="hidden lg:inline">Delete</span>
-                            </Button>
-
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setAssignModalOpen(true)}
-                                disabled={selectedIds.length === 0}
-                                className="h-9 gap-2 border-slate-200 hover:bg-blue-50 text-blue-600 disabled:opacity-50 rounded-xl shadow-sm"
-                            >
-                                <UserPlus className="h-4 w-4" />
-                                <span className="hidden lg:inline">Assign</span>
-                            </Button>
-
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setEmailModalOpen(true)}
-                                disabled={selectedIds.length === 0}
-                                className="h-9 gap-2 border-slate-200 hover:bg-amber-50 text-amber-600 disabled:opacity-50 rounded-xl shadow-sm"
-                            >
-                                <Mail className="h-4 w-4" />
-                                <span className="hidden lg:inline">Email</span>
-                            </Button>
-
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setWhatsappModalOpen(true)}
-                                disabled={selectedIds.length === 0}
-                                className="h-9 gap-2 border-slate-200 hover:bg-green-50 text-green-600 disabled:opacity-50 rounded-xl shadow-sm"
-                            >
-                                <MessageSquare className="h-4 w-4" />
-                                <span className="hidden lg:inline">Whatsapp</span>
-                            </Button>
-
-                            <Badge variant="outline" className="h-9 px-4 rounded-xl border-slate-200 bg-white/50 font-bold text-slate-600 gap-2">
+                        <div className="flex items-center gap-3">
+                            <Badge variant="outline" className="h-9 px-4 rounded-xl border-slate-200 dark:border-white/10 bg-white/50 dark:bg-transparent font-bold text-slate-600 dark:text-gray-300 gap-2">
                                 <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                                 {pagination.total} Records
                             </Badge>
@@ -222,10 +239,10 @@ function ApplicationsPageContent({ role }: { role: string }) {
                     <div className="flex flex-wrap items-center gap-3 mb-6">
                         <div className="w-full sm:w-[180px]">
                             <Select value={countryId} onValueChange={(val) => { setCountryId(val); setUniversityId("ALL"); }}>
-                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 border-0 focus:ring-0">
+                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 dark:bg-transparent border-0 dark:border dark:border-white/10 shadow-sm focus:ring-0">
                                     <SelectValue placeholder="Country" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="rounded-xl border-border dark:bg-slate-900">
                                     <SelectItem value="ALL">All Countries</SelectItem>
                                     {countries?.countries?.map((c: any) => (
                                         <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -236,10 +253,10 @@ function ApplicationsPageContent({ role }: { role: string }) {
 
                         <div className="w-full sm:w-[180px]">
                             <Select value={universityId} onValueChange={setUniversityId}>
-                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 border-0 focus:ring-0">
+                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 dark:bg-transparent border-0 dark:border dark:border-white/10 shadow-sm focus:ring-0">
                                     <SelectValue placeholder="University" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="rounded-xl border-border dark:bg-slate-900">
                                     <SelectItem value="ALL">All Universities</SelectItem>
                                     {universities?.universities?.map((u: any) => (
                                         <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
@@ -250,10 +267,10 @@ function ApplicationsPageContent({ role }: { role: string }) {
 
                         <div className="w-full sm:w-[180px]">
                             <Select value={assignedToId} onValueChange={setAssignedToId}>
-                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 border-0 focus:ring-0">
+                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 dark:bg-transparent border-0 dark:border dark:border-white/10 shadow-sm focus:ring-0">
                                     <SelectValue placeholder="Assigned To" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="rounded-xl border-border dark:bg-slate-900">
                                     <SelectItem value="ALL">All Counselors</SelectItem>
                                     {counselors?.map((c: any) => (
                                         <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -297,7 +314,7 @@ function ApplicationsPageContent({ role }: { role: string }) {
                                     px-3 py-1.5 rounded-xl flex items-center gap-2 transition-all border
                                     ${(status === f.id || (f.id === "ALL" && !status))
                                         ? `${f.bg} border-transparent shadow-sm ring-1 ring-inset ${f.color.replace('text-', 'ring-')}/30`
-                                        : "bg-white hover:bg-slate-50 text-slate-500 border-slate-200"
+                                        : "bg-white dark:bg-transparent hover:bg-slate-50 dark:hover:bg-white/5 text-slate-500 dark:text-gray-400 border-slate-200 dark:border-white/10"
                                     }
                                 `}
                             >
@@ -310,8 +327,8 @@ function ApplicationsPageContent({ role }: { role: string }) {
 
                     {isLoading && page === 1 ? (
                         <div className="space-y-4 p-4">
-                            <div className="h-10 bg-slate-50 animate-pulse rounded-xl w-full" />
-                            <div className="h-40 bg-slate-50 animate-pulse rounded-xl w-full" />
+                            <div className="h-10 bg-slate-50 dark:bg-white/5 animate-pulse rounded-xl w-full" />
+                            <div className="h-40 bg-slate-50 dark:bg-white/5 animate-pulse rounded-xl w-full" />
                         </div>
                     ) : (
                         <ApplicationsTable

@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import bcrypt from 'bcryptjs';
+import { validateRoleUpdate, canManageUser } from "@/lib/user-auth";
+import { Role } from "@prisma/client";
 
 // GET /api/employees/[id] - Get employee details
 export async function GET(
@@ -18,7 +20,7 @@ export async function GET(
         const { id } = await params;
 
         // RBAC Check
-        if (session.user.role !== "ADMIN" && session.user.role !== "MANAGER") {
+        if (session.user.role !== "SUPER_ADMIN" && session.user.role !== "ADMIN" && session.user.role !== "MANAGER") {
             if (session.user.role === "AGENT") {
                 const agent = await prisma.agentProfile.findUnique({ where: { userId: session.user.id } });
                 const targetCounselor = await prisma.counselorProfile.findUnique({
@@ -109,16 +111,40 @@ export async function PATCH(
         const { id } = await params;
 
         // Only admins can update employees, or the employee themselves
-        if (session.user.role !== "ADMIN" && session.user.id !== id) {
+        const isSelf = session.user.id === id;
+        const isPrivileged = ["SUPER_ADMIN", "ADMIN"].includes(session.user.role);
+
+        if (!isPrivileged && !isSelf) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 
         const body = await req.json();
         const { name, email, role, phone, department, isActive, password } = body;
 
-        // Only admins can change roles or active status
-        if ((role || isActive !== undefined) && session.user.role !== "ADMIN") {
-            return NextResponse.json({ error: "Only admins can change roles or status" }, { status: 403 });
+        // RBAC: Role Escalation Prevention
+        if (role) {
+            const roleToAssign = role as Role;
+            const { allowed, message } = validateRoleUpdate(session.user.role as Role, roleToAssign);
+            if (!allowed) {
+                return NextResponse.json({ error: message || "Forbidden" }, { status: 403 });
+            }
+        }
+
+        if (isActive !== undefined && !["SUPER_ADMIN", "ADMIN"].includes(session.user.role)) {
+            const isAgent = session.user.role === "AGENT";
+            if (isAgent) {
+                const agent = await prisma.agentProfile.findUnique({ where: { userId: session.user.id } });
+                const counselor = await prisma.counselorProfile.findUnique({ 
+                    where: { userId: id },
+                    select: { agentId: true }
+                });
+                
+                if (!counselor || counselor.agentId !== agent?.id) {
+                    return NextResponse.json({ error: "You can only change status for your own counselors" }, { status: 403 });
+                }
+            } else {
+                return NextResponse.json({ error: "Only admins can change status" }, { status: 403 });
+            }
         }
 
         const updateData: any = {};
@@ -131,6 +157,8 @@ export async function PATCH(
         if (password) {
             updateData.passwordHash = await bcrypt.hash(password, 10);
         }
+        
+        updateData.updatedById = session.user.id;
 
         const employee = await prisma.user.update({
             where: { id },
@@ -176,7 +204,7 @@ export async function DELETE(
         }
 
         // Only admins can delete employees
-        if (session.user.role !== "ADMIN") {
+        if (!["SUPER_ADMIN", "ADMIN"].includes(session.user.role)) {
             return NextResponse.json({ error: "Forbidden" }, { status: 403 });
         }
 

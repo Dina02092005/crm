@@ -4,6 +4,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import bcrypt from 'bcryptjs';
 import { sendEmail } from '@/lib/email';
+import { sendWelcomeEmail } from '@/lib/mail';
+import { validateRoleUpdate } from '@/lib/user-auth';
+import { Role } from '@prisma/client';
+
 
 export const dynamic = 'force-dynamic';
 
@@ -23,7 +27,7 @@ export async function GET(req: NextRequest) {
         // The previous code restricted to ADMIN only.
 
         const userRole = session.user.role;
-        const allowedRoles = ['ADMIN', 'MANAGER', 'AGENT', 'SALES_REP', 'COUNSELOR', 'SUPPORT_AGENT']; // All staff
+        const allowedRoles = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'AGENT', 'SALES_REP', 'COUNSELOR', 'SUPPORT_AGENT']; // All staff
 
         if (!allowedRoles.includes(userRole)) {
             return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
@@ -162,9 +166,18 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // Only admins can create employees (for now)
-        if (session.user.role !== "ADMIN") {
-            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+        // Restricted Role Creation: Only Super Admin can create Admin/Super Admin
+        const roleToAssign = (role || "EMPLOYEE") as Role;
+        const { allowed, message } = validateRoleUpdate(session.user.role as Role, roleToAssign);
+
+        if (!allowed) {
+            return NextResponse.json({ error: message || "Forbidden" }, { status: 403 });
+        }
+
+        // Only staff can create other users
+        const canCreateUser = ["SUPER_ADMIN", "ADMIN"].includes(session.user.role);
+        if (!canCreateUser) {
+            return NextResponse.json({ error: "Unauthorized to create users" }, { status: 403 });
         }
 
         if (!name || !email || !password) {
@@ -189,7 +202,8 @@ export async function POST(req: NextRequest) {
                 name,
                 email,
                 passwordHash,
-                role: role || "EMPLOYEE",
+                role: roleToAssign,
+                createdById: session.user.id,
                 roleId: body.roleId || null,
                 imageUrl, // Save profile picture
                 emailVerified: new Date(), // Auto-verify employees created by admin
@@ -221,22 +235,13 @@ export async function POST(req: NextRequest) {
 
         // Send welcome email with credentials
         try {
-            await sendEmail({
-                to: email,
-                subject: 'Welcome to Inter CRM - Your Account Credentials',
-                html: `
-                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                        <h2 style="color: #6d28d9;">Welcome to Inter CRM!</h2>
-                        <p>Hello ${name},</p>
-                        <p>Your employee account has been successfully created. You can now login to the dashboard using the following credentials:</p>
-                        <div style="background-color: #f3f4f6; padding: 15px; border-radius: 8px; margin: 20px 0;">
-                            <p style="margin: 5px 0;"><strong>Email:</strong> ${email}</p>
-                            <p style="margin: 5px 0;"><strong>Password:</strong> ${password}</p>
-                        </div>
-                        <p>Please login and change your password immediately for security.</p>
-                        <p>Best regards,<br>The Inter CRM Team</p>
-                    </div>
-                `,
+            const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/login`;
+            await sendWelcomeEmail({
+                email,
+                name,
+                password,
+                loginUrl,
+                role: 'Employee'
             });
         } catch (emailError) {
             console.error("Failed to send welcome email:", emailError);

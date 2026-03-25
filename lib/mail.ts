@@ -39,14 +39,30 @@ export const sendStudentWelcomeEmail = async (
   password: string,
   loginUrl: string
 ) => {
+  return sendWelcomeEmail({ email, name, password, loginUrl, role: 'Student' });
+};
+
+export const sendWelcomeEmail = async ({
+  email,
+  name,
+  password,
+  loginUrl,
+  role = 'User'
+}: {
+  email: string;
+  name: string;
+  password: string;
+  loginUrl: string;
+  role?: string;
+}) => {
   const mailOptions = {
     from: process.env.SMTP_FROM || '"InterEd CRM" <noreply@example.com>',
     to: email,
-    subject: 'Welcome to InterEd – Your Student Login Credentials',
+    subject: `Welcome to InterEd – Your ${role} Login Credentials`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px;">
         <h2 style="color: #0ea5e9; text-align: center;">Welcome to InterEd, ${name}!</h2>
-        <p>Your student account has been created. Use the credentials below to log in:</p>
+        <p>Your ${role.toLowerCase()} account has been created. Use the credentials below to log in:</p>
         <table style="width:100%; background:#f4f4f4; border-radius:8px; padding:16px; margin:20px 0;">
           <tr><td style="padding:6px 0;"><strong>Login Email:</strong></td><td>${email}</td></tr>
           <tr><td style="padding:6px 0;"><strong>Temporary Password:</strong></td><td style="font-size:18px; font-weight:bold; letter-spacing:2px;">${password}</td></tr>
@@ -58,8 +74,18 @@ export const sendStudentWelcomeEmail = async (
       </div>
     `,
   };
-  return transporter.sendMail(mailOptions);
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log(`Email sent successfully to ${email}. MessageId: ${info.messageId}`);
+    return info;
+  } catch (error) {
+    console.error(`FAILED to send email to ${email}:`, error);
+    console.error(`Using SMTP Config: Host=${process.env.SMTP_HOST}, Port=${process.env.SMTP_PORT}, User=${process.env.SMTP_USER}`);
+    throw error;
+  }
 };
+
 export const sendCustomEmail = async (email: string, subject: string, body: string) => {
   const mailOptions = {
     from: process.env.SMTP_FROM || '"InterEd CRM" <noreply@example.com>',

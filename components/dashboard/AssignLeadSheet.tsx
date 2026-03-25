@@ -49,7 +49,7 @@ export function AssignLeadSheet({
     const [selectedManagerId, setSelectedManagerId] = useState<string>("");
     const [selectedCounselorId, setSelectedCounselorId] = useState<string>("");
 
-    const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "MANAGER";
+    const isAdmin = ["ADMIN", "SUPER_ADMIN", "MANAGER"].includes(session?.user?.role);
     const isAgent = session?.user?.role === "AGENT";
 
     useEffect(() => {

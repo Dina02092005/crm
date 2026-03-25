@@ -1,20 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
-import { useDebounce } from "@/hooks/use-debounce";
-import { useLeads, useLeadStats } from "@/hooks/use-leads";
-import { LeadsTable } from "@/components/dashboard/LeadsTable";
-import { Card, CardContent } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
-import Link from "next/link";
-import { Plus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useRolePath } from "@/hooks/use-role-path";
+import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { BulkUploadLeadsButton } from "@/components/dashboard/BulkUploadLeadsButton";
-import { useCountries, useCounselors } from "@/hooks/use-masters";
+import axios from "axios";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
     Select,
     SelectContent,
@@ -22,217 +14,412 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { FilterX } from "lucide-react";
+import { 
+    Search, 
+    Plus, 
+    FileSpreadsheet, 
+    Mail, 
+    Trash2, 
+    UserPlus, 
+    MessageCircle, 
+    FilterX,
+    TrendingUp,
+    ChevronDown,
+    MapPin,
+    Calendar,
+    Users
+} from "lucide-react";
+import { toast } from "sonner";
+import { LeadsTable } from "@/components/dashboard/LeadsTable";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { AssignApplicationsModal } from "@/components/applications/AssignApplicationsModal";
+import { EmailComposeModal } from "@/components/applications/EmailComposeModal";
+import { WhatsappMessageModal } from "@/components/applications/WhatsappMessageModal";
+import { useLeads } from "@/hooks/use-leads";
+import { useDebounce } from "@/hooks/use-debounce";
+import { useRolePath } from "@/hooks/use-role-path";
+import { useCountries, useCounselors } from "@/hooks/use-masters";
+import { Badge } from "@/components/ui/badge";
+import { BulkUploadLeadsButton } from "@/components/dashboard/BulkUploadLeadsButton";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 export default function LeadsPage() {
+    const router = useRouter();
+    const params = useParams();
+    const role = (params?.role as string) || "COUNSELOR";
+    const { data: session } = useSession();
+    const { prefixPath } = useRolePath();
     const [search, setSearch] = useState("");
     const [status, setStatus] = useState("ALL");
-    const [assignedTo, setAssignedTo] = useState("ALL");
+    const [onboardedBy, setOnboardedBy] = useState("ALL");
     const [interestedCountry, setInterestedCountry] = useState("ALL");
-    const [highestQualification, setHighestQualification] = useState("ALL");
-    const [interest, setInterest] = useState("ALL");
-    const [source, setSource] = useState("ALL");
-    const [fromDate, setFromDate] = useState<string>("");
-    const [toDate, setToDate] = useState<string>("");
+    const [intake, setIntake] = useState("ALL");
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
-    const { data: session } = useSession() as any;
-    const role = session?.user?.role;
-    const { prefixPath } = useRolePath();
+
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [showAssignModal, setShowAssignModal] = useState(false);
+    const [showEmailModal, setShowEmailModal] = useState(false);
+    const [showWhatsappModal, setShowWhatsappModal] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
+    const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+    const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+    const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [showFilters, setShowFilters] = useState(false);
 
     const debouncedSearch = useDebounce(search, 500);
 
-    const { data, isLoading, refetch } = useLeads({
+    const { data, isLoading, refetch } = useLeads(
         page,
         limit,
-        search: debouncedSearch,
-        status,
-        assignedTo: assignedTo === "ALL" ? "" : assignedTo,
-        interestedCountry: interestedCountry === "ALL" ? "" : interestedCountry,
-        highestQualification: highestQualification === "ALL" ? "" : highestQualification,
-        interest: interest === "ALL" ? "" : interest,
-        source: source === "ALL" ? "" : source,
-        from: fromDate,
-        to: toDate,
-    });
+        debouncedSearch,
+        status === "ALL" ? "" : status,
+        onboardedBy === "ALL" ? "" : onboardedBy,
+        interestedCountry === "ALL" ? "" : interestedCountry,
+        intake === "ALL" ? "" : intake
+    );
 
     const { data: countries } = useCountries();
     const { data: counselors } = useCounselors();
 
-    const leads = data?.leads || [];
-    const totalPages = data?.pagination.totalPages || 0;
-    const totalLeads = data?.pagination.total || 0;
-
+    // Reset page on search/filter changes
     useEffect(() => {
         setPage(1);
-    }, [debouncedSearch, status, assignedTo, interestedCountry, highestQualification, interest, source, fromDate, toDate]);
+    }, [debouncedSearch, status, onboardedBy, interestedCountry, intake]);
 
-    const { data: leadStats } = useLeadStats();
+    const leads = data?.leads || [];
+    const totalLeads = data?.pagination?.total || 0;
+    const totalPages = data?.pagination?.totalPages || 1;
 
-    const getCount = (id: string) => {
-        if (!leadStats) return 0;
-        return leadStats[id as keyof typeof leadStats] || 0;
+    const handleExportExcel = async () => {
+        try {
+            setIsExporting(true);
+            const response = await axios.get('/api/leads/export', {
+                params: { search: debouncedSearch, status: status === "ALL" ? "" : status },
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `leads_export_${new Date().toISOString()}.xlsx`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            toast.success("Excel exported successfully");
+        } catch (error) {
+            toast.error("Failed to export Excel");
+        } finally {
+            setIsExporting(false);
+        }
     };
 
-    const hasFilters = assignedTo !== "ALL" || interestedCountry !== "ALL" || highestQualification !== "ALL" || interest !== "ALL" || source !== "ALL" || fromDate || toDate;
+    const handleBulkDelete = async () => {
+        try {
+            setIsBulkDeleting(true);
+            await axios.delete('/api/leads/bulk', { data: { ids: selectedIds } });
+            toast.success(`${selectedIds.length} leads deleted`);
+            setSelectedIds([]);
+            refetch();
+        } catch (error) {
+            toast.error("Failed to delete leads");
+        } finally {
+            setIsBulkDeleting(false);
+            setShowBulkDeleteConfirm(false);
+        }
+    };
+
+    const handleDeleteLead = (id: string) => {
+        setDeleteId(id);
+    };
+
+    const confirmDelete = async () => {
+        if (!deleteId) return;
+        try {
+            await axios.delete(`/api/leads/${deleteId}`);
+            toast.success("Lead deleted successfully");
+            refetch();
+        } catch (error) {
+            toast.error("Failed to delete lead");
+        } finally {
+            setDeleteId(null);
+        }
+    };
 
     return (
-        <div className="flex flex-col gap-6 p-4 md:p-8 max-w-[1600px] mx-auto w-full">
-            {/* Header Section */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-semibold tracking-tight">Leads</h1>
-                    <p className="text-sm text-muted-foreground mt-1">
-                        Manage and track your potential students and inquiries.
-                    </p>
-                </div>
+        <div className="flex flex-col gap-3 p-3 sm:p-4 bg-slate-50/50 dark:bg-transparent min-h-screen">
+            {/* Header Section - Detached */}
+            <div className="flex flex-col md:flex-row gap-4 mb-0 bg-white dark:bg-transparent p-4 rounded-xl border border-slate-200 dark:border-white/5 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)]">
                 <div className="flex items-center gap-3">
-                    {role === "ADMIN" && <BulkUploadLeadsButton onSuccess={refetch} />}
-                    <Link href={prefixPath("/leads/new")}>
-                        <Button className="h-10 px-4 gap-2 font-medium">
-                            <Plus className="h-4 w-4" /> Add Lead
-                        </Button>
-                    </Link>
+                     <div className="h-10 w-10 bg-indigo-50 rounded-2xl flex items-center justify-center">
+                        <TrendingUp className="h-5 w-5 text-indigo-600" />
+                     </div>
+                     <div>
+                        <h2 className="text-lg font-bold text-foreground tracking-tight">Lead Management</h2>
+                        <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Total {totalLeads} Leads</p>
+                     </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExportExcel}
+                        disabled={isExporting}
+                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold"
+                    >
+                        <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+                        {isExporting ? "Exporting..." : "Excel"}
+                    </Button>
+
+                    <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowAssignModal(true)}
+                        disabled={selectedIds.length === 0}
+                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold disabled:opacity-50"
+                    >
+                        <UserPlus className="h-4 w-4 text-blue-600" />
+                        Assign
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowEmailModal(true)}
+                        disabled={selectedIds.length === 0}
+                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold disabled:opacity-50"
+                    >
+                        <Mail className="h-4 w-4 text-amber-600" />
+                        Email
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowWhatsappModal(true)}
+                        disabled={selectedIds.length === 0}
+                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold disabled:opacity-50"
+                    >
+                        <MessageCircle className="h-4 w-4 text-green-600" />
+                        Whatsapp
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowBulkDeleteConfirm(true)}
+                        disabled={selectedIds.length === 0}
+                        className="h-9 rounded-xl border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 gap-2 text-[12px] font-bold disabled:opacity-50"
+                    >
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                        Delete
+                    </Button>
                 </div>
             </div>
 
-            {/* Filter & Actions Bar */}
-            <div className="space-y-4">
-                <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between border-b pb-4">
-                    <div className="flex flex-wrap items-center gap-3 flex-1">
-                        <div className="relative w-full sm:w-80">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Card className="border-0 dark:border dark:border-white/5 rounded-3xl overflow-hidden bg-white dark:bg-transparent shadow-sm dark:shadow-none">
+                <CardContent className="p-4">
+                    {/* Integrated Search Row */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+                        <div className="relative max-w-sm w-full">
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground/40" />
                             <Input
                                 placeholder="Search leads..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="pl-9 h-10 w-full bg-background"
+                                className="pl-9 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-9 text-[13px] placeholder:text-muted-foreground/40 font-sans w-full"
                             />
                         </div>
 
-                        <Select value={status} onValueChange={setStatus}>
-                            <SelectTrigger className="h-10 w-[140px]">
-                                <SelectValue placeholder="Status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="ALL">All Status</SelectItem>
-                                <SelectItem value="NEW">New</SelectItem>
-                                <SelectItem value="UNDER_REVIEW">Under Review</SelectItem>
-                                <SelectItem value="CONTACTED">Contacted</SelectItem>
-                                <SelectItem value="CONVERTED">Converted</SelectItem>
-                                <SelectItem value="CLOSED">Closed</SelectItem>
-                            </SelectContent>
-                        </Select>
+                        <div className="flex items-center gap-3">
+                            {["ADMIN", "SUPER_ADMIN", "MANAGER"].includes(role) && <BulkUploadLeadsButton onSuccess={refetch} />}
+                             <Link href={prefixPath("/leads/new")}>
+                                <Button className="h-9 px-4 gap-2 font-bold text-[12px] rounded-xl shadow-md">
+                                    <Plus className="h-4 w-4" /> Add Lead
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
 
-                        <Select value={assignedTo} onValueChange={setAssignedTo}>
-                            <SelectTrigger className="h-10 w-[180px]">
-                                <SelectValue placeholder="Assigned To" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="ALL">All Counselors</SelectItem>
-                                {counselors?.map((c: any) => (
-                                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                    {/* Advanced Filters Toggle */}
+                    <div className="mb-4">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => setShowFilters(!showFilters)}
+                            className="h-8 text-[11px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground p-0 gap-2"
+                        >
+                            <ChevronDown className={cn("h-4 w-4 transition-transform", showFilters && "rotate-180")} />
+                            {showFilters ? "Hide Advanced Filters" : "Show Advanced Filters"}
+                        </Button>
+                    </div>
 
-                        <Select value={interest} onValueChange={setInterest}>
-                            <SelectTrigger className="h-10 w-[160px]">
-                                <SelectValue placeholder="Interest" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="ALL">All Interests</SelectItem>
-                                <SelectItem value="STUDY_ABROAD">Study Abroad</SelectItem>
-                                <SelectItem value="SKILL_DEVELOPMENT">Skill Development</SelectItem>
-                                <SelectItem value="LOAN">Loan</SelectItem>
-                                <SelectItem value="MBBS">MBBS</SelectItem>
-                                <SelectItem value="OTHER">Other</SelectItem>
-                            </SelectContent>
-                        </Select>
+                    {/* Advanced Filters Panel */}
+                    <div className={cn(
+                        "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-6 transition-all duration-300",
+                        showFilters ? "opacity-100 max-h-[500px]" : "opacity-0 max-h-0 overflow-hidden mb-0"
+                    )}>
+                        <div className="space-y-1.5">
+                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 ml-1">Status</label>
+                            <Select value={status} onValueChange={setStatus}>
+                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 dark:bg-transparent border-0 dark:border dark:border-white/10 shadow-sm focus:ring-0">
+                                    <SelectValue placeholder="Status" />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl border-border dark:bg-slate-900">
+                                    <SelectItem value="ALL">All Status</SelectItem>
+                                    <SelectItem value="NEW">New</SelectItem>
+                                    <SelectItem value="CONTACTED">Contacted</SelectItem>
+                                    <SelectItem value="QUALIFIED">Qualified</SelectItem>
+                                    <SelectItem value="LOST">Lost</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                        {hasFilters && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                    setAssignedTo("ALL");
-                                    setInterestedCountry("ALL");
-                                    setHighestQualification("ALL");
-                                    setInterest("ALL");
-                                    setSource("ALL");
-                                    setFromDate("");
-                                    setToDate("");
-                                }}
-                                className="h-10 px-3 text-muted-foreground hover:text-foreground"
-                            >
-                                <FilterX className="h-4 w-4 mr-2" /> Reset
-                            </Button>
+                        <div className="space-y-1.5">
+                             <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 ml-1">Assigned To</label>
+                            <Select value={onboardedBy} onValueChange={setOnboardedBy}>
+                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 dark:bg-transparent border-0 dark:border dark:border-white/10 shadow-sm focus:ring-0">
+                                    <SelectValue placeholder="Onboarded By" />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl border-border dark:bg-slate-900">
+                                    <SelectItem value="ALL">All Staff</SelectItem>
+                                    {counselors?.map((c: any) => (
+                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-1.5">
+                             <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 ml-1">Destination</label>
+                            <Select value={interestedCountry} onValueChange={setInterestedCountry}>
+                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 dark:bg-transparent border-0 dark:border dark:border-white/10 shadow-sm focus:ring-0">
+                                    <SelectValue placeholder="Lead Country" />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl border-border dark:bg-slate-900">
+                                    <SelectItem value="ALL">All Countries</SelectItem>
+                                    {countries?.countries?.map((c: any) => (
+                                        <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        <div className="space-y-1.5">
+                             <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 ml-1">Target Intake</label>
+                            <Select value={intake} onValueChange={setIntake}>
+                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 dark:bg-transparent border-0 dark:border dark:border-white/10 shadow-sm focus:ring-0">
+                                    <SelectValue placeholder="Intake" />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-xl border-border dark:bg-slate-900">
+                                    <SelectItem value="ALL">All Intakes</SelectItem>
+                                    {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map(m => (
+                                        <SelectItem key={m} value={m}>{m} 2024/25</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {(status !== "ALL" || onboardedBy !== "ALL" || interestedCountry !== "ALL" || intake !== "ALL") && (
+                            <div className="col-span-full pt-1">
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                        setStatus("ALL");
+                                        setOnboardedBy("ALL");
+                                        setInterestedCountry("ALL");
+                                        setIntake("ALL");
+                                    }}
+                                    className="h-8 text-[11px] text-muted-foreground hover:text-destructive gap-1 px-2"
+                                >
+                                    <FilterX className="h-3.5 w-3.5" /> Clear All Filters
+                                </Button>
+                            </div>
                         )}
                     </div>
-                </div>
 
-                {/* Status Pills */}
-                <div className="flex flex-wrap gap-2">
-                    {[
-                        { id: "ALL", label: "All" },
-                        { id: "NEW", label: "New" },
-                        { id: "ASSIGNED", label: "Assigned" },
-                        { id: "IN_PROGRESS", label: "In Progress" },
-                        { id: "FOLLOW_UP", label: "Follow Up" },
-                        { id: "CONVERTED", label: "Converted" },
-                        { id: "LOST", label: "Lost" },
-                    ].map((f) => {
-                        const active = status === f.id;
-                        return (
-                            <button
-                                key={f.id}
-                                onClick={() => setStatus(f.id)}
-                                className={cn(
-                                    "px-4 py-1.5 text-sm font-medium rounded-full border transition-colors",
-                                    active 
-                                        ? "bg-primary text-primary-foreground border-primary"
-                                        : "bg-background text-muted-foreground border-input hover:bg-muted"
-                                )}
-                            >
-                                {f.label}
-                                <span className={cn(
-                                    "ml-2 text-xs opacity-70",
-                                    active ? "text-primary-foreground" : "text-muted-foreground"
-                                )}>
-                                    {getCount(f.id)}
-                                </span>
-                            </button>
-                        );
-                    })}
-                </div>
-            </div>
+                    {isLoading && page === 1 ? (
+                        <div className="space-y-4 p-4">
+                            <div className="h-10 bg-slate-50 dark:bg-white/5 animate-pulse rounded-xl w-full" />
+                            <div className="h-64 bg-slate-50 dark:bg-white/5 animate-pulse rounded-xl w-full" />
+                        </div>
+                    ) : (
+                        <LeadsTable
+                            data={leads}
+                            onUpdate={refetch}
+                            selectedIds={selectedIds}
+                            onSelectionChange={setSelectedIds}
+                            pagination={{
+                                page: page,
+                                totalPages: totalPages,
+                                pageSize: limit,
+                                onPageChange: setPage,
+                                onPageSizeChange: (v) => {
+                                    setLimit(v);
+                                    setPage(1);
+                                }
+                            }}
+                        />
+                    )}
+                </CardContent>
+            </Card>
 
-            {/* Table Section */}
-            <div className="bg-background rounded-lg border shadow-sm overflow-hidden">
-                {isLoading ? (
-                    <div className="p-8 space-y-4">
-                        <Skeleton className="h-12 w-full" />
-                        <Skeleton className="h-12 w-full" />
-                        <Skeleton className="h-12 w-full" />
-                    </div>
-                ) : (
-                    <LeadsTable
-                        data={leads}
-                        onUpdate={refetch}
-                        pagination={{
-                            page,
-                            totalPages,
-                            pageSize: limit,
-                            onPageChange: setPage,
-                            onPageSizeChange: (newLimit) => {
-                                setLimit(newLimit);
-                                setPage(1);
-                            }
-                        }}
-                    />
-                )}
-            </div>
+            {/* Modals */}
+            <AssignApplicationsModal
+                isOpen={showAssignModal}
+                onClose={() => setShowAssignModal(false)}
+                selectedIds={selectedIds}
+                selectedNames={leads.filter((s: any) => selectedIds.includes(s.id)).map((s: any) => s.name)}
+                onSuccess={() => {
+                    setSelectedIds([]);
+                    refetch();
+                }}
+                apiEndpoint="/api/leads/bulk-assign"
+                title="Leads"
+                moduleName="leads"
+            />
+
+            <EmailComposeModal
+                isOpen={showEmailModal}
+                onClose={() => setShowEmailModal(false)}
+                selectedEmails={leads.filter((s: any) => selectedIds.includes(s.id)).map((s: any) => s.email).filter(Boolean)}
+                apiEndpoint="/api/applications/email" 
+            />
+
+            <WhatsappMessageModal
+                isOpen={showWhatsappModal}
+                onClose={() => setShowWhatsappModal(false)}
+                selectedLeads={leads.filter((s: any) => selectedIds.includes(s.id)).map((s: any) => ({
+                    id: s.id,
+                    name: s.name,
+                    phone: s.phone || ""
+                }))}
+                apiEndpoint="/api/applications/whatsapp"
+            />
+
+            <ConfirmDialog
+                isOpen={showBulkDeleteConfirm}
+                onClose={() => setShowBulkDeleteConfirm(false)}
+                onConfirm={handleBulkDelete}
+                title="Bulk Delete Leads"
+                description={`Are you sure you want to delete ${selectedIds.length} selected leads? This action cannot be undone.`}
+                confirmText={isBulkDeleting ? "Deleting..." : "Delete All"}
+                variant="destructive"
+            />
+
+            <ConfirmDialog
+                isOpen={!!deleteId}
+                onClose={() => setDeleteId(null)}
+                onConfirm={confirmDelete}
+                title="Delete Lead"
+                description="Are you sure you want to delete this lead? This action cannot be undone."
+                confirmText="Delete"
+                variant="destructive"
+            />
         </div>
     );
 }

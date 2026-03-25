@@ -73,13 +73,22 @@ export function StudentApplicationsView() {
 
         setIsSubmitting(true);
         try {
-            await axios.post("/api/student/notes", {
+            const res = await axios.post("/api/student/notes", {
                 applicationId: selectedApp.id,
                 note: newNote
             });
             toast.success("Comment added successfully");
             setNewNote("");
-            fetchApplications(); // Refresh to show new note
+            
+            // Refresh applications list
+            const fetchRes = await axios.get("/api/student/applications");
+            setApplications(fetchRes.data);
+            
+            // Update selectedApp with the new data from fetchRes.data
+            const updatedApp = fetchRes.data.find((a: any) => a.id === selectedApp.id);
+            if (updatedApp) {
+                setSelectedApp(updatedApp);
+            }
         } catch (error) {
             toast.error("Failed to add comment");
         } finally {

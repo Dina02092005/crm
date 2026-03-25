@@ -138,7 +138,7 @@ export function Sidebar() {
             <div className={`block xl:hidden ${collapsedWidth} shrink-0`} />
 
             {/* Floating/Fixed Sidebar */}
-            <aside className={`fixed left-0 top-0 h-screen bg-sidebar text-white overflow-hidden flex flex-col transition-all duration-300 ${collapsedWidth} hover:${expandedWidth} ${isCollapsed ? 'xl:w-[78px] xl:hover:w-[252px]' : 'xl:w-[252px]'} group z-60 shadow-2xl`}>
+            <aside className={`fixed left-0 top-0 h-screen bg-sidebar dark:bg-sidebar text-white dark:text-gray-200 overflow-hidden flex flex-col transition-all duration-300 ${collapsedWidth} hover:${expandedWidth} ${isCollapsed ? 'xl:w-[78px] xl:hover:w-[252px]' : 'xl:w-[252px]'} group z-60 shadow-2xl dark:border-r dark:border-white/5`}>
                 {/* Logo - Sticky */}
                 <div className="px-4 py-4 flex justify-center shrink-0">
                     <Link href={`${rolePrefix}/dashboard`} className="flex items-center">
@@ -181,8 +181,8 @@ export function Sidebar() {
                                         <motion.button
                                             onClick={() => toggleSubmenu(item.label, item.submenu?.[0]?.href)}
                                             className={`w-full flex items-center justify-center px-4 h-[41px] text-sm font-medium rounded-lg transition-all duration-300 ${isActive(undefined, item.submenu)
-                                                ? "bg-primary/10 text-primary font-semibold"
-                                                : "text-white hover:bg-white/5"
+                                                ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary font-semibold"
+                                                : "text-white hover:bg-white/5 dark:text-gray-400 dark:hover:bg-white/5"
                                                 } ${!isCollapsed ? 'xl:justify-between' : 'group-hover:justify-between'}`}
                                             whileHover={{ x: 2 }}
                                             transition={{ type: "spring", stiffness: 400, damping: 25 }}
@@ -256,8 +256,8 @@ export function Sidebar() {
                                                                     href={prefixHref(subItem.href)}
                                                                     onClick={handleSubmenuClick}
                                                                     className={`block text-sm font-normal leading-none transition-colors duration-200 whitespace-nowrap ${isSubActive
-                                                                        ? "text-primary font-medium"
-                                                                        : "text-white/70 hover:text-white"
+                                                                        ? "text-primary dark:text-white font-medium"
+                                                                        : "text-white/70 hover:text-white dark:text-gray-400 dark:hover:text-gray-200"
                                                                         }`}
                                                                 >
                                                                     {subItem.label}
@@ -279,8 +279,8 @@ export function Sidebar() {
                                             href={prefixHref(item.href!)}
                                             onClick={() => setExpandedMenu(null)}
                                             className={`flex items-center justify-center px-4 h-[41px] text-sm font-medium rounded-lg transition-all duration-300 ${isActive(item.href)
-                                                ? "bg-primary/10 text-primary font-semibold"
-                                                : "text-white hover:bg-white/5 hover:text-white"
+                                                ? "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary font-semibold"
+                                                : "text-white hover:bg-white/5 hover:text-white dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-white"
                                                 } ${!isCollapsed ? 'xl:justify-start' : 'group-hover:justify-start'} gap-3`}
                                         >
                                             <span className="w-5 h-5 flex items-center justify-center shrink-0 [&>svg]:w-full [&>svg]:h-full">{item.icon}</span>

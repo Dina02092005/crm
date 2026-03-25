@@ -47,9 +47,10 @@ export function ApplicationDetailView({ application, onUpdate }: ApplicationDeta
     return (
         <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto p-2 sm:p-4">
             {/* Header / Summary Card */}
-            <Card className="border-none shadow-sm bg-white overflow-hidden rounded-2xl">
+            <Card className="border-none shadow-xl bg-card overflow-hidden rounded-2xl ring-1 ring-border/50">
                 <CardContent className="p-0">
-                    <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-6 py-4 flex items-center justify-between">
+                    <div className="bg-gradient-to-r from-primary/90 via-primary to-indigo-600 dark:from-sky-900/40 dark:via-primary/20 dark:to-indigo-900/40 px-6 py-6 flex items-center justify-between backdrop-blur-md">
+
                         <div className="flex items-center gap-4">
                             <Button
                                 variant="ghost"
@@ -85,14 +86,14 @@ export function ApplicationDetailView({ application, onUpdate }: ApplicationDeta
             </Card>
 
             <Tabs defaultValue="university" className="w-full">
-                <TabsList className="w-full bg-slate-100/80 p-1.5 h-12 rounded-2xl border border-slate-200/50 mb-6">
-                    <TabsTrigger value="personal" className="flex-1 rounded-xl data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-md text-xs font-bold gap-2 transition-all">
+                <TabsList className="w-full bg-muted/50 dark:bg-slate-900/40 p-1.5 h-12 rounded-2xl border border-border/50 mb-8 shadow-inner backdrop-blur-sm">
+                    <TabsTrigger value="personal" className="flex-1 rounded-xl data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg text-[11px] font-black uppercase tracking-wider gap-2 transition-all border border-transparent data-[state=active]:border-border/50">
                         <User className="h-4 w-4" /> Personal Details
                     </TabsTrigger>
-                    <TabsTrigger value="documents" className="flex-1 rounded-xl data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-md text-xs font-bold gap-2 transition-all">
+                    <TabsTrigger value="documents" className="flex-1 rounded-xl data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg text-[11px] font-black uppercase tracking-wider gap-2 transition-all border border-transparent data-[state=active]:border-border/50">
                         <FolderOpen className="h-4 w-4" /> Documents
                     </TabsTrigger>
-                    <TabsTrigger value="university" className="flex-1 rounded-xl data-[state=active]:bg-white data-[state=active]:text-primary data-[state=active]:shadow-md text-xs font-bold gap-2 transition-all">
+                    <TabsTrigger value="university" className="flex-1 rounded-xl data-[state=active]:bg-background data-[state=active]:text-primary data-[state=active]:shadow-lg text-[11px] font-black uppercase tracking-wider gap-2 transition-all border border-transparent data-[state=active]:border-border/50">
                         <Database className="h-4 w-4" /> University Application
                     </TabsTrigger>
 
@@ -150,7 +151,7 @@ export function ApplicationDetailView({ application, onUpdate }: ApplicationDeta
 
                 {/* --- DOCUMENTS TAB --- */}
                 <TabsContent value="documents" className="focus-visible:ring-0">
-                    <Card className="rounded-2xl border-none shadow-sm">
+                    <Card className="rounded-2xl border border-border/50 shadow-xl bg-card overflow-hidden">
                         <CardContent className="p-6">
                             <StudentDocumentsSection
                                 studentId={student?.id}
@@ -166,6 +167,7 @@ export function ApplicationDetailView({ application, onUpdate }: ApplicationDeta
                         applications={[application]}
                         onUpdate={onUpdate}
                         onAdd={() => router.push(prefixPath(`/students/${application.studentId}/applications/add`))}
+
                     />
                 </TabsContent>
 

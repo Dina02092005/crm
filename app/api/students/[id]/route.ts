@@ -92,13 +92,16 @@ export async function PATCH(
         const body = await req.json();
         const { name, email, phone, status } = body;
 
+        const validStudentStatuses = ['NEW', 'UNDER_REVIEW', 'COUNSELLING_COMPLETED', 'COUNSELLING_SCHEDULED', 'DOCUMENT_PENDING', 'DOCUMENT_VERIFIED', 'INTERESTED', 'NOT_INTERESTED', 'NOT_ELIGIBLE', 'ON_HOLD', 'APPLICATION_SUBMITTED'];
+        const finalStatus = (status && validStudentStatuses.includes(status)) ? status : undefined;
+
         const student = await prisma.student.update({
             where: { id },
             data: {
                 ...(name && { name }),
                 ...(email !== undefined && { email }),
                 ...(phone && { phone }),
-                ...(status && { status }),
+                ...(finalStatus && { status: finalStatus }),
                 ...(body.agentId !== undefined && { agentId: body.agentId === "" || body.agentId === "__none__" ? null : body.agentId }),
                 ...(body.counselorId !== undefined && { counselorId: body.counselorId === "" || body.counselorId === "__none__" ? null : body.counselorId }),
             },

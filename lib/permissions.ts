@@ -15,7 +15,9 @@ export const PERMISSION_MODULES = [
     "FILE_MANAGER",
     "ROLES",
     "NOTES",
-    "FOLLOW_UPS"
+    "FOLLOW_UPS",
+    "USERS",
+    "SETTINGS"
 ] as const;
 
 export type PermissionModule = (typeof PERMISSION_MODULES)[number];

@@ -17,22 +17,26 @@ export default function AddApplicationPage() {
 
     useEffect(() => {
         const fetchStudent = async () => {
+            if (!params?.id) {
+                toast.error("Invalid Student ID");
+                router.back();
+                setIsLoading(false); // Ensure loading state is false if ID is missing
+                return;
+            }
             try {
                 const response = await axios.get(`/api/students/${params.id}`);
                 setStudent(response.data);
             } catch (error) {
-                console.error("Failed to fetch student", error);
-                toast.error("Failed to load student details");
-                router.push(prefixPath("/students"));
+                console.error("Failed to fetch student:", error);
+                toast.error("Could not find student record");
+                router.back();
             } finally {
                 setIsLoading(false);
             }
         };
 
-        if (params.id) {
-            fetchStudent();
-        }
-    }, [params.id, router, prefixPath]);
+        fetchStudent();
+    }, [params?.id, router]);
 
     if (isLoading) {
         return (
@@ -55,9 +59,12 @@ export default function AddApplicationPage() {
                 studentName={student.name}
                 studentEmail={student.email}
                 studentPhone={student.phone}
-                onSuccess={() => {
-                    toast.success("Applications added successfully");
-                    router.push(prefixPath(`/students/${params.id}?tab=applications`));
+                onSuccess={(data) => {
+                    if (data && data.length > 0) {
+                        router.push(prefixPath(`/applications/${data[0].id}`));
+                    } else {
+                        router.push(prefixPath(`/applications`));
+                    }
                 }}
                 onCancel={() => router.back()}
             />

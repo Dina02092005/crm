@@ -37,8 +37,17 @@ import { usePermissions } from "@/hooks/use-permissions";
 import { AddCourseModal } from "@/components/masters/AddCourseModal";
 import { ManageIntakesModal } from "@/components/masters/ManageIntakesModal";
 import { ImportCoursesModal } from "@/components/masters/ImportCoursesModal";
-import { useCountries, useUniversities, useCourses } from "@/hooks/use-masters";
+import { useCountries, useUniversities, useCourses, useBulkDeleteCourses } from "@/hooks/use-masters";
 import { useDebounce } from "@/hooks/use-debounce";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal } from "lucide-react";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export default function CoursesPage() {
     const { can } = usePermissions();
@@ -80,6 +89,41 @@ export default function CoursesPage() {
     useEffect(() => {
         setPage(1);
     }, [selectedCountry, selectedUniversity, debouncedSearch]);
+
+    // Multi-select state
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const bulkDeleteMutation = useBulkDeleteCourses();
+    const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+
+    const toggleSelectAll = () => {
+        if (selectedIds.size === courses.length && courses.length > 0) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(courses.map((c: any) => c.id)));
+        }
+    };
+
+    const toggleSelect = (id: string) => {
+        const newSelected = new Set(selectedIds);
+        if (newSelected.has(id)) {
+            newSelected.delete(id);
+        } else {
+            newSelected.add(id);
+        }
+        setSelectedIds(newSelected);
+    };
+
+    const handleBulkDelete = async () => {
+        try {
+            await bulkDeleteMutation.mutateAsync(Array.from(selectedIds));
+            toast.success("Courses deleted successfully");
+            setSelectedIds(new Set());
+            setIsBulkDeleteOpen(false);
+            refetch();
+        } catch (error) {
+            toast.error("Failed to delete courses");
+        }
+    };
 
     const handleReset = () => {
         setSelectedCountry("all");
@@ -248,6 +292,33 @@ export default function CoursesPage() {
                 )}
             </div>
 
+            {/* Multi-select Action Bar */}
+            {selectedIds.size > 0 && (
+                <div className="bg-primary text-primary-foreground px-6 py-4 rounded-none flex items-center justify-between shadow-lg animate-in fade-in slide-in-from-top-4 duration-300">
+                    <div className="flex items-center gap-4">
+                        <span className="text-sm font-bold uppercase tracking-widest">{selectedIds.size} Courses Selected</span>
+                        <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            onClick={() => setSelectedIds(new Set())}
+                            className="h-9 text-[10px] font-black uppercase tracking-wider bg-white/20 hover:bg-white/30 text-white rounded-none border-none"
+                        >
+                            Deselect
+                        </Button>
+                    </div>
+                    {can("MASTERS", "DELETE") && (
+                        <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            onClick={() => setIsBulkDeleteOpen(true)}
+                            className="h-9 text-[10px] font-black uppercase tracking-wider bg-white text-destructive hover:bg-white/90 rounded-none border-none px-8"
+                        >
+                            Delete Selected
+                        </Button>
+                    )}
+                </div>
+            )}
+
             {/* Main Table Container */}
             <div className="bg-white border border-gray-200 shadow-md flex flex-col min-h-[500px]">
                 {/* Table Toolbar */}
@@ -286,6 +357,12 @@ export default function CoursesPage() {
                     <Table className="min-w-[1500px] border-collapse">
                         <TableHeader>
                             <TableRow className="bg-gray-50/80 hover:bg-gray-50/80 border-b-2 border-gray-200">
+                                <TableHead className="w-12 px-4 border-r border-gray-200 text-center">
+                                    <Checkbox 
+                                        checked={courses.length > 0 && selectedIds.size === courses.length}
+                                        onCheckedChange={toggleSelectAll}
+                                    />
+                                </TableHead>
                                 <TableHead className="w-[100px] font-bold text-gray-900 border-x border-gray-200 text-center">Action</TableHead>
                                 <TableHead className="w-[120px] font-bold text-gray-900 border-r border-gray-200">Country</TableHead>
                                 <TableHead className="w-[200px] font-bold text-gray-900 border-r border-gray-200">University</TableHead>
@@ -322,7 +399,13 @@ export default function CoursesPage() {
                             ) : (
                                 courses.map((course: any) => (
                                     <TableRow key={course.id} className="hover:bg-gray-50/50 border-b border-gray-100 items-start">
-                                        <TableCell className="border-x border-gray-100 p-2">
+                                        <TableCell className="border-x border-gray-100 p-2 text-center">
+                                            <Checkbox 
+                                                checked={selectedIds.has(course.id)}
+                                                onCheckedChange={() => toggleSelect(course.id)}
+                                            />
+                                        </TableCell>
+                                        <TableCell className="border-r border-gray-100 p-2">
                                             <div className="flex items-center justify-center gap-2">
                                                 {can("MASTERS", "EDIT") && (
                                                     <Button
@@ -455,6 +538,17 @@ export default function CoursesPage() {
                     onSuccess={refetch}
                 />
             )}
+
+            <ConfirmDialog
+                isOpen={isBulkDeleteOpen}
+                onClose={() => setIsBulkDeleteOpen(false)}
+                onConfirm={handleBulkDelete}
+                title="Bulk Delete Courses"
+                description={`Are you sure you want to delete ${selectedIds.size} selected courses? This action cannot be undone.`}
+                confirmText="Yes, Delete All"
+                variant="destructive"
+                isLoading={bulkDeleteMutation.isPending}
+            />
         </div>
     );
 }

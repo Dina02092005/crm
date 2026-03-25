@@ -2,9 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import {
     getStudents, createStudent, updateStudent, deleteStudent,
-    getEmployees, createEmployee, updateEmployee, deleteEmployee,
+    getEmployees, createEmployee, updateEmployee, deleteEmployee, deleteEmployeesBulk,
     getApplications, createApplication, updateApplication, deleteApplication, deleteApplicationsBulk,
-    getVisaApplications, createVisaApplication, updateVisaApplication, deleteVisaApplication
+    getVisaApplications, createVisaApplication, updateVisaApplication, deleteVisaApplication,
+    deleteStudentsBulk, deleteVisaApplicationsBulk, deleteRolesBulk
 } from '../services/api';
 
 import { toast } from 'sonner';
@@ -62,6 +63,17 @@ export const useDeleteStudent = () => {
     });
 };
 
+export const useBulkDeleteStudents = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: deleteStudentsBulk,
+        onSuccess: (response: any) => {
+            toast.success(response?.message || 'Students deleted successfully');
+            queryClient.invalidateQueries({ queryKey: ['students'] });
+        },
+    });
+};
+
 // Employees
 export const useEmployees = (page = 1, limit = 10) => {
     return useQuery({
@@ -97,6 +109,17 @@ export const useDeleteEmployee = () => {
     return useMutation({
         mutationFn: deleteEmployee,
         onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['employees'] });
+        },
+    });
+};
+
+export const useBulkDeleteEmployees = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: deleteEmployeesBulk,
+        onSuccess: (response: any) => {
+            toast.success(response?.message || 'Employees deleted successfully');
             queryClient.invalidateQueries({ queryKey: ['employees'] });
         },
     });
@@ -188,3 +211,24 @@ export const useDeleteVisaApplication = () => {
     });
 };
 
+export const useBulkDeleteVisaApplications = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: deleteVisaApplicationsBulk,
+        onSuccess: (response: any) => {
+            toast.success(response?.message || 'Visa applications deleted successfully');
+            queryClient.invalidateQueries({ queryKey: ['visa-applications'] });
+        },
+    });
+};
+
+export const useBulkDeleteRoles = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: deleteRolesBulk,
+        onSuccess: (response: any) => {
+            toast.success(response?.message || 'Roles deleted successfully');
+            queryClient.invalidateQueries({ queryKey: ['roles'] });
+        },
+    });
+};

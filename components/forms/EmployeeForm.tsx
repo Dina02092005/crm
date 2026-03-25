@@ -22,7 +22,7 @@ const employeeSchema = z.object({
     email: z.string().email("Invalid email address"),
     password: z.string().min(6, "Password must be at least 6 characters").optional().or(z.literal("")),
     phone: z.string().min(10, "Phone number must be at least 10 digits"),
-    role: z.enum(["ADMIN", "MANAGER", "SALES_REP", "SUPPORT_AGENT", "EMPLOYEE", "AGENT", "COUNSELOR"]).optional(),
+    role: z.enum(["SUPER_ADMIN", "ADMIN", "MANAGER", "SALES_REP", "SUPPORT_AGENT", "EMPLOYEE", "AGENT", "COUNSELOR"]).optional(),
     roleId: z.string().optional().nullable(),
     department: z.string().min(2, "Department is required"),
     salary: z.coerce.number().min(0, "Salary must be a positive number"),
@@ -72,7 +72,7 @@ export default function EmployeeForm({ employee, onSuccess, formId, defaultRole 
     // Fetch staff members who can have counselors reporting to them
     const { data: managersData } = useEmployees("active", 1, 100, ""); // Will filter manually below to be safe or use query params if API supports multiple roles
     const availableManagers = managersData?.employees?.filter((emp: any) =>
-        ["AGENT", "SALES_REP", "MANAGER", "ADMIN"].includes(emp.role)
+        ["AGENT", "SALES_REP", "MANAGER", "ADMIN", "SUPER_ADMIN"].includes(emp.role)
     ) || [];
 
 
@@ -81,7 +81,8 @@ export default function EmployeeForm({ employee, onSuccess, formId, defaultRole 
     const inferredFirstName = nameParts[0] || '';
     const inferredLastName = nameParts.slice(1).join(' ') || '';
 
-    const profile = employee?.role === 'AGENT' ? (employee as any).agentProfile : (employee as any).counselorProfile;
+    const profile = employee?.role === 'AGENT' ? (employee as any)?.agentProfile : (employee as any)?.counselorProfile;
+    const counselorProfile = (employee as any)?.counselorProfile;
 
     const form = useForm({
         defaultValues: {
@@ -89,17 +90,17 @@ export default function EmployeeForm({ employee, onSuccess, formId, defaultRole 
             email: employee?.email || '',
             firstName: employee?.firstName || inferredFirstName,
             lastName: employee?.lastName || inferredLastName,
-            department: employee?.department || (employee as any).counselorProfile?.department || '',
-            designation: employee?.designation || (employee as any).counselorProfile?.designation || '',
-            joiningDate: (employee?.joiningDate || (employee as any).counselorProfile?.joiningDate)
-                ? new Date(employee?.joiningDate || (employee as any).counselorProfile?.joiningDate).toISOString().split('T')[0]
+            department: employee?.department || counselorProfile?.department || '',
+            designation: employee?.designation || counselorProfile?.designation || '',
+            joiningDate: (employee?.joiningDate || counselorProfile?.joiningDate)
+                ? new Date(employee?.joiningDate || counselorProfile?.joiningDate).toISOString().split('T')[0]
                 : '',
-            salary: employee?.salary || (employee as any).counselorProfile?.salary || 0,
+            salary: employee?.salary || counselorProfile?.salary || 0,
             imageUrl: employee?.imageUrl || null,
             password: '',
             role: employee?.role || defaultRole || 'EMPLOYEE',
             roleId: (employee as any)?.roleId || '',
-            agentId: (employee as any)?.counselorProfile?.agentId || '',
+            agentId: counselorProfile?.agentId || '',
             companyName: (employee as any)?.agentProfile?.companyName || '',
             address: (employee as any)?.agentProfile?.address || '',
             commission: (employee as any)?.agentProfile?.commission || 0,
@@ -262,7 +263,7 @@ export default function EmployeeForm({ employee, onSuccess, formId, defaultRole 
                     />
                 </div>
 
-                {(session?.user?.role === 'ADMIN') && (
+                {["ADMIN", "SUPER_ADMIN", "MANAGER"].includes(session?.user?.role) && (
                     <div className="grid grid-cols-2 gap-4">
                         <form.Field
                             name="role"
@@ -275,6 +276,10 @@ export default function EmployeeForm({ employee, onSuccess, formId, defaultRole 
                                         value={field.state.value || "EMPLOYEE"}
                                         onBlur={field.handleBlur}
                                         onChange={(e) => field.handleChange(e.target.value as any)}
+                                        disabled={
+                                            (employee?.role === "SUPER_ADMIN" || employee?.role === "ADMIN") && 
+                                            session?.user?.role !== "SUPER_ADMIN"
+                                        }
                                         className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
                                     >
                                         <option value="EMPLOYEE">Staff / Employee</option>
@@ -283,7 +288,15 @@ export default function EmployeeForm({ employee, onSuccess, formId, defaultRole 
                                         <option value="SALES_REP">Sales Rep</option>
                                         <option value="SUPPORT_AGENT">Support Agent</option>
                                         <option value="MANAGER">Manager</option>
-                                        <option value="ADMIN">Admin</option>
+                                        {session?.user?.role === "SUPER_ADMIN" && (
+                                            <>
+                                                <option value="ADMIN">Admin</option>
+                                                <option value="SUPER_ADMIN">Super Admin</option>
+                                            </>
+                                        )}
+                                        {session?.user?.role === "ADMIN" && employee?.role === "ADMIN" && (
+                                            <option value="ADMIN">Admin</option>
+                                        )}
                                     </select>
                                     <ErrorMessage field={field} />
                                 </div>
@@ -375,7 +388,7 @@ export default function EmployeeForm({ employee, onSuccess, formId, defaultRole 
                     </div>
                 )}
 
-                {form.state.values.role === 'COUNSELOR' && session?.user?.role === 'ADMIN' && (
+                {form.state.values.role === 'COUNSELOR' && (session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN') && (
                     <div className="grid grid-cols-2 gap-4">
                         <form.Field
                             name="agentId"

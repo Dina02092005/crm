@@ -22,6 +22,18 @@ export const deleteStudent = async (id: string): Promise<void> => {
     return api.delete(`/students/${id}`);
 };
 
+export const deleteStudentsBulk = async (ids: string[]): Promise<void> => {
+    return api.delete(`/students/bulk`, { data: { ids } });
+};
+
+export const getLeads = async (page = 1, limit = 10, search = ""): Promise<{ leads: any[], pagination: any }> => {
+    return api.get(`/leads?page=${page}&limit=${limit}&search=${search}`);
+};
+
+export const deleteLeadsBulk = async (ids: string[]): Promise<void> => {
+    return api.delete(`/leads/bulk`, { data: { ids } });
+};
+
 export const getEmployees = async (page = 1, limit = 10): Promise<{ employees: Employee[], pagination: any }> => {
     return api.get(`/employees?page=${page}&limit=${limit}`);
 };
@@ -36,6 +48,10 @@ export const updateEmployee = async (id: string, data: Partial<Employee>): Promi
 
 export const deleteEmployee = async (id: string): Promise<void> => {
     return api.delete(`/employees/${id}`);
+};
+
+export const deleteEmployeesBulk = async (ids: string[]): Promise<void> => {
+    return api.delete(`/employees/bulk`, { data: { ids } });
 };
 
 // Applications
@@ -82,4 +98,12 @@ export const updateVisaApplication = async (id: string, data: any): Promise<any>
 
 export const deleteVisaApplication = async (id: string): Promise<void> => {
     return api.delete(`/visa-applications/${id}`);
+};
+
+export const deleteVisaApplicationsBulk = async (ids: string[]): Promise<void> => {
+    return api.delete(`/visa-applications/bulk`, { data: { ids } });
+};
+
+export const deleteRolesBulk = async (ids: string[]): Promise<void> => {
+    return api.post(`/roles/bulk`, { ids });
 };

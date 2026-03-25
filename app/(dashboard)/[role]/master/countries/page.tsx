@@ -23,8 +23,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { useCountries } from "@/hooks/use-masters";
+import { useCountries, useBulkDeleteCountries } from "@/hooks/use-masters";
 import { useDebounce } from "@/hooks/use-debounce";
+import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import {
     Select,
     SelectContent,
@@ -65,6 +67,41 @@ export default function CountriesPage() {
     useEffect(() => {
         setPage(1);
     }, [debouncedSearch]);
+
+    // Multi-select state
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const bulkDeleteMutation = useBulkDeleteCountries();
+    const [isBulkDeleteOpen, setIsBulkDeleteOpen] = useState(false);
+
+    const toggleSelectAll = () => {
+        if (selectedIds.size === countries.length && countries.length > 0) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(countries.map((c: any) => c.id)));
+        }
+    };
+
+    const toggleSelect = (id: string) => {
+        const newSelected = new Set(selectedIds);
+        if (newSelected.has(id)) {
+            newSelected.delete(id);
+        } else {
+            newSelected.add(id);
+        }
+        setSelectedIds(newSelected);
+    };
+
+    const handleBulkDelete = async () => {
+        try {
+            await bulkDeleteMutation.mutateAsync(Array.from(selectedIds));
+            toast.success("Countries deleted successfully");
+            setSelectedIds(new Set());
+            setIsBulkDeleteOpen(false);
+            refetch();
+        } catch (error) {
+            toast.error("Failed to delete countries");
+        }
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -191,6 +228,33 @@ export default function CountriesPage() {
                 )}
             </div>
 
+            {/* Multi-select Action Bar */}
+            {selectedIds.size > 0 && (
+                <div className="bg-primary text-primary-foreground px-6 py-4 rounded-md flex items-center justify-between shadow-lg animate-in fade-in slide-in-from-top-4 duration-300">
+                    <div className="flex items-center gap-4">
+                        <span className="text-[10px] font-black uppercase tracking-widest">{selectedIds.size} Regions Selected</span>
+                        <Button 
+                            variant="secondary" 
+                            size="sm" 
+                            onClick={() => setSelectedIds(new Set())}
+                            className="h-8 text-[9px] font-black uppercase tracking-wider bg-white/20 hover:bg-white/30 text-white rounded-md border-none"
+                        >
+                            Deselect All
+                        </Button>
+                    </div>
+                    {can("MASTERS", "DELETE") && (
+                        <Button 
+                            variant="destructive" 
+                            size="sm" 
+                            onClick={() => setIsBulkDeleteOpen(true)}
+                            className="h-8 text-[9px] font-black uppercase tracking-wider bg-white text-destructive hover:bg-white/90 rounded-md border-none px-6"
+                        >
+                            Bulk Deletion
+                        </Button>
+                    )}
+                </div>
+            )}
+
             {/* Filter Bar */}
             <div className="flex flex-col sm:flex-row items-center justify-between gap-4 border-b pb-4">
                 <div className="relative w-full sm:w-80">
@@ -209,6 +273,12 @@ export default function CountriesPage() {
                 <Table>
                     <TableHeader className="bg-muted/30">
                         <TableRow className="hover:bg-transparent">
+                            <TableHead className="w-12 px-4 border-r">
+                                <Checkbox 
+                                    checked={countries.length > 0 && selectedIds.size === countries.length}
+                                    onCheckedChange={toggleSelectAll}
+                                />
+                            </TableHead>
                             <TableHead className="w-12 px-4 border-r text-[10px] font-black uppercase tracking-widest text-muted-foreground">#</TableHead>
                             <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Region Name</TableHead>
                             <TableHead className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">ISO Code</TableHead>
@@ -241,6 +311,12 @@ export default function CountriesPage() {
                         ) : (
                             countries.map((c: any, idx: number) => (
                                 <TableRow key={c.id} className="group hover:bg-muted/30 border-b last:border-0 transition-colors">
+                                    <TableCell className="px-4 border-r">
+                                        <Checkbox 
+                                            checked={selectedIds.has(c.id)}
+                                            onCheckedChange={() => toggleSelect(c.id)}
+                                        />
+                                    </TableCell>
                                     <TableCell className="px-4 border-r font-mono text-[10px] text-muted-foreground/60">
                                         {(page - 1) * limit + idx + 1}
                                     </TableCell>
@@ -351,6 +427,17 @@ export default function CountriesPage() {
                     </div>
                 </div>
             </div>
+
+            <ConfirmDialog
+                isOpen={isBulkDeleteOpen}
+                onClose={() => setIsBulkDeleteOpen(false)}
+                onConfirm={handleBulkDelete}
+                title="Bulk Delete Regions"
+                description={`Are you sure you want to delete ${selectedIds.size} selected regions? This action cannot be undone and may affect related universities and courses.`}
+                confirmText="Yes, Delete All"
+                variant="destructive"
+                isLoading={bulkDeleteMutation.isPending}
+            />
         </div>
     );
 }

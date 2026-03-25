@@ -19,6 +19,7 @@ const counsellorSchema = z.object({
     phone: z.string().min(10, "Phone number is required"),
     password: z.string().min(6, "Password must be at least 6 characters"),
     roleId: z.string().optional().nullable(),
+    agentId: z.string().optional().nullable(),
     status: z.enum(["ACTIVE", "INACTIVE"]),
 });
 
@@ -42,12 +43,20 @@ function ErrorMessage({ field }: { field: any }) {
 export default function AdminCounsellorForm({ onSuccess, formId }: AdminCounsellorFormProps) {
     const queryClient = useQueryClient();
     const [availableRoles, setAvailableRoles] = useState<any[]>([]);
+    const [availableAgents, setAvailableAgents] = useState<any[]>([]);
 
     useEffect(() => {
+        // Fetch roles
         fetch("/api/roles")
             .then(res => res.json())
             .then(data => setAvailableRoles(data))
             .catch(err => console.error("Failed to fetch roles", err));
+
+        // Fetch agents
+        fetch("/api/agents?limit=100")
+            .then(res => res.json())
+            .then(data => setAvailableAgents(data.employees || data))
+            .catch(err => console.error("Failed to fetch agents", err));
     }, []);
 
     const form = useForm({
@@ -58,6 +67,7 @@ export default function AdminCounsellorForm({ onSuccess, formId }: AdminCounsell
             phone: '',
             password: '',
             roleId: '',
+            agentId: '',
             status: 'ACTIVE' as const,
         },
         // @ts-ignore
@@ -172,6 +182,30 @@ export default function AdminCounsellorForm({ onSuccess, formId }: AdminCounsell
                             onChange={(e) => field.handleChange(e.target.value)}
                             placeholder="••••••••"
                         />
+                        <ErrorMessage field={field} />
+                    </div>
+                )}
+            />
+
+            <form.Field
+                name="agentId"
+                children={(field) => (
+                    <div className="space-y-2">
+                        <Label htmlFor={field.name}>Assign Agent (Parent)</Label>
+                        <select
+                            id={field.name}
+                            value={field.state.value || ""}
+                            onBlur={field.handleBlur}
+                            onChange={(e) => field.handleChange(e.target.value)}
+                            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 font-medium"
+                        >
+                            <option value="">Select Agent (Optional)</option>
+                            {availableAgents.map(agent => (
+                                <option key={agent.id} value={agent.agentProfile?.id || agent.id}>
+                                    {agent.name} {agent.agentProfile?.companyName ? `(${agent.agentProfile.companyName})` : ''}
+                                </option>
+                            ))}
+                        </select>
                         <ErrorMessage field={field} />
                     </div>
                 )}

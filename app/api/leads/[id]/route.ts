@@ -141,8 +141,24 @@ export async function PATCH(
             }
         });
 
-        if (body.dateOfBirth) {
-            body.dateOfBirth = new Date(body.dateOfBirth);
+        const keysToNull = ['interest', 'dateOfBirth', 'passportIssueDate', 'passportExpiryDate', 'email', 'intake', 'gender', 'nationality', 'maritalStatus', 'address', 'highestQualification', 'testName', 'testScore', 'interestedCourse', 'interestedCountry'];
+
+        keysToNull.forEach(key => {
+            if (body[key] === "" || body[key] === undefined) {
+                body[key] = null;
+            }
+        });
+
+        if (body.dateOfBirth) body.dateOfBirth = new Date(body.dateOfBirth);
+        if (body.passportIssueDate) body.passportIssueDate = new Date(body.passportIssueDate);
+        if (body.passportExpiryDate) body.passportExpiryDate = new Date(body.passportExpiryDate);
+
+        if (Array.isArray(body.intake)) {
+            body.intake = body.intake.join(', ');
+        }
+
+        if (body.proficiencyExams && Array.isArray(body.proficiencyExams) && body.proficiencyExams.length === 0) {
+            body.proficiencyExams = null;
         }
 
         // Derive name if firstName/lastName changed
@@ -184,6 +200,9 @@ export async function PATCH(
                 }))
             };
         }
+
+        delete body.followUp;
+        delete body.appointment;
 
         const lead = await prisma.lead.update({
             where: { id },

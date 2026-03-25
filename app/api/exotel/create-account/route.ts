@@ -13,7 +13,7 @@ import { createExotelUser } from '@/lib/exotel';
 export async function POST(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions) as any;
-        if (!session || session.user.role !== 'ADMIN') {
+        if (!session || !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 

@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 
 export function useCountries(page = 1, limit = 25, search = "") {
@@ -25,6 +25,19 @@ export function useCountriesWithUniversityCount(page = 1, limit = 25, search = "
     });
 }
 
+export function useBulkDeleteCountries() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (ids: string[]) => {
+            await axios.delete("/api/master/countries/bulk", { data: { ids } });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["countries"] });
+            queryClient.invalidateQueries({ queryKey: ["countries-with-count"] });
+        },
+    });
+}
+
 export function useUniversities(countryId?: string, page = 1, limit = 25, search = "") {
     return useQuery({
         queryKey: ["universities", countryId, page, limit, search],
@@ -33,6 +46,31 @@ export function useUniversities(countryId?: string, page = 1, limit = 25, search
                 params: { countryId, page, limit, search }
             });
             return data;
+        },
+    });
+}
+
+export function useBulkDeleteUniversities() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (ids: string[]) => {
+            await axios.delete("/api/master/universities/bulk", { data: { ids } });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["universities"] });
+            queryClient.invalidateQueries({ queryKey: ["countries-with-count"] });
+        },
+    });
+}
+
+export function useBulkDeleteCourses() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (ids: string[]) => {
+            await axios.delete("/api/master/courses/bulk", { data: { ids } });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["courses"] });
         },
     });
 }
@@ -77,6 +115,30 @@ export function useWebsites(page = 1, limit = 25, search = "") {
                 params: { page, limit, search }
             });
             return data;
+        },
+    });
+}
+
+export function useBulkDeleteWebsites() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (ids: string[]) => {
+            await axios.delete("/api/websites/bulk", { data: { ids } });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["websites"] });
+        },
+    });
+}
+
+export function useBulkDeleteQualifications() {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: async (ids: string[]) => {
+            await axios.delete("/api/master/qualifications/bulk", { data: { ids } });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["qualifications"] });
         },
     });
 }

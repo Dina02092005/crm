@@ -28,6 +28,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { DatePicker } from "@/components/ui/date-picker";
 
 interface AddUniversityApplicationModalProps {
     isOpen: boolean;
@@ -57,6 +58,7 @@ interface ApplicationRow {
 }
 
 interface CountryBlock {
+    id: string;
     countryId: string;
     countryName: string;
     rows: ApplicationRow[];
@@ -102,8 +104,8 @@ export function AddUniversityApplicationModal({
                 axios.get("/api/master/countries"),
                 axios.get("/api/master/associates")
             ]);
-            setCountries(countriesRes.data || []);
-            setAssociates(associatesRes.data || []);
+            setCountries(Array.isArray(countriesRes.data) ? countriesRes.data : (countriesRes.data.countries || []));
+            setAssociates(Array.isArray(associatesRes.data) ? associatesRes.data : (associatesRes.data.associates || []));
         } catch (error) {
             console.error("Failed to load master data", error);
             toast.error("Failed to load dropdown data");
@@ -128,15 +130,12 @@ export function AddUniversityApplicationModal({
 
     const handleAddCountry = async (countryId: string) => {
         if (!countryId) return;
-        if (blocks.find(b => b.countryId === countryId)) {
-            toast.error("Country already added");
-            return;
-        }
 
         const country = countries.find(c => c.id === countryId);
         if (!country) return;
 
         setBlocks(prev => [...prev, {
+            id: Math.random().toString(36).substr(2, 9),
             countryId,
             countryName: country.name,
             rows: []
@@ -147,22 +146,17 @@ export function AddUniversityApplicationModal({
         setSelectedCountryId(""); // Reset search
     };
 
-    const handleRemoveBlock = (countryId: string) => {
-        setBlocks(prev => prev.filter(b => b.countryId !== countryId));
+    const handleRemoveBlock = (blockId: string) => {
+        setBlocks(prev => prev.filter(b => b.id !== blockId));
     };
 
-    const handleAddUniversity = async (countryId: string, universityId: string) => {
+    const handleAddUniversity = async (blockId: string, countryId: string, universityId: string) => {
         const universities = universitiesCache[countryId] || [];
         const university = universities.find(u => u.id === universityId);
         if (!university) return;
 
         setBlocks(prev => prev.map(block => {
-            if (block.countryId === countryId) {
-                // Check if already in this block
-                if (block.rows.find(r => r.universityId === universityId)) {
-                    toast.error("University already added in this country block");
-                    return block;
-                }
+            if (block.id === blockId) {
                 return {
                     ...block,
                     rows: [...block.rows, {
@@ -181,9 +175,9 @@ export function AddUniversityApplicationModal({
         }));
     };
 
-    const updateRow = (countryId: string, tempId: string, data: Partial<ApplicationRow>) => {
+    const updateRow = (blockId: string, tempId: string, data: Partial<ApplicationRow>) => {
         setBlocks(prev => prev.map(block => {
-            if (block.countryId === countryId) {
+            if (block.id === blockId) {
                 return {
                     ...block,
                     rows: block.rows.map(row => row.tempId === tempId ? { ...row, ...data } : row)
@@ -193,9 +187,9 @@ export function AddUniversityApplicationModal({
         }));
     };
 
-    const removeRow = (countryId: string, tempId: string) => {
+    const removeRow = (blockId: string, tempId: string) => {
         setBlocks(prev => prev.map(block => {
-            if (block.countryId === countryId) {
+            if (block.id === blockId) {
                 return {
                     ...block,
                     rows: block.rows.filter(row => row.tempId !== tempId)
@@ -236,7 +230,7 @@ export function AddUniversityApplicationModal({
 
             // Invalidate query cache
             queryClient.invalidateQueries({ queryKey: ["applications"] });
-            
+
             // Refresh server components
             router.refresh();
 
@@ -311,7 +305,7 @@ export function AddUniversityApplicationModal({
                                 </SelectTrigger>
                                 <SelectContent className="rounded-none">
                                     {countries.map(c => (
-                                        <SelectItem key={c.id} value={c.id} disabled={blocks.some(b => b.countryId === c.id)}>
+                                        <SelectItem key={c.id} value={c.id}>
                                             {c.name}
                                         </SelectItem>
                                     ))}
@@ -351,7 +345,7 @@ export function AddUniversityApplicationModal({
                             ) : (
                                 <div className="space-y-6">
                                     {blocks.map(block => (
-                                        <Card key={block.countryId} className="border-2 border-slate-100 rounded-none overflow-visible shadow-sm hover:border-primary/40 transition-all bg-white mb-8">
+                                        <Card key={block.id} className="border-2 border-slate-100 rounded-none overflow-visible shadow-sm hover:border-primary/40 transition-all bg-white mb-8">
                                             <div className="bg-slate-50 p-4 px-6 flex items-center justify-between border-b-2 border-slate-100">
                                                 <div className="flex items-center gap-3">
                                                     <Globe className="h-5 w-5 text-primary" />
@@ -359,7 +353,7 @@ export function AddUniversityApplicationModal({
                                                     <Badge variant="secondary" className="text-[11px] bg-primary/10 text-primary border-none rounded-none px-2 py-0.5">{block.rows.length} Applications</Badge>
                                                 </div>
                                                 <div className="flex items-center gap-6">
-                                                    <Select onValueChange={(val) => handleAddUniversity(block.countryId, val)}>
+                                                    <Select onValueChange={(val) => handleAddUniversity(block.id, block.countryId, val)}>
                                                         <SelectTrigger className="h-12 min-w-[400px] rounded-none bg-white border-2 border-slate-200 shadow-sm text-sm font-bold focus:ring-0">
                                                             <div className="flex items-center gap-3 text-muted-foreground">
                                                                 <Search className="h-5 w-5" />
@@ -378,7 +372,7 @@ export function AddUniversityApplicationModal({
                                                         variant="ghost"
                                                         size="icon"
                                                         className="h-10 w-10 text-muted-foreground hover:text-destructive hover:bg-destructive/5 transition-colors"
-                                                        onClick={() => handleRemoveBlock(block.countryId)}
+                                                        onClick={() => handleRemoveBlock(block.id)}
                                                     >
                                                         <X className="h-5 w-5" />
                                                     </Button>
@@ -400,7 +394,7 @@ export function AddUniversityApplicationModal({
                                                                         variant="ghost"
                                                                         size="icon"
                                                                         className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                                                                        onClick={() => removeRow(block.countryId, row.tempId)}
+                                                                        onClick={() => removeRow(block.id, row.tempId)}
                                                                     >
                                                                         <Trash2 className="h-3.5 w-3.5" />
                                                                     </Button>
@@ -411,7 +405,7 @@ export function AddUniversityApplicationModal({
                                                                         <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">Requested Course*</Label>
                                                                         <Input
                                                                             value={row.courseName}
-                                                                            onChange={(e) => updateRow(block.countryId, row.tempId, { courseName: e.target.value })}
+                                                                            onChange={(e) => updateRow(block.id, row.tempId, { courseName: e.target.value })}
                                                                             placeholder="Which course should they apply for?"
                                                                             className="h-12 text-sm rounded-none bg-slate-50/50 border-slate-200 focus-visible:ring-primary/20 placeholder:opacity-50"
                                                                         />
@@ -420,17 +414,17 @@ export function AddUniversityApplicationModal({
                                                                         <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">Intake / Session</Label>
                                                                         <Input
                                                                             value={row.intake}
-                                                                            onChange={(e) => updateRow(block.countryId, row.tempId, { intake: e.target.value })}
+                                                                            onChange={(e) => updateRow(block.id, row.tempId, { intake: e.target.value })}
                                                                             placeholder="e.g. Sep 2025"
                                                                             className="h-12 text-sm rounded-none bg-slate-50/50 border-slate-200 focus-visible:ring-primary/20 placeholder:opacity-50"
                                                                         />
                                                                     </div>
                                                                     <div className="xl:col-span-2 space-y-2.5">
                                                                         <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">Deadline</Label>
-                                                                        <Input
-                                                                            type="date"
+                                                                        <DatePicker
                                                                             value={row.deadlineDate}
-                                                                            onChange={(e) => updateRow(block.countryId, row.tempId, { deadlineDate: e.target.value })}
+                                                                            onChange={(val) => updateRow(block.id, row.tempId, { deadlineDate: val })}
+                                                                            placeholder="Select Date"
                                                                             className="h-12 text-sm rounded-none bg-slate-50/50 border-slate-200"
                                                                         />
                                                                     </div>
@@ -438,7 +432,7 @@ export function AddUniversityApplicationModal({
                                                                         <Label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground/80">Assigned Expert</Label>
                                                                         <Select
                                                                             value={row.associateId}
-                                                                            onValueChange={(val) => updateRow(block.countryId, row.tempId, { associateId: val })}
+                                                                            onValueChange={(val) => updateRow(block.id, row.tempId, { associateId: val })}
                                                                         >
                                                                             <SelectTrigger className="h-12 text-sm rounded-none bg-slate-50/50 border-slate-200">
                                                                                 <SelectValue placeholder="Assign an Associate" />
