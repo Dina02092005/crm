@@ -245,7 +245,7 @@ export default function RolesPage() {
         setPermissions(prev => prev.map(p => {
             const newActions = enabled 
                 ? Array.from(new Set([...p.actions, action]))
-                : p.actions.filter(a => a !== action);
+                : p.actions.filter((a: string) => a !== action);
             return { ...p, actions: newActions };
         }));
     };
@@ -539,13 +539,13 @@ export default function RolesPage() {
             {/* Core Creation Dialog */}
             <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
                 <DialogContent className="rounded-2xl max-w-sm p-8 flex flex-col gap-8 shadow-2xl border-0">
-                    <div className="flex flex-col gap-2">
+                    <DialogHeader className="flex flex-col gap-2">
                         <div className="h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center mb-2">
                             <Plus className="h-6 w-6 text-primary" />
                         </div>
-                        <h3 className="text-2xl font-black text-slate-900 tracking-tight">New Matrix</h3>
-                        <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">Define a unique functional role</p>
-                    </div>
+                        <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight">New Matrix</DialogTitle>
+                        <DialogDescription className="text-xs text-slate-500 font-bold uppercase tracking-widest">Define a unique functional role</DialogDescription>
+                    </DialogHeader>
 
                     <div className="space-y-4">
                         <div className="space-y-2">
@@ -585,10 +585,10 @@ export default function RolesPage() {
             <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
                 <DialogContent className="rounded-2xl max-w-md p-0 flex flex-col h-[520px] shadow-2xl overflow-hidden border-0">
                     <div className="p-8 bg-slate-50/50 border-b border-slate-100 flex flex-col gap-6">
-                        <div>
-                            <h3 className="text-xl font-black text-slate-900 tracking-tight uppercase">Staff Directory</h3>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Assign an active member to this role</p>
-                        </div>
+                        <DialogHeader>
+                            <DialogTitle className="text-xl font-black text-slate-900 tracking-tight uppercase">Staff Directory</DialogTitle>
+                            <DialogDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Assign an active member to this role</DialogDescription>
+                        </DialogHeader>
                         <div className="relative group">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within:text-primary transition-colors" />
                             <Input

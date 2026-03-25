@@ -174,7 +174,7 @@ export default function DashboardPage() {
     const router = useRouter();
     const { data: profile } = useProfile();
 
-    if (role === "ADMIN") {
+    if (["ADMIN", "SUPER_ADMIN", "MANAGER"].includes(role)) {
         return (
             <div className="px-2 py-1">
                 <AdminAnalyticsDashboard />

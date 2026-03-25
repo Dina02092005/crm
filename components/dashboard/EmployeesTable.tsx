@@ -49,7 +49,7 @@ export function EmployeesTable({ data, onUpdate, onDelete, onToggleStatus, pagin
     const [editingEmployee, setEditingEmployee] = useState<Employee | undefined>(undefined);
     const { data: session } = useSession() as any;
     const { prefixPath } = useRolePath();
-    const isAdmin = session?.user?.role === "ADMIN";
+    const isAdmin = ["ADMIN", "SUPER_ADMIN", "MANAGER"].includes(session?.user?.role);
     const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
     const bulkDeleteMutation = useBulkDeleteEmployees();
 

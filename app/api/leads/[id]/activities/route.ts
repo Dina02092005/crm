@@ -143,7 +143,7 @@ export async function DELETE(
         }
 
         // Only admins can delete activities
-        if (session.user.role !== 'ADMIN') {
+        if (!['ADMIN', 'SUPER_ADMIN'].includes(session.user.role)) {
             return NextResponse.json({ message: 'Only admins can delete activities' }, { status: 403 });
         }
 

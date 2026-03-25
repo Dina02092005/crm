@@ -147,7 +147,7 @@ export default function LeadsPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
-                    {role === "ADMIN" && <BulkUploadLeadsButton onSuccess={refetch} />}
+                    {["ADMIN", "SUPER_ADMIN", "MANAGER"].includes(role) && <BulkUploadLeadsButton onSuccess={refetch} />}
                     <Link href={prefixPath("/leads/new")}>
                         <Button className="h-10 px-4 gap-2 font-medium">
                             <Plus className="h-4 w-4" /> Add Lead

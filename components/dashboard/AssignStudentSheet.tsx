@@ -59,8 +59,8 @@ export function AssignStudentSheet({
     const [isLoadingOptions, setIsLoadingOptions] = useState(false);
     const [loadingAgentsMap, setLoadingAgentsMap] = useState<Record<string, boolean>>({});
 
-    const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "SUPER_ADMIN";
-    const isAgent = session?.user?.role === "AGENT" || session?.user?.role === "SALES_REP" || session?.user?.role === "MANAGER";
+    const isAdmin = ["ADMIN", "SUPER_ADMIN", "MANAGER"].includes(session?.user?.role);
+    const isAgent = ["AGENT", "SALES_REP"].includes(session?.user?.role);
 
     useEffect(() => {
         if (isOpen) {

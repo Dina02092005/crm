@@ -339,7 +339,7 @@ export default function StudentDetailPage() {
                                                 <Pencil className="h-4 w-4 mr-2" />
                                                 Edit Profile
                                             </Button>
-                                            {session?.user?.role === "ADMIN" && (
+                                            {["ADMIN", "SUPER_ADMIN", "MANAGER"].includes(session?.user?.role) && (
                                                 <Button
                                                     variant="ghost"
                                                     className="w-full text-destructive hover:text-destructive hover:bg-destructive/5 rounded-xl h-9 text-sm"

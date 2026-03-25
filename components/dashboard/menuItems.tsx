@@ -118,8 +118,6 @@ const Icons = {
     )
 };
 
-
-
 export interface MenuItem {
     label: string;
     icon: React.ReactNode;
@@ -132,7 +130,6 @@ export interface MenuItem {
 
 export const menuItems: MenuItem[] = [
     { label: "Dashboard", icon: Icons.Dashboard, href: "/dashboard" },
-    // { label: "My Notes", icon: <FaStickyNote />, href: "/notes", permission: { action: "VIEW", module: "NOTES" } },
     { label: "Call Center", icon: Icons.CallCenter, href: "/call-center", roles: ["AGENT", "COUNSELOR"] },
     { label: "Leads", icon: Icons.Leads, href: "/leads", roles: ["ADMIN", "MANAGER", "AGENT", "COUNSELOR", "SALES_REP", "SUPPORT_AGENT"], permission: { action: "VIEW", module: "LEADS" } },
     { label: "Students", icon: Icons.Students, href: "/students", roles: ["ADMIN", "MANAGER", "AGENT", "COUNSELOR", "SALES_REP", "SUPPORT_AGENT"], permission: { action: "VIEW", module: "STUDENTS" } },
@@ -161,6 +158,39 @@ export const menuItems: MenuItem[] = [
         roles: ["STUDENT", "AGENT", "COUNSELOR", "SUPER_ADMIN", "ADMIN"]
     },
     {
+        label: "Agents",
+        icon: Icons.Agents,
+        href: "/agents",
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],
+        permission: { action: "VIEW", module: "AGENTS" }
+    },
+    {
+        label: "Counselors",
+        icon: Icons.Counselors,
+        href: "/employees",
+        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "AGENT"],
+        permission: { action: "VIEW", module: "COUNSELORS" }
+    },
+    {
+        label: "Master Data",
+        icon: Icons.Master,
+        roles: ["SUPER_ADMIN", "ADMIN"],
+        submenu: [
+            { label: "Countries", href: "/master/countries", permission: { action: "VIEW", module: "MASTER" } },
+            { label: "Universities", href: "/master/universities", permission: { action: "VIEW", module: "MASTER" } },
+            { label: "Qualifications", href: "/master/qualifications", permission: { action: "VIEW", module: "MASTER" } },
+            { label: "Websites", href: "/master/websites", permission: { action: "VIEW", module: "MASTER" } },
+            { label: "Checklist", href: "/master/checklist", permission: { action: "VIEW", module: "MASTER" } },
+        ]
+    },
+    {
+        label: "Roles & Permissions",
+        icon: Icons.Roles,
+        href: "/roles",
+        roles: ["SUPER_ADMIN", "ADMIN"],
+        permission: { action: "VIEW", module: "ROLES" }
+    },
+    {
         label: "File Manager",
         icon: Icons.FileManager,
         href: "/file-manager",
@@ -168,38 +198,14 @@ export const menuItems: MenuItem[] = [
         permission: { action: "VIEW", module: "FILE_MANAGER" }
     },
     {
-        label: "Master",
-        icon: Icons.Master,
-        roles: ["ADMIN"],
-        permission: { action: "VIEW", module: "MASTER" },
-        submenu: [
-            { label: "Checklist", href: "/master/checklist", permission: { action: "VIEW", module: "MASTER" } },
-            { label: "Countries", href: "/master/countries", permission: { action: "VIEW", module: "MASTER" } },
-            { label: "Universities", href: "/master/universities", permission: { action: "VIEW", module: "MASTER" } },
-            { label: "Qualifications", href: "/master/qualifications", permission: { action: "VIEW", module: "MASTER" } },
-            { label: "Courses", href: "/master/courses", permission: { action: "VIEW", module: "MASTER" } },
-            { label: "Websites", href: "/master/websites", permission: { action: "VIEW", module: "MASTER" } },
-        ]
-    },
-    { label: "My Profile", icon: Icons.Profile, href: "/profile", roles: ["STUDENT"] },
-    { label: "My Documents", icon: Icons.Documents, href: "/profile?tab=documents", roles: ["STUDENT"] },
-    {
-        label: "Agents",
-        icon: Icons.Agents,
-        roles: ["ADMIN"], permission: { action: "VIEW", module: "AGENTS" },
-        submenu: [
-            { label: "Manage Agents", href: "/agents" },
-            { label: "Registration Requests", href: "/agents/requests" },
-        ]
-    },
-    { label: "Counselors", icon: Icons.Counselors, href: "/employees", roles: ["ADMIN", "AGENT"], permission: { action: "VIEW", module: "COUNSELORS" } },
-    { label: "Reports", icon: Icons.Reports, href: "/reports", roles: ["ADMIN", "MANAGER", "SUPER_ADMIN"], permission: { action: "VIEW", module: "REPORTS" } },
-    {
-        label: "Roles & Permissions",
+        label: "Admin",
         icon: Icons.Roles,
-        href: "/roles",
-        roles: ["ADMIN"],
-        permission: { action: "VIEW", module: "ROLES" }
+        roles: ["SUPER_ADMIN", "ADMIN"],
+        submenu: [
+            { label: "Manage Admins", href: "/admin/admins", permission: { action: "VIEW", module: "USERS" } },
+            { label: "Manage Managers", href: "/admin/managers", permission: { action: "VIEW", module: "USERS" } },
+            { label: "Control Panel", href: "/admin/control-panel", permission: { action: "EDIT", module: "SETTINGS" } },
+        ]
     },
+    { label: "Reports", icon: Icons.Reports, href: "/reports", roles: ["ADMIN", "MANAGER", "SUPER_ADMIN"], permission: { action: "VIEW", module: "REPORTS" } },
 ];
-

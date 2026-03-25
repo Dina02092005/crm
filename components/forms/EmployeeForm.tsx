@@ -72,7 +72,7 @@ export default function EmployeeForm({ employee, onSuccess, formId, defaultRole 
     // Fetch staff members who can have counselors reporting to them
     const { data: managersData } = useEmployees("active", 1, 100, ""); // Will filter manually below to be safe or use query params if API supports multiple roles
     const availableManagers = managersData?.employees?.filter((emp: any) =>
-        ["AGENT", "SALES_REP", "MANAGER", "ADMIN"].includes(emp.role)
+        ["AGENT", "SALES_REP", "MANAGER", "ADMIN", "SUPER_ADMIN"].includes(emp.role)
     ) || [];
 
 
@@ -81,7 +81,8 @@ export default function EmployeeForm({ employee, onSuccess, formId, defaultRole 
     const inferredFirstName = nameParts[0] || '';
     const inferredLastName = nameParts.slice(1).join(' ') || '';
 
-    const profile = employee?.role === 'AGENT' ? (employee as any).agentProfile : (employee as any).counselorProfile;
+    const profile = employee?.role === 'AGENT' ? (employee as any)?.agentProfile : (employee as any)?.counselorProfile;
+    const counselorProfile = (employee as any)?.counselorProfile;
 
     const form = useForm({
         defaultValues: {
@@ -89,17 +90,17 @@ export default function EmployeeForm({ employee, onSuccess, formId, defaultRole 
             email: employee?.email || '',
             firstName: employee?.firstName || inferredFirstName,
             lastName: employee?.lastName || inferredLastName,
-            department: employee?.department || (employee as any).counselorProfile?.department || '',
-            designation: employee?.designation || (employee as any).counselorProfile?.designation || '',
-            joiningDate: (employee?.joiningDate || (employee as any).counselorProfile?.joiningDate)
-                ? new Date(employee?.joiningDate || (employee as any).counselorProfile?.joiningDate).toISOString().split('T')[0]
+            department: employee?.department || counselorProfile?.department || '',
+            designation: employee?.designation || counselorProfile?.designation || '',
+            joiningDate: (employee?.joiningDate || counselorProfile?.joiningDate)
+                ? new Date(employee?.joiningDate || counselorProfile?.joiningDate).toISOString().split('T')[0]
                 : '',
-            salary: employee?.salary || (employee as any).counselorProfile?.salary || 0,
+            salary: employee?.salary || counselorProfile?.salary || 0,
             imageUrl: employee?.imageUrl || null,
             password: '',
             role: employee?.role || defaultRole || 'EMPLOYEE',
             roleId: (employee as any)?.roleId || '',
-            agentId: (employee as any)?.counselorProfile?.agentId || '',
+            agentId: counselorProfile?.agentId || '',
             companyName: (employee as any)?.agentProfile?.companyName || '',
             address: (employee as any)?.agentProfile?.address || '',
             commission: (employee as any)?.agentProfile?.commission || 0,
@@ -262,7 +263,7 @@ export default function EmployeeForm({ employee, onSuccess, formId, defaultRole 
                     />
                 </div>
 
-                {(session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN') && (
+                {["ADMIN", "SUPER_ADMIN", "MANAGER"].includes(session?.user?.role) && (
                     <div className="grid grid-cols-2 gap-4">
                         <form.Field
                             name="role"
