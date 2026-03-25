@@ -116,17 +116,20 @@ export function VisaApplicationsTable({
         onSelectionChange(newSelected);
     };
 
-    const getStatusVariant = (status: VisaStatus) => {
+    const getStatusVariant = (status: VisaStatus | string) => {
         const variants: Record<string, string> = {
             VISA_GRANTED: "bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800",
             VISA_APPROVED: "bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800",
+            ENROLLED: "bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800",
             VISA_REFUSED: "bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800",
             VISA_REJECTED: "bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800",
+            VISA_WITHDRAWN: "bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800",
             VISA_APPLICATION_SUBMITTED: "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800",
+            PENDING: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700",
             UNDER_REVIEW: "bg-purple-50 text-purple-600 border-purple-100 dark:bg-purple-900/30 dark:text-purple-400 dark:border-purple-800",
             DOCUMENTS_PENDING: "bg-orange-50 text-orange-600 border-orange-100 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800",
         };
-        return variants[status] || "bg-slate-50 text-slate-500 border-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700";
+        return variants[status] || "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700";
     };
 
     const handleStatusChange = async (visaId: string, newStatus: string) => {
@@ -158,7 +161,7 @@ export function VisaApplicationsTable({
     };
 
     return (
-        <div className="relative border rounded-xl overflow-hidden bg-card shadow-sm">
+        <div className="relative border dark:border-white/5 rounded-xl overflow-hidden bg-white dark:bg-transparent shadow-sm">
             <Table>
                 <TableHeader className="bg-muted/30">
                     <TableRow>

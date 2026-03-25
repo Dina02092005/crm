@@ -216,10 +216,10 @@ export function LeadsTable({
     };
 
     return (
-        <div className="relative border rounded-md overflow-hidden bg-card">
+        <div className="relative border dark:border-white/5 rounded-md overflow-hidden bg-white dark:bg-transparent shadow-sm">
 
             <Table>
-                <TableHeader className="bg-muted/30">
+                <TableHeader className="bg-muted/30 dark:bg-white/5">
                     <TableRow>
                         <TableHead className="w-12 px-4 border-r">
                             <Checkbox 
@@ -239,7 +239,7 @@ export function LeadsTable({
                     {data.map((lead) => (
                         <TableRow 
                             key={lead.id} 
-                            className="group cursor-pointer hover:bg-muted/30 border-b last:border-0"
+                            className="group cursor-pointer hover:bg-muted/30 dark:hover:bg-white/5 transition-colors border-b last:border-0"
                             onClick={(e) => {
                                 // If the click landed on an interactive element (button, checkbox, select), don't navigate
                                 const target = e.target as HTMLElement;
@@ -257,7 +257,7 @@ export function LeadsTable({
                             </TableCell>
                             <TableCell>
                                 <div className="flex items-center gap-3">
-                                    <Avatar className="h-8 w-8 rounded-md bg-muted border">
+                                    <Avatar className="h-8 w-8 rounded-md bg-muted dark:bg-white/5 border dark:border-white/5">
                                         <AvatarFallback className="rounded-md text-[10px] font-bold">
                                             {lead.name.charAt(0).toUpperCase()}
                                         </AvatarFallback>
@@ -274,11 +274,11 @@ export function LeadsTable({
                                     onValueChange={(v) => handleStatusChange(lead.id, v)}
                                 >
                                     <SelectTrigger className={cn(
-                                        "h-7 w-[140px] px-2 py-0 text-[10px] font-bold uppercase border bg-background hover:bg-muted/50 transition-colors focus:ring-1 focus:ring-primary/20 select-trigger",
-                                        getStatusVariant(lead.status) === "outline" && "text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800",
-                                        getStatusVariant(lead.status) === "secondary" && "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30",
-                                        getStatusVariant(lead.status) === "default" && "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/30",
-                                        getStatusVariant(lead.status) === "destructive" && "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30"
+                                        "h-7 w-[140px] px-2 py-0 text-[10px] font-bold uppercase border-0 dark:border dark:border-white/10 bg-transparent hover:bg-muted/50 dark:hover:bg-white/5 transition-colors focus:ring-1 focus:ring-primary/20 select-trigger",
+                                        getStatusVariant(lead.status) === "outline" && "text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-transparent",
+                                        getStatusVariant(lead.status) === "secondary" && "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-900/30",
+                                        getStatusVariant(lead.status) === "default" && "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/30",
+                                        getStatusVariant(lead.status) === "destructive" && "text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-900/30"
                                     )}>
                                         <SelectValue>
                                             <Badge variant={getStatusVariant(lead.status)} className="capitalize px-2 py-0 text-[10px] font-bold border-0 bg-transparent shadow-none pointer-events-none">
@@ -372,7 +372,7 @@ export function LeadsTable({
             </Table>
 
             {pagination && (
-                <div className="flex items-center justify-between px-4 py-3 border-t bg-muted/20 min-h-[56px]">
+                <div className="flex items-center justify-between px-4 py-3 border-t dark:border-white/5 bg-muted/20 dark:bg-white/5 min-h-[56px]">
                     <div className="flex items-center gap-6">
                         <div className="text-[11px] font-black text-muted-foreground uppercase tracking-widest leading-none">
                             Page {pagination.page} <span className="text-muted-foreground/20">/</span> {pagination.totalPages}
@@ -383,7 +383,7 @@ export function LeadsTable({
                                 value={pagination.pageSize.toString()}
                                 onValueChange={(v) => pagination.onPageSizeChange(Number(v))}
                             >
-                                <SelectTrigger className="h-7 w-[70px] text-[10px] font-bold border-muted/30 bg-background focus:ring-1 focus:ring-primary/20">
+                                <SelectTrigger className="h-7 w-[70px] text-[10px] font-bold border-muted/30 dark:border-white/10 bg-white dark:bg-transparent focus:ring-1 focus:ring-primary/20">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent className="min-w-[70px]">
@@ -400,7 +400,7 @@ export function LeadsTable({
                         <Button
                             variant="outline"
                             size="sm"
-                            className="h-8 text-[10px] font-black uppercase px-4 border-muted/30 hover:bg-muted/50 transition-colors"
+                            className="h-8 text-[10px] font-black uppercase px-4 border-muted/30 dark:border-white/10 bg-white dark:bg-transparent hover:bg-muted/50 dark:hover:bg-white/5 transition-colors"
                             disabled={pagination.page <= 1}
                             onClick={() => pagination.onPageChange(pagination.page - 1)}
                         >
@@ -409,7 +409,7 @@ export function LeadsTable({
                         <Button
                             variant="outline"
                             size="sm"
-                            className="h-8 text-[10px] font-black uppercase px-4 border-muted/30 hover:bg-muted/50 transition-colors"
+                            className="h-8 text-[10px] font-black uppercase px-4 border-muted/30 dark:border-white/10 bg-white dark:bg-transparent hover:bg-muted/50 dark:hover:bg-white/5 transition-colors"
                             disabled={pagination.page >= pagination.totalPages}
                             onClick={() => pagination.onPageChange(pagination.page + 1)}
                         >

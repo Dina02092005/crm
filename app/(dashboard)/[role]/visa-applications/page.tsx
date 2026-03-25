@@ -127,16 +127,16 @@ function VisaApplicationsPageContent({ role }: { role: string }) {
     }
 
     return (
-        <div className="flex flex-col gap-3 p-3 sm:p-4 bg-slate-50/50 min-h-screen">
+        <div className="flex flex-col gap-3 p-3 sm:p-4 bg-slate-50/50 dark:bg-transparent min-h-screen">
             {/* Bulk Actions Toolbar */}
-            <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-3xl border border-slate-100 shadow-sm mb-2">
+            <div className="flex flex-col md:flex-row gap-4 mb-0 bg-white dark:bg-transparent p-4 rounded-xl border border-slate-200 dark:border-white/5 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)]">
                 <div className="flex items-center gap-3">
                      <div className="h-10 w-10 bg-indigo-50 rounded-2xl flex items-center justify-center">
                         <Plane className="h-5 w-5 text-indigo-600" />
                      </div>
                      <div>
-                        <h2 className="text-lg font-bold text-slate-800 tracking-tight">Visa Applications</h2>
-                        <p className="text-[11px] text-slate-500 font-medium uppercase tracking-wider">Total {pagination.total} Records</p>
+                        <h2 className="text-lg font-bold text-foreground tracking-tight">Visa Applications</h2>
+                        <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Total {pagination.total} Records</p>
                      </div>
                 </div>
 
@@ -200,7 +200,7 @@ function VisaApplicationsPageContent({ role }: { role: string }) {
                 </div>
             </div>
 
-            <Card className="border-0 rounded-3xl overflow-hidden bg-card shadow-sm">
+            <Card className="border-0 dark:border dark:border-white/5 rounded-3xl overflow-hidden bg-white dark:bg-transparent shadow-sm dark:shadow-none">
                 <CardContent className="p-4">
                     {/* Integrated Header Row */}
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
@@ -215,7 +215,7 @@ function VisaApplicationsPageContent({ role }: { role: string }) {
                         </div>
 
                         <div className="flex items-center gap-3">
-                            <Badge variant="outline" className="h-9 px-4 rounded-xl border-slate-200 bg-white/50 font-bold text-slate-600 gap-2">
+                            <Badge variant="outline" className="h-9 px-4 rounded-xl border-slate-200 dark:border-white/10 bg-white/50 dark:bg-transparent font-bold text-slate-600 dark:text-gray-300 gap-2">
                                 <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                                 {pagination.total} Records
                             </Badge>
@@ -242,7 +242,7 @@ function VisaApplicationsPageContent({ role }: { role: string }) {
                                     px-3 py-1.5 rounded-xl flex items-center gap-2 transition-all border
                                     ${status === f.id
                                         ? `${f.bg} border-transparent shadow-sm ring-1 ring-inset ${f.color.replace('text-', 'ring-')}/30`
-                                        : "bg-white hover:bg-slate-50 text-slate-500 border-slate-200"
+                                        : "bg-white dark:bg-transparent hover:bg-slate-50 dark:hover:bg-white/5 text-slate-500 dark:text-gray-400 border-slate-200 dark:border-white/10"
                                     }
                                 `}
                             >

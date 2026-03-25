@@ -120,12 +120,16 @@ export function StudentsTable({
         const variants: Record<string, string> = {
             NEW: "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800",
             UNDER_REVIEW: "bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-800",
+            COUNSELLING_SCHEDULED: "bg-indigo-50 text-indigo-600 border-indigo-100 dark:bg-indigo-900/30 dark:text-indigo-400 dark:border-indigo-800",
+            COUNSELLING_COMPLETED: "bg-sky-50 text-sky-600 border-sky-100 dark:bg-sky-900/30 dark:text-sky-400 dark:border-sky-800",
+            DOCUMENT_PENDING: "bg-orange-50 text-orange-600 border-orange-100 dark:bg-orange-900/30 dark:text-orange-400 dark:border-orange-800",
             DOCUMENT_VERIFIED: "bg-emerald-50 text-emerald-600 border-emerald-100 dark:bg-emerald-900/30 dark:text-emerald-400 dark:border-emerald-800",
             INTERESTED: "bg-green-50 text-green-600 border-green-100 dark:bg-green-900/30 dark:text-green-400 dark:border-green-800",
+            NOT_INTERESTED: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-transparent dark:text-slate-400 dark:border-white/10",
             NOT_ELIGIBLE: "bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800",
-            ON_HOLD: "bg-slate-50 text-slate-600 border-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+            ON_HOLD: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-transparent dark:text-slate-300 dark:border-white/10",
         };
-        return variants[status] || "bg-slate-50 text-slate-500 border-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700";
+        return variants[status] || "bg-slate-100 text-slate-600 border-slate-200 dark:bg-transparent dark:text-slate-400 dark:border-white/10";
     };
 
     const handleStatusChange = async (studentId: string, newStatus: string) => {
@@ -158,7 +162,7 @@ export function StudentsTable({
     };
 
     return (
-        <div className="relative border rounded-xl overflow-hidden bg-card shadow-sm">
+        <div className="relative border dark:border-white/5 rounded-xl overflow-hidden bg-white dark:bg-transparent shadow-sm">
             {/* The overlay is now partially redundant if we have the top toolbar, but keeping it for now as a double-check */}
             {activeSelectedIds.length > 0 && (
                 <div className="absolute top-0 inset-x-0 h-12 bg-primary text-primary-foreground flex items-center justify-between px-4 z-20">
@@ -170,7 +174,7 @@ export function StudentsTable({
                 </div>
             )}
             <Table>
-                <TableHeader className="bg-muted/30">
+                <TableHeader className="bg-muted/30 dark:bg-white/5">
                     <TableRow>
                         <TableHead className="w-12 px-4 border-r dark:border-slate-800">
                             <Checkbox 
@@ -190,7 +194,7 @@ export function StudentsTable({
                     {data.map((student) => (
                         <TableRow 
                             key={student.id} 
-                            className="group cursor-pointer hover:bg-muted/30 transition-colors border-b last:border-0"
+                            className="group cursor-pointer hover:bg-muted/30 dark:hover:bg-white/5 transition-colors border-b last:border-0"
                             onClick={(e) => {
                                 const target = e.target as HTMLElement;
                                 if (target.closest('button, [role="combobox"], [role="checkbox"], .select-trigger, [role="menuitem"]')) {
@@ -215,7 +219,7 @@ export function StudentsTable({
                                     <div className="flex flex-col min-w-0">
                                         <span className="font-bold text-sm text-foreground truncate uppercase tracking-tight">{student.name || 'Unknown Student'}</span>
                                         <div className="flex items-center gap-2 mt-0.5">
-                                            <Badge variant="outline" className="text-[9px] font-black uppercase py-0 px-1.5 border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400">
+                                            <Badge variant="outline" className="text-[9px] font-black uppercase py-0 px-1.5 border-slate-200 dark:border-white/5 text-slate-500 dark:text-slate-500">
                                                 ID: {student.id.slice(-6).toUpperCase()}
                                             </Badge>
                                             {student.lead?.source && (
@@ -243,7 +247,7 @@ export function StudentsTable({
                                     onValueChange={(v) => handleStatusChange(student.id, v)}
                                 >
                                     <SelectTrigger className={cn(
-                                        "h-8 w-[160px] px-3 py-0 text-[10px] font-black uppercase border-0 shadow-none transition-all rounded-lg focus:ring-1 focus:ring-primary/20",
+                                        "h-8 w-[160px] px-3 py-0 text-[10px] font-black uppercase border-0 dark:border dark:border-white/10 shadow-none transition-all rounded-lg focus:ring-1 focus:ring-primary/20",
                                         getStatusVariant(student.status || "NEW")
                                     )}>
                                         <SelectValue />
@@ -343,7 +347,7 @@ export function StudentsTable({
             </Table>
 
             {pagination && (
-                <div className="flex items-center justify-between px-6 py-4 border-t bg-muted/20 min-h-[64px]">
+                <div className="flex items-center justify-between px-6 py-4 border-t dark:border-white/5 bg-muted/20 dark:bg-white/5 min-h-[64px]">
                     <div className="flex items-center gap-8">
                         <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] leading-none">
                             Page {pagination.page} <span className="text-muted-foreground/20 mx-2">/</span> {pagination.totalPages}
@@ -354,7 +358,7 @@ export function StudentsTable({
                                 value={pagination.pageSize.toString()}
                                 onValueChange={(v) => pagination.onPageSizeChange(Number(v))}
                             >
-                                <SelectTrigger className="h-8 w-[72px] text-[10px] font-black border-border bg-background shadow-sm focus:ring-1 focus:ring-primary/20 rounded-lg">
+                                <SelectTrigger className="h-8 w-[72px] text-[10px] font-black border-border dark:border-white/10 bg-white dark:bg-transparent shadow-sm focus:ring-1 focus:ring-primary/20 rounded-lg">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent className="min-w-[72px] rounded-xl shadow-2xl border-border">
@@ -371,7 +375,7 @@ export function StudentsTable({
                         <Button
                             variant="outline"
                             size="sm"
-                            className="h-9 px-5 text-[10px] font-black uppercase tracking-widest border-border bg-background hover:bg-muted transition-all rounded-xl"
+                            className="h-9 px-5 text-[10px] font-black uppercase tracking-widest border-border dark:border-white/10 bg-white dark:bg-transparent hover:bg-muted dark:hover:bg-white/5 transition-all rounded-xl"
                             disabled={pagination.page <= 1}
                             onClick={() => pagination.onPageChange(pagination.page - 1)}
                         >
@@ -380,7 +384,7 @@ export function StudentsTable({
                         <Button
                             variant="outline"
                             size="sm"
-                            className="h-9 px-5 text-[10px] font-black uppercase tracking-widest border-border bg-background hover:bg-muted transition-all rounded-xl"
+                            className="h-9 px-5 text-[10px] font-black uppercase tracking-widest border-border dark:border-white/10 bg-white dark:bg-transparent hover:bg-muted dark:hover:bg-white/5 transition-all rounded-xl"
                             disabled={pagination.page >= pagination.totalPages}
                             onClick={() => pagination.onPageChange(pagination.page + 1)}
                         >

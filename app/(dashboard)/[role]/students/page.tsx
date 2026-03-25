@@ -35,6 +35,8 @@ import { useStudents } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useRolePath } from "@/hooks/use-role-path";
 import { useCountries, useCounselors } from "@/hooks/use-masters";
+import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
 
 export default function StudentsPage() {
     const router = useRouter();
@@ -134,97 +136,86 @@ export default function StudentsPage() {
         }
     };
 
-    if (isLoading) {
-        return (
-            <div className="p-10 text-center">
-                <div className="animate-pulse space-y-4">
-                    <div className="h-10 bg-gray-200 rounded w-1/4 mx-auto"></div>
-                    <div className="h-64 bg-gray-200 rounded max-w-5xl mx-auto"></div>
+    return (
+        <div className="flex flex-col gap-3 p-3 sm:p-4 bg-slate-50/50 dark:bg-transparent min-h-screen">
+            {/* Header Section - Detached */}
+            <div className="flex flex-col md:flex-row gap-4 mb-0 bg-white dark:bg-transparent p-4 rounded-xl border border-slate-200 dark:border-white/5 shadow-[0_2px_10px_-3px_rgba(6,81,237,0.1)]">
+                <div className="flex items-center gap-3">
+                     <div className="h-10 w-10 bg-indigo-50 rounded-2xl flex items-center justify-center">
+                        <Users className="h-5 w-5 text-indigo-600" />
+                     </div>
+                     <div>
+                        <h2 className="text-lg font-bold text-foreground tracking-tight">Student Management</h2>
+                        <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Total {pagination.total} Students</p>
+                     </div>
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExportExcel}
+                        disabled={isExporting}
+                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold"
+                    >
+                        <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
+                        {isExporting ? "Exporting..." : "Excel"}
+                    </Button>
+
+                    <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowAssignModal(true)}
+                        disabled={selectedIds.length === 0}
+                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold disabled:opacity-50"
+                    >
+                        <UserPlus className="h-4 w-4 text-blue-600" />
+                        Assign
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowEmailModal(true)}
+                        disabled={selectedIds.length === 0}
+                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold disabled:opacity-50"
+                    >
+                        <Mail className="h-4 w-4 text-amber-600" />
+                        Email
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowWhatsappModal(true)}
+                        disabled={selectedIds.length === 0}
+                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold disabled:opacity-50"
+                    >
+                        <MessageCircle className="h-4 w-4 text-green-600" />
+                        Whatsapp
+                    </Button>
+
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowBulkDeleteConfirm(true)}
+                        disabled={selectedIds.length === 0}
+                        className="h-9 rounded-xl border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 gap-2 text-[12px] font-bold disabled:opacity-50"
+                    >
+                        <Trash2 className="h-4 w-4 text-red-600" />
+                        Delete
+                    </Button>
                 </div>
             </div>
-        );
-    }
 
-    return (
-        <div className="flex flex-col gap-2 p-3 sm:p-4">
-            <Card className="border-0 rounded-3xl overflow-hidden bg-card">
+            <Card className="border-0 dark:border dark:border-white/5 rounded-3xl overflow-hidden bg-white dark:bg-transparent shadow-sm dark:shadow-none">
                 <CardContent className="p-4">
-                    {/* Bulk Actions Toolbar */}
-                    <div className="flex flex-wrap items-center justify-between mb-6 gap-4 bg-muted/30 dark:bg-slate-900/40 backdrop-blur-sm p-4 rounded-2xl border border-border/50 shadow-sm">
-                        <div className="flex items-center gap-3">
-                             <div className="h-11 w-11 bg-primary/10 dark:bg-primary/20 rounded-xl flex items-center justify-center shadow-inner">
-                                <Users className="h-5 w-5 text-primary" />
-                             </div>
-                             <div>
-                                <h2 className="text-lg font-bold text-foreground tracking-tight">Student Management</h2>
-                                <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-widest opacity-70">Total {pagination.total} Students</p>
-                             </div>
-                        </div>
-
-                        <div className="flex flex-wrap items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleExportExcel}
-                                disabled={isExporting}
-                                className="h-9 rounded-xl border-border bg-background/50 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 gap-2 text-[11px] font-black uppercase tracking-wider transition-all shadow-sm"
-                            >
-                                <FileSpreadsheet className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                                {isExporting ? "Exporting..." : "Excel"}
-                            </Button>
-
-                            <div className="h-6 w-px bg-border/60 mx-1 hidden sm:block" />
-
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setShowAssignModal(true)}
-                                disabled={selectedIds.length === 0}
-                                className="h-9 rounded-xl border-border bg-background/50 hover:bg-blue-50 dark:hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-400 gap-2 text-[11px] font-black uppercase tracking-wider transition-all disabled:opacity-30 shadow-sm"
-                            >
-                                <UserPlus className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                                Assign
-                            </Button>
-
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setShowEmailModal(true)}
-                                disabled={selectedIds.length === 0}
-                                className="h-9 rounded-xl border-border bg-background/50 hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-400 gap-2 text-[11px] font-black uppercase tracking-wider transition-all disabled:opacity-30 shadow-sm"
-                            >
-                                <Mail className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                                Email
-                            </Button>
-
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setShowWhatsappModal(true)}
-                                disabled={selectedIds.length === 0}
-                                className="h-9 rounded-xl border-border bg-background/50 hover:bg-green-50 dark:hover:bg-green-500/10 hover:text-green-600 dark:hover:text-green-400 gap-2 text-[11px] font-black uppercase tracking-wider transition-all disabled:opacity-30 shadow-sm"
-                            >
-                                <MessageCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-                                Whatsapp
-                            </Button>
-
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setShowBulkDeleteConfirm(true)}
-                                disabled={selectedIds.length === 0}
-                                className="h-9 rounded-xl border-border bg-background/50 hover:bg-red-50 dark:hover:bg-red-500/10 hover:text-red-600 dark:hover:text-red-400 gap-2 text-[11px] font-black uppercase tracking-wider transition-all disabled:opacity-30 shadow-sm hover:border-red-200 dark:hover:border-red-500/30"
-                            >
-                                <Trash2 className="h-4 w-4 text-red-600 dark:text-red-400" />
-                                Delete
-                            </Button>
-                        </div>
-                    </div>
-
-                    {/* Integrated Search and Action Row */}
-                    <div className="flex flex-row items-center justify-between mb-4 gap-4">
+                    {/* Integrated Search Row */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
                         <div className="relative max-w-sm w-full">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50" />
+                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground/40" />
                             <Input
                                 placeholder="Search students..."
                                 value={search}
@@ -232,23 +223,28 @@ export default function StudentsPage() {
                                 className="pl-9 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-9 text-[13px] placeholder:text-muted-foreground/40 font-sans w-full"
                             />
                         </div>
-                        <Button
-                            onClick={() => router.push(prefixPath("/addstudent"))}
-                            className="bg-primary hover:bg-primary/90 text-white rounded-xl h-9 px-6 transition-colors shadow-sm font-medium"
-                        >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add Student
-                        </Button>
+
+                        <div className="flex items-center gap-3">
+                             <Badge variant="outline" className="h-9 px-4 rounded-xl border-slate-200 dark:border-white/10 bg-white/50 dark:bg-transparent font-bold text-slate-600 dark:text-gray-300 gap-2">
+                                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                                {pagination.total} Records
+                            </Badge>
+                             <Link href={prefixPath("/students/new")}>
+                                <Button className="h-9 px-4 gap-2 font-bold text-[12px] rounded-xl shadow-md">
+                                    <Plus className="h-4 w-4" /> Add Student
+                                </Button>
+                            </Link>
+                        </div>
                     </div>
 
                     {/* Advanced Filters */}
                     <div className="flex flex-wrap items-center gap-3 mb-6">
                         <div className="w-full sm:w-[150px]">
                             <Select value={status} onValueChange={setStatus}>
-                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 border-0 focus:ring-0">
+                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 dark:bg-transparent border-0 dark:border dark:border-white/10 shadow-sm focus:ring-0">
                                     <SelectValue placeholder="Status" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="rounded-xl border-border dark:bg-slate-900">
                                     <SelectItem value="ALL">All Status</SelectItem>
                                     <SelectItem value="PROSPECT">Prospect</SelectItem>
                                     <SelectItem value="APPLICANT">Applicant</SelectItem>
@@ -259,10 +255,10 @@ export default function StudentsPage() {
 
                         <div className="w-full sm:w-[150px]">
                             <Select value={onboardedBy} onValueChange={setOnboardedBy}>
-                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 border-0 focus:ring-0">
+                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 dark:bg-transparent border-0 dark:border dark:border-white/10 shadow-sm focus:ring-0">
                                     <SelectValue placeholder="Onboarded By" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="rounded-xl border-border dark:bg-slate-900">
                                     <SelectItem value="ALL">All Staff</SelectItem>
                                     {counselors?.map((c: any) => (
                                         <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
@@ -273,10 +269,10 @@ export default function StudentsPage() {
 
                         <div className="w-full sm:w-[150px]">
                             <Select value={interestedCountry} onValueChange={setInterestedCountry}>
-                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 border-0 focus:ring-0">
+                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 dark:bg-transparent border-0 dark:border dark:border-white/10 shadow-sm focus:ring-0">
                                     <SelectValue placeholder="Country" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="rounded-xl border-border dark:bg-slate-900">
                                     <SelectItem value="ALL">All Countries</SelectItem>
                                     {countries?.countries?.map((c: any) => (
                                         <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
@@ -287,10 +283,10 @@ export default function StudentsPage() {
 
                         <div className="w-full sm:w-[150px]">
                             <Select value={intake} onValueChange={setIntake}>
-                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 border-0 focus:ring-0">
+                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 dark:bg-transparent border-0 dark:border dark:border-white/10 shadow-sm focus:ring-0">
                                     <SelectValue placeholder="Intake" />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="rounded-xl border-border dark:bg-slate-900">
                                     <SelectItem value="ALL">All Intakes</SelectItem>
                                     {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map(m => (
                                         <SelectItem key={m} value={m}>{m} 2024/25</SelectItem>
@@ -316,23 +312,30 @@ export default function StudentsPage() {
                         )}
                     </div>
 
-                    <StudentsTable
-                        data={students}
-                        onUpdate={refetch}
-                        onDelete={handleDeleteStudent}
-                        selectedIds={selectedIds}
-                        onSelectionChange={setSelectedIds}
-                        pagination={{
-                            page: pagination.page,
-                            totalPages: pagination.totalPages,
-                            pageSize: limit,
-                            onPageChange: setPage,
-                            onPageSizeChange: (newLimit) => {
-                                setLimit(newLimit);
-                                setPage(1);
-                            }
-                        }}
-                    />
+                    {isLoading && page === 1 ? (
+                        <div className="space-y-4 p-4">
+                            <div className="h-10 bg-slate-50 dark:bg-white/5 animate-pulse rounded-xl w-full" />
+                            <div className="h-40 bg-slate-50 dark:bg-white/5 animate-pulse rounded-xl w-full" />
+                        </div>
+                    ) : (
+                        <StudentsTable
+                            data={students}
+                            onUpdate={refetch}
+                            onDelete={handleDeleteStudent}
+                            selectedIds={selectedIds}
+                            onSelectionChange={setSelectedIds}
+                            pagination={{
+                                page: pagination.page,
+                                totalPages: pagination.totalPages,
+                                pageSize: limit,
+                                onPageChange: setPage,
+                                onPageSizeChange: (newLimit) => {
+                                    setLimit(newLimit);
+                                    setPage(1);
+                                }
+                            }}
+                        />
+                    )}
                 </CardContent>
             </Card>
 
@@ -361,11 +364,10 @@ export default function StudentsPage() {
             <WhatsappMessageModal
                 isOpen={showWhatsappModal}
                 onClose={() => setShowWhatsappModal(false)}
-                selectedStudents={students.filter((s: any) => selectedIds.includes(s.id)).map((s: any) => ({
+                selectedLeads={students.filter((s: any) => selectedIds.includes(s.id)).map((s: any) => ({
                     id: s.id,
                     name: s.name,
-                    phone: s.phone,
-                    leadId: s.leadId
+                    phone: s.phone || ""
                 }))}
                 apiEndpoint="/api/applications/whatsapp"
             />

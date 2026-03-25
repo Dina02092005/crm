@@ -131,7 +131,7 @@ export function ApplicationsTable({
             DEFERRED: "bg-pink-50 text-pink-600 border-pink-100 dark:bg-pink-900/30 dark:text-pink-400 dark:border-pink-800",
             REJECTED: "bg-rose-50 text-rose-600 border-rose-100 dark:bg-rose-900/30 dark:text-rose-400 dark:border-rose-800",
         };
-        return variants[status] || "bg-slate-50 text-slate-500 border-slate-100 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700";
+        return variants[status] || "bg-slate-50 text-slate-500 border-slate-100 dark:bg-transparent dark:text-slate-400 dark:border-white/10";
     };
 
     const handleStatusChange = async (appId: string, newStatus: string) => {
@@ -227,7 +227,7 @@ export function ApplicationsTable({
     };
 
     return (
-        <div className="relative border rounded-xl overflow-hidden bg-card shadow-sm">
+        <div className="relative border dark:border-white/5 rounded-xl overflow-hidden bg-white dark:bg-transparent shadow-sm">
             {activeSelectedIds.size > 0 && (
                 <div className="absolute top-0 inset-x-0 h-12 bg-primary text-primary-foreground flex items-center justify-between px-4 z-20">
                     <span className="text-[11px] font-bold uppercase tracking-wider">{activeSelectedIds.size} students selected</span>
@@ -275,7 +275,7 @@ export function ApplicationsTable({
                             <Fragment key={group.studentId}>
                                 {/* Student Header Row */}
                                 <TableRow 
-                                    className="bg-muted/40 hover:bg-muted/60 cursor-pointer border-b border-t transition-colors"
+                                    className="bg-muted/40 dark:bg-white/5 hover:bg-muted/60 dark:hover:bg-white/10 cursor-pointer border-b border-t transition-colors"
                                     onClick={(e) => {
                                         // Don't toggle if clicking on avatar to go to profile
                                         const target = e.target as HTMLElement;
@@ -322,7 +322,7 @@ export function ApplicationsTable({
                                 {isExpanded && group.applications.map((app) => (
                                     <TableRow 
                                         key={app.id} 
-                                        className="group cursor-pointer hover:bg-muted/10 transition-colors border-b last:border-0"
+                                        className="group cursor-pointer hover:bg-muted/10 dark:hover:bg-white/5 transition-colors border-b last:border-0"
                                         onClick={(e) => {
                                             const target = e.target as HTMLElement;
                                             if (target.closest('button, [role="combobox"], [role="checkbox"], .select-trigger, [role="menuitem"]')) {
@@ -419,8 +419,8 @@ export function ApplicationsTable({
                                                     className={cn(
                                                         "h-8 px-3 text-[10px] font-black uppercase rounded-lg transition-all border",
                                                         app.status === "FINALIZED" ? "bg-amber-500 text-white border-transparent hover:bg-amber-600 shadow-sm" :
-                                                        app.status === "READY_FOR_VISA" ? "bg-emerald-50 text-emerald-600 border-emerald-100" :
-                                                        "bg-slate-50 text-slate-300 border-slate-100 cursor-not-allowed"
+                                                        app.status === "READY_FOR_VISA" ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800" :
+                                                        "bg-white dark:bg-transparent text-slate-300 dark:text-white/20 border-slate-100 dark:border-white/5 cursor-not-allowed"
                                                     )}
                                                 >
                                                     <Plane className="h-3.5 w-3.5 mr-1" />
@@ -429,7 +429,7 @@ export function ApplicationsTable({
 
                                                 <DropdownMenu>
                                                     <DropdownMenuTrigger asChild>
-                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-muted rounded-lg">
+                                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:bg-muted dark:hover:bg-white/5 rounded-lg">
                                                             <MoreHorizontal className="h-4 w-4" />
                                                         </Button>
                                                     </DropdownMenuTrigger>
@@ -440,7 +440,7 @@ export function ApplicationsTable({
                                                         <DropdownMenuItem onClick={() => onOpenNotes?.(app)}>
                                                             <Plus className="h-4 w-4 mr-2 text-slate-400" /> Add Notes ({app._count?.notes || 0})
                                                         </DropdownMenuItem>
-                                                        <div className="h-px bg-slate-100 my-1" />
+                                                        <div className="h-px bg-slate-100 dark:bg-white/5 my-1" />
                                                         <DropdownMenuItem onClick={() => handleStatusChange(app.id, "APPLIED")}>
                                                             <CheckCircle className="h-4 w-4 mr-2 text-emerald-500" /> Application
                                                         </DropdownMenuItem>
@@ -482,7 +482,7 @@ export function ApplicationsTable({
                         <TableRow>
                             <TableCell colSpan={7} className="h-64 text-center text-muted-foreground">
                                 <div className="flex flex-col items-center gap-2">
-                                    <div className="h-12 w-12 rounded-full bg-muted flex items-center justify-center border border-border mb-2">
+                                    <div className="h-12 w-12 rounded-full bg-muted dark:bg-white/5 flex items-center justify-center border border-border dark:border-white/5 mb-2">
                                         <Users className="h-6 w-6 text-muted-foreground/30" />
                                     </div>
                                     <span className="text-sm font-bold text-muted-foreground uppercase tracking-widest">No matching applications</span>
@@ -495,18 +495,18 @@ export function ApplicationsTable({
             </Table>
 
             {pagination && (
-                <div className="flex items-center justify-between px-6 py-4 border-t bg-muted/20 min-h-[64px]">
+                <div className="flex items-center justify-between px-6 py-4 border-t dark:border-white/5 bg-muted/20 dark:bg-white/5 min-h-[64px]">
                     <div className="flex items-center gap-8">
                         <div className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] leading-none">
                             Page {pagination.page} <span className="text-muted-foreground/20 mx-2">/</span> {pagination.totalPages}
                         </div>
-                        <div className="flex items-center gap-3 border-l pl-8 border-border">
+                        <div className="flex items-center gap-3 border-l pl-8 border-border dark:border-white/5">
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Display</span>
                             <Select
                                 value={pagination.pageSize.toString()}
                                 onValueChange={(v) => pagination.onPageSizeChange(Number(v))}
                             >
-                                <SelectTrigger className="h-8 w-[72px] text-[10px] font-black border-border bg-background shadow-sm focus:ring-1 focus:ring-primary/20 rounded-lg">
+                                <SelectTrigger className="h-8 w-[72px] text-[10px] font-black border-border dark:border-white/10 bg-white dark:bg-transparent shadow-sm focus:ring-1 focus:ring-primary/20 rounded-lg">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent className="min-w-[72px] rounded-xl shadow-2xl border-border">
@@ -523,7 +523,7 @@ export function ApplicationsTable({
                         <Button
                             variant="outline"
                             size="sm"
-                            className="h-9 px-5 text-[10px] font-black uppercase tracking-widest border-border bg-background hover:bg-muted transition-all rounded-xl"
+                            className="h-9 px-5 text-[10px] font-black uppercase tracking-widest border-border dark:border-white/10 bg-white dark:bg-transparent hover:bg-muted dark:hover:bg-white/5 transition-all rounded-xl"
                             disabled={pagination.page <= 1}
                             onClick={() => pagination.onPageChange(pagination.page - 1)}
                         >
@@ -532,7 +532,7 @@ export function ApplicationsTable({
                         <Button
                             variant="outline"
                             size="sm"
-                            className="h-9 px-5 text-[10px] font-black uppercase tracking-widest border-border bg-background hover:bg-muted transition-all rounded-xl"
+                            className="h-9 px-5 text-[10px] font-black uppercase tracking-widest border-border dark:border-white/10 bg-white dark:bg-transparent hover:bg-muted dark:hover:bg-white/5 transition-all rounded-xl"
                             disabled={pagination.page >= pagination.totalPages}
                             onClick={() => pagination.onPageChange(pagination.page + 1)}
                         >
