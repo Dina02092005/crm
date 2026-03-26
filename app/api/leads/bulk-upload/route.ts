@@ -72,8 +72,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const role = session.user.role as string;
-    if (role !== "ADMIN") {
-        return NextResponse.json({ error: "Forbidden — only ADMIN can bulk upload" }, { status: 403 });
+    if (!["ADMIN", "SUPER_ADMIN", "AGENT", "COUNSELOR"].includes(role)) {
+        return NextResponse.json({ error: "Forbidden — insufficient permissions for bulk upload" }, { status: 403 });
     }
 
     // ── Parse multipart ───────────────────────────────────────────────────────

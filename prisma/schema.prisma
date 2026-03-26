@@ -662,7 +662,6 @@ enum ApplicationStatus {
 enum Role {
   SUPER_ADMIN
   ADMIN
-  MANAGER
   EMPLOYEE
   SALES_REP
   SUPPORT_AGENT

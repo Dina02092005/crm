@@ -593,7 +593,7 @@ export default function LeadDetailPage() {
                                                 <Pencil className="h-3.5 w-3.5 mr-2" />
                                                 Edit
                                             </Button>
-                                            {(session?.user?.role === 'ADMIN' || session?.user?.role === 'MANAGER') && (
+                                            {(session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN') && (
                                                 <Button
                                                     variant="outline"
                                                     className="rounded-xl h-9 text-sm border-primary/20 text-primary hover:bg-primary/5"

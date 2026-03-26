@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { AuditLogService } from "@/lib/auditLog";
-import { VisaType, VisaStatus } from '@/lib/prisma';
+import { VisaType, VisaStatus } from '@prisma/client';
 import { withPermission } from "@/lib/permissions";
 import {
     notifyVisaStarted,

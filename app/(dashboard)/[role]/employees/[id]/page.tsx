@@ -142,7 +142,7 @@ export default function EmployeeDetailPage() {
     }, [params.id]);
 
     // Check if user has access
-    if (session?.user?.role !== "ADMIN" && session?.user?.role !== "MANAGER" && session?.user?.role !== "AGENT") {
+    if (session?.user?.role !== "ADMIN" && session?.user?.role !== "SUPER_ADMIN" && session?.user?.role !== "AGENT") {
         return (
             <div className="p-10">
                 <Card className="border-0 shadow-sm rounded-3xl">
@@ -497,10 +497,10 @@ export default function EmployeeDetailPage() {
                         <EmployeeForm
                             formId="edit-employee-form"
                             employee={employee}
+                            title={employee.role === 'ADMIN' ? 'Admin' : 'Counselor'}
                             onSuccess={() => {
                                 setShowEditDialog(false);
                                 fetchEmployee();
-                                toast.success("Employee updated successfully");
                             }}
                         />
                     </div>

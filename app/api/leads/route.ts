@@ -23,6 +23,7 @@ export const GET = withPermission('LEADS', 'VIEW', async (req, { permission }) =
         const from = searchParams.get('from');
         const to = searchParams.get('to');
         const interest = searchParams.get('interest');
+        const intake = searchParams.get('intake');
 
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '10');
@@ -41,6 +42,7 @@ export const GET = withPermission('LEADS', 'VIEW', async (req, { permission }) =
         if (interestedCountry && interestedCountry !== 'ALL') where.interestedCountry = { contains: interestedCountry, mode: 'insensitive' };
         if (highestQualification && highestQualification !== 'ALL') where.highestQualification = { contains: highestQualification, mode: 'insensitive' };
         if (interest && interest !== 'ALL') where.interest = interest;
+        if (intake && intake !== 'ALL') where.intake = { contains: intake, mode: 'insensitive' };
 
         if (from && to && from !== "" && to !== "") {
             where.createdAt = {

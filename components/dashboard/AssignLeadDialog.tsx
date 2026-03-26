@@ -48,7 +48,7 @@ export function AssignLeadDialog({
     const [selectedManagerId, setSelectedManagerId] = useState<string>("");
     const [selectedCounselorId, setSelectedCounselorId] = useState<string>("");
 
-    const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "MANAGER";
+    const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "SUPER_ADMIN";
     const isAgent = session?.user?.role === "AGENT";
 
     useEffect(() => {
@@ -66,7 +66,7 @@ export function AssignLeadDialog({
     const fetchAgents = async () => {
         setIsLoadingAgents(true);
         try {
-            const roles = ["AGENT", "SALES_REP", "MANAGER"];
+            const roles = ["AGENT", "SALES_REP"];
             const requests = roles.map(role =>
                 axios.get(`/api/employees?role=${role}&status=active&limit=100`)
             );
@@ -141,7 +141,7 @@ export function AssignLeadDialog({
                 <DialogHeader>
                     <DialogTitle>Assign Lead</DialogTitle>
                     <DialogDescription>
-                        Select a manager and optionally a counselor to assign <strong>{leadName}</strong>.
+                        Select an agent and optionally a counselor to assign <strong>{leadName}</strong>.
                     </DialogDescription>
                 </DialogHeader>
 
@@ -155,10 +155,10 @@ export function AssignLeadDialog({
                             {isAdmin && (
                                 <div className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label>Manager / Agent</Label>
+                                        <Label>Agent</Label>
                                         <Select value={selectedManagerId} onValueChange={handleManagerChange}>
                                             <SelectTrigger className="w-full h-12 rounded-xl bg-slate-50 border-slate-200">
-                                                <SelectValue placeholder="Select Manager or Agent" />
+                                                <SelectValue placeholder="Select Agent" />
                                             </SelectTrigger>
                                             <SelectContent className="rounded-xl shadow-xl border-slate-200">
                                                 {agents.map((agent) => (
@@ -192,7 +192,7 @@ export function AssignLeadDialog({
                                                         <SelectValue placeholder={loadingAgentsMap[selectedManagerId] ? "Loading..." : "Select Counselor (Optional)"} />
                                                     </SelectTrigger>
                                                     <SelectContent className="rounded-xl shadow-xl border-slate-200">
-                                                        <SelectItem value="none" className="py-2">No Counselor (Assign to Manager)</SelectItem>
+                                                        <SelectItem value="none" className="py-2">No Counselor (Assign to Agent)</SelectItem>
                                                         {agentCounselors[selectedManagerId]?.map((counselor) => (
                                                             <SelectItem key={counselor.id} value={counselor.id} className="cursor-pointer py-3 rounded-lg focus:bg-primary/5">
                                                                 <div className="flex items-center gap-2">
@@ -203,7 +203,7 @@ export function AssignLeadDialog({
                                                         ))}
                                                         {(!loadingAgentsMap[selectedManagerId] && (!agentCounselors[selectedManagerId] || agentCounselors[selectedManagerId].length === 0)) && (
                                                             <div className="p-4 text-center text-xs text-muted-foreground italic">
-                                                                No counselors found for this manager
+                                                                No counselors found for this agent
                                                             </div>
                                                         )}
                                                     </SelectContent>

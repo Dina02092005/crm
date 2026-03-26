@@ -12,6 +12,7 @@ import { CreateEmployeeSheet } from "@/components/dashboard/CreateEmployeeSheet"
 import { useEmployees, useDeleteEmployee, useToggleEmployeeStatus, useEmployeeStats } from "@/hooks/use-employees";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDebounce } from "@/hooks/use-debounce";
+import { StatusTabs, StatusTab } from "@/components/dashboard/StatusTabs";
 
 export default function AgentsPage() {
     const { data: session } = useSession() as any;
@@ -36,6 +37,12 @@ export default function AgentsPage() {
     const deleteEmployeeMutation = useDeleteEmployee();
     const toggleEmployeeStatusMutation = useToggleEmployeeStatus();
     const { data: employeeStats } = useEmployeeStats("AGENT");
+
+    const agentStatusTabs: StatusTab[] = [
+        { id: "all", label: "Total", color: "text-blue-600", bg: "bg-blue-50" },
+        { id: "active", label: "Active", color: "text-emerald-600", bg: "bg-emerald-50" },
+        { id: "inactive", label: "Inactive", color: "text-gray-600", bg: "bg-gray-50" },
+    ];
 
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [statusId, setStatusId] = useState<string | null>(null);
@@ -114,27 +121,11 @@ export default function AgentsPage() {
                         )}
                     </div>
 
-                    <div className="flex flex-wrap gap-2 mb-6">
-                        {[
-                            { id: "all", label: "Total", color: "text-blue-600", bg: "bg-blue-50" },
-                            { id: "active", label: "Active", color: "text-emerald-600", bg: "bg-emerald-50" },
-                            { id: "inactive", label: "Inactive", color: "text-gray-600", bg: "bg-gray-50" },
-                        ].map((f) => (
-                            <button
-                                key={f.id}
-                                onClick={() => setStatusFilter(f.id)}
-                                className={`
-                                    px-4 py-2 rounded-xl flex items-center gap-2 transition-all border font-bold text-xs
-                                    ${statusFilter === f.id
-                                        ? `${f.bg} ${f.color} border-current shadow-sm`
-                                        : "bg-white border-gray-200 text-gray-500 hover:bg-gray-50"
-                                    }
-                                `}
-                            >
-                                {f.label}
-                            </button>
-                        ))}
-                    </div>
+                    <StatusTabs 
+                        tabs={agentStatusTabs} 
+                        activeTab={statusFilter} 
+                        onTabChange={setStatusFilter} 
+                    />
 
                     {isLoading ? (
                         <div className="py-20 flex flex-col items-center justify-center gap-3">

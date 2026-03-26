@@ -104,7 +104,7 @@ export const authOptions: NextAuthOptions = {
 
                     // Role-based access control
                     if (loginType === 'admin') {
-                        if (user.role !== 'ADMIN' && user.role !== 'MANAGER' && user.role !== 'SUPER_ADMIN') {
+                        if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
                             throw new Error('Access denied. Admin privileges required.');
                         }
                     } else if (loginType === 'agent') {
@@ -118,7 +118,7 @@ export const authOptions: NextAuthOptions = {
                         }
                     } else if (loginType === 'student') {
                         if (user.role !== 'STUDENT') {
-                            if (user.role === 'ADMIN' || user.role === 'MANAGER' || user.role === 'SUPER_ADMIN') {
+                            if (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN') {
                                 throw new Error('Please use the Admin login page at /admin/login');
                             }
                             const allowedAgentRoles = ['AGENT', 'COUNSELOR', 'SALES_REP', 'SUPPORT_AGENT'];

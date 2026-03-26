@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
 
         const where = {
             role: {
-                in: ["AGENT", "COUNSELOR", "EMPLOYEE", "ADMIN", "MANAGER"] as any[]
+                in: ["AGENT", "COUNSELOR", "EMPLOYEE", "ADMIN"] as any[]
             },
             isActive: true,
             ...(search && {

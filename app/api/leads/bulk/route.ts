@@ -12,8 +12,8 @@ export async function DELETE(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // RBAC: ADMIN, MANAGER, and COUNSELOR can bulk delete leads (depending on your specific requirements)
-        if (!["ADMIN", "MANAGER", "COUNSELOR"].includes(session.user.role)) {
+        // RBAC: ADMIN and COUNSELOR can bulk delete leads (depending on your specific requirements)
+        if (!["ADMIN", "SUPER_ADMIN", "COUNSELOR"].includes(session.user.role)) {
             return NextResponse.json({ error: "Forbidden: Insufficient permissions" }, { status: 403 });
         }
 

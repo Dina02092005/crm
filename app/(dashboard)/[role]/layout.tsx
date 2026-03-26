@@ -26,7 +26,7 @@ export default async function DashboardLayout({ children, params }: DashboardLay
     }
 
     // Validate that the user is allowed to access this role segment
-    const isAdmin = ["ADMIN", "SUPER_ADMIN", "MANAGER"].includes(userRole);
+    const isAdmin = ["ADMIN", "SUPER_ADMIN"].includes(userRole);
     const isAgent = ["AGENT", "SALES_REP", "SUPPORT_AGENT"].includes(userRole);
     const isCounselor = userRole === "COUNSELOR";
     const isStudent = userRole === "STUDENT";

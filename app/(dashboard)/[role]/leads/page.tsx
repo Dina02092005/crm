@@ -35,12 +35,13 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { AssignApplicationsModal } from "@/components/applications/AssignApplicationsModal";
 import { EmailComposeModal } from "@/components/applications/EmailComposeModal";
 import { WhatsappMessageModal } from "@/components/applications/WhatsappMessageModal";
-import { useLeads } from "@/hooks/use-leads";
+import { useLeads, useLeadStats } from "@/hooks/use-leads";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useRolePath } from "@/hooks/use-role-path";
 import { useCountries, useCounselors } from "@/hooks/use-masters";
 import { Badge } from "@/components/ui/badge";
 import { BulkUploadLeadsButton } from "@/components/dashboard/BulkUploadLeadsButton";
+import { StatusTabs, StatusTab } from "@/components/dashboard/StatusTabs";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -70,18 +71,101 @@ export default function LeadsPage() {
 
     const debouncedSearch = useDebounce(search, 500);
 
-    const { data, isLoading, refetch } = useLeads(
+    const { data, isLoading, refetch } = useLeads({
         page,
         limit,
-        debouncedSearch,
-        status === "ALL" ? "" : status,
-        onboardedBy === "ALL" ? "" : onboardedBy,
-        interestedCountry === "ALL" ? "" : interestedCountry,
-        intake === "ALL" ? "" : intake
-    );
+        search: debouncedSearch,
+        status: status === "ALL" ? "" : status,
+        assignedTo: onboardedBy === "ALL" ? "" : onboardedBy,
+        interestedCountry: interestedCountry === "ALL" ? "" : interestedCountry,
+        intake: intake === "ALL" ? "" : intake
+    });
 
+    const { data: stats } = useLeadStats();
     const { data: countries } = useCountries();
     const { data: counselors } = useCounselors();
+    const counts = stats || { 
+        ALL: 0, 
+        NEW: 0, 
+        CONTACTED: 0, 
+        INTERESTED: 0, 
+        NOT_INTERESTED: 0,
+        UNDER_REVIEW: 0,
+        COUNSELLING_SCHEDULED: 0,
+        COUNSELLING_COMPLETED: 0,
+        FOLLOWUP_REQUIRED: 0,
+        ON_HOLD: 0,
+        CLOSED: 0,
+        CONVERTED: 0
+    };
+
+    const leadStatusTabs: StatusTab[] = [
+        { 
+            id: "ALL", 
+            label: (
+                <div className="flex items-center gap-2">
+                    All
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-primary/10 text-primary border-none">
+                        {counts.ALL}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-primary", 
+            bg: "bg-primary/10" 
+        },
+        { 
+            id: "NEW", 
+            label: (
+                <div className="flex items-center gap-2">
+                    New
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-blue-100 text-blue-700 border-none">
+                        {counts.NEW}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-blue-600", 
+            bg: "bg-blue-600/10" 
+        },
+        { 
+            id: "CONTACTED", 
+            label: (
+                <div className="flex items-center gap-2">
+                    Contacted
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-amber-100 text-amber-700 border-none">
+                        {counts.CONTACTED}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-amber-600", 
+            bg: "bg-amber-600/10" 
+        },
+        { 
+            id: "INTERESTED", 
+            label: (
+                <div className="flex items-center gap-2">
+                    Qualified
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-emerald-100 text-emerald-700 border-none">
+                        {counts.INTERESTED}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-emerald-600", 
+            bg: "bg-emerald-600/10" 
+        },
+        { 
+            id: "NOT_INTERESTED", 
+            label: (
+                <div className="flex items-center gap-2">
+                    Lost
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-rose-100 text-rose-700 border-none">
+                        {counts.NOT_INTERESTED}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-rose-600", 
+            bg: "bg-rose-600/10" 
+        },
+    ];
 
     // Reset page on search/filter changes
     useEffect(() => {
@@ -235,7 +319,7 @@ export default function LeadsPage() {
                         </div>
 
                         <div className="flex items-center gap-3">
-                            {["ADMIN", "SUPER_ADMIN", "MANAGER"].includes(role) && <BulkUploadLeadsButton onSuccess={refetch} />}
+                        {["ADMIN", "SUPER_ADMIN", "AGENT", "COUNSELOR"].includes(role) && <BulkUploadLeadsButton onSuccess={refetch} />}
                              <Link href={prefixPath("/leads/new")}>
                                 <Button className="h-9 px-4 gap-2 font-bold text-[12px] rounded-xl shadow-md">
                                     <Plus className="h-4 w-4" /> Add Lead
@@ -257,27 +341,19 @@ export default function LeadsPage() {
                         </Button>
                     </div>
 
+                    <StatusTabs 
+                        tabs={leadStatusTabs} 
+                        activeTab={status} 
+                        onTabChange={setStatus} 
+                    />
+
                     {/* Advanced Filters Panel */}
                     <div className={cn(
                         "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-6 transition-all duration-300",
                         showFilters ? "opacity-100 max-h-[500px]" : "opacity-0 max-h-0 overflow-hidden mb-0"
                     )}>
-                        <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 ml-1">Status</label>
-                            <Select value={status} onValueChange={setStatus}>
-                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 dark:bg-transparent border-0 dark:border dark:border-white/10 shadow-sm focus:ring-0">
-                                    <SelectValue placeholder="Status" />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl border-border dark:bg-slate-900">
-                                    <SelectItem value="ALL">All Status</SelectItem>
-                                    <SelectItem value="NEW">New</SelectItem>
-                                    <SelectItem value="CONTACTED">Contacted</SelectItem>
-                                    <SelectItem value="QUALIFIED">Qualified</SelectItem>
-                                    <SelectItem value="LOST">Lost</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-
+                        {/* Status label removed since we have tabs now, but if there are other status options it could stay as a label/spacer */}
+                        
                         <div className="space-y-1.5">
                              <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 ml-1">Assigned To</label>
                             <Select value={onboardedBy} onValueChange={setOnboardedBy}>

@@ -94,7 +94,17 @@ export const GET = withPermission('COUNSELORS', 'VIEW', async (req, { permission
 export const POST = withPermission('COUNSELORS', 'CREATE', async (req, { permission }) => {
     try {
         const body = await req.json();
-        const { name, email, password, phone, department, designation, salary, joiningDate, agentId, roleId } = body;
+        const { name, firstName, lastName, email, password, phone, department, designation, salary, joiningDate, agentId, roleId } = body;
+
+        const effectiveName = name || (firstName && lastName ? `${firstName} ${lastName}`.trim() : firstName || lastName || "");
+
+        if (!effectiveName || !email || !password) {
+            const missing = [];
+            if (!effectiveName) missing.push("name/firstName/lastName");
+            if (!email) missing.push("email");
+            if (!password) missing.push("password");
+            return NextResponse.json({ error: `Required fields missing: ${missing.join(", ")}` }, { status: 400 });
+        }
 
         // If an Agent is creating, the counselor is automatically linked to them
         let effectiveAgentId = agentId;
@@ -119,7 +129,7 @@ export const POST = withPermission('COUNSELORS', 'CREATE', async (req, { permiss
 
         const counselor = await prisma.user.create({
             data: {
-                name,
+                name: effectiveName,
                 email,
                 passwordHash,
                 role: "COUNSELOR",

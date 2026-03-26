@@ -30,6 +30,16 @@ export const useStudents = (page = 1, limit = 10, search = "", status = "", onbo
     });
 };
 
+export const useStudentStats = () => {
+    return useQuery({
+        queryKey: ['student-stats'],
+        queryFn: async () => {
+            const { data } = await axios.get('/api/students/stats');
+            return data;
+        },
+    });
+};
+
 export const useCreateStudent = () => {
     const queryClient = useQueryClient();
     return useMutation({
@@ -135,6 +145,16 @@ export const useApplications = (page = 1, limit = 10, search = '', status: strin
     });
 };
 
+export const useApplicationStats = () => {
+    return useQuery({
+        queryKey: ['application-stats'],
+        queryFn: async () => {
+            const { data } = await axios.get('/api/applications/stats');
+            return data;
+        },
+    });
+};
+
 export const useUpdateApplication = () => {
     const queryClient = useQueryClient();
     return useMutation({
@@ -174,6 +194,16 @@ export const useVisaApplications = (studentId?: string, page = 1, limit = 10, se
         queryKey: ['visa-applications', studentId, page, limit, search, status],
         queryFn: async () => {
             return await getVisaApplications(studentId, page, limit, search, status);
+        },
+    });
+};
+
+export const useVisaStats = () => {
+    return useQuery({
+        queryKey: ['visa-stats'],
+        queryFn: async () => {
+            const { data } = await axios.get('/api/visa-applications/stats');
+            return data;
         },
     });
 };

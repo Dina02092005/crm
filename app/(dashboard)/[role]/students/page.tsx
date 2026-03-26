@@ -31,11 +31,12 @@ import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { AssignApplicationsModal } from "@/components/applications/AssignApplicationsModal";
 import { EmailComposeModal } from "@/components/applications/EmailComposeModal";
 import { WhatsappMessageModal } from "@/components/applications/WhatsappMessageModal";
-import { useStudents } from "@/hooks/useApi";
+import { useStudents, useStudentStats } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useRolePath } from "@/hooks/use-role-path";
 import { useCountries, useCounselors } from "@/hooks/use-masters";
 import { Badge } from "@/components/ui/badge";
+import { StatusTabs, StatusTab } from "@/components/dashboard/StatusTabs";
 import Link from "next/link";
 
 export default function StudentsPage() {
@@ -71,8 +72,78 @@ export default function StudentsPage() {
         intake === "ALL" ? "" : intake
     );
 
+    const { data: stats } = useStudentStats();
     const { data: countries } = useCountries();
     const { data: counselors } = useCounselors();
+    const counts = stats || { ALL: 0, NEW: 0, DOCUMENT_PENDING: 0, DOCUMENT_VERIFIED: 0, APPLICATION_SUBMITTED: 0 };
+
+    const studentStatusTabs: StatusTab[] = [
+        { 
+            id: "ALL", 
+            label: (
+                <div className="flex items-center gap-2">
+                    All
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-primary/10 text-primary border-none">
+                        {counts.ALL}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-primary", 
+            bg: "bg-primary/10" 
+        },
+        { 
+            id: "NEW", 
+            label: (
+                <div className="flex items-center gap-2">
+                    New
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-blue-100 text-blue-700 border-none">
+                        {counts.NEW}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-blue-600", 
+            bg: "bg-blue-600/10" 
+        },
+        { 
+            id: "DOCUMENT_PENDING", 
+            label: (
+                <div className="flex items-center gap-2">
+                    Doc Pending
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-amber-100 text-amber-700 border-none">
+                        {counts.DOCUMENT_PENDING}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-amber-600", 
+            bg: "bg-amber-600/10" 
+        },
+        { 
+            id: "DOCUMENT_VERIFIED", 
+            label: (
+                <div className="flex items-center gap-2">
+                    Doc Verified
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-emerald-100 text-emerald-700 border-none">
+                        {counts.DOCUMENT_VERIFIED}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-emerald-600", 
+            bg: "bg-emerald-600/10" 
+        },
+        { 
+            id: "APPLICATION_SUBMITTED", 
+            label: (
+                <div className="flex items-center gap-2">
+                    Applied
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-indigo-100 text-indigo-700 border-none">
+                        {counts.APPLICATION_SUBMITTED}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-indigo-600", 
+            bg: "bg-indigo-600/10" 
+        },
+    ];
 
     // Reset page on search/filter changes
     useEffect(() => {
@@ -237,21 +308,15 @@ export default function StudentsPage() {
                         </div>
                     </div>
 
+                    <StatusTabs 
+                        tabs={studentStatusTabs} 
+                        activeTab={status} 
+                        onTabChange={setStatus} 
+                    />
+
                     {/* Advanced Filters */}
                     <div className="flex flex-wrap items-center gap-3 mb-6">
-                        <div className="w-full sm:w-[150px]">
-                            <Select value={status} onValueChange={setStatus}>
-                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 dark:bg-transparent border-0 dark:border dark:border-white/10 shadow-sm focus:ring-0">
-                                    <SelectValue placeholder="Status" />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl border-border dark:bg-slate-900">
-                                    <SelectItem value="ALL">All Status</SelectItem>
-                                    <SelectItem value="PROSPECT">Prospect</SelectItem>
-                                    <SelectItem value="APPLICANT">Applicant</SelectItem>
-                                    <SelectItem value="ENROLLED">Enrolled</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+                        {/* Status Select replaced by StatusTabs */}
 
                         <div className="w-full sm:w-[150px]">
                             <Select value={onboardedBy} onValueChange={setOnboardedBy}>

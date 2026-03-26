@@ -6,7 +6,7 @@ import { authOptions } from '@/lib/auth';
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const session = await getServerSession(authOptions) as any;
-    if (!session || !['ADMIN', 'MANAGER'].includes(session.user.role)) {
+    if (!session || !['ADMIN'].includes(session.user.role)) {
         return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
@@ -25,7 +25,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
     const session = await getServerSession(authOptions) as any;
-    if (!session || !['ADMIN', 'MANAGER'].includes(session.user.role)) {
+    if (!session || !['ADMIN'].includes(session.user.role)) {
         return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 

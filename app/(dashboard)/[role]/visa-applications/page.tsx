@@ -17,7 +17,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { VisaApplicationsTable } from "@/components/dashboard/VisaApplicationsTable";
-import { useVisaApplications, useDeleteVisaApplication } from "@/hooks/useApi";
+import { useVisaApplications, useVisaStats, useDeleteVisaApplication } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +32,7 @@ import { AssignApplicationsModal } from "@/components/applications/AssignApplica
 import { EmailComposeModal } from "@/components/applications/EmailComposeModal";
 import { WhatsappMessageModal } from "@/components/applications/WhatsappMessageModal";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+import { StatusTabs, StatusTab } from "@/components/dashboard/StatusTabs";
 
 function VisaApplicationsPageContent({ role }: { role: string }) {
     const [search, setSearch] = useState("");
@@ -62,6 +63,129 @@ function VisaApplicationsPageContent({ role }: { role: string }) {
 
     const visaApplications = (data?.visaApplications || []) as any[];
     const pagination = data?.pagination || { page: 1, limit: 10, totalPages: 1, total: 0 };
+
+    const { data: stats } = useVisaStats();
+    const counts = stats || { ALL: 0, PENDING: 0, VISA_APPLICATION_SUBMITTED: 0, VISA_APPLICATION_IN_PROGRESS: 0, VISA_APPROVED: 0, VISA_REJECTED: 0, VISA_REFUSED: 0, DEFERRED: 0, ENROLLED: 0 };
+
+    const visaStatusTabs: StatusTab[] = [
+        { 
+            id: "ALL", 
+            label: (
+                <div className="flex items-center gap-2">
+                    All
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-primary/10 text-primary border-none">
+                        {counts.ALL}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-primary", 
+            bg: "bg-primary/10" 
+        },
+        { 
+            id: "PENDING", 
+            label: (
+                <div className="flex items-center gap-2">
+                    Pending
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-amber-100 text-amber-700 border-none">
+                        {counts.PENDING}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-amber-600", 
+            bg: "bg-amber-600/10" 
+        },
+        { 
+            id: "VISA_APPLICATION_SUBMITTED", 
+            label: (
+                <div className="flex items-center gap-2">
+                    Submitted
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-blue-100 text-blue-700 border-none">
+                        {counts.VISA_APPLICATION_SUBMITTED}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-blue-600", 
+            bg: "bg-blue-600/10" 
+        },
+        { 
+            id: "VISA_APPLICATION_IN_PROGRESS", 
+            label: (
+                <div className="flex items-center gap-2">
+                    In Process
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-indigo-100 text-indigo-700 border-none">
+                        {counts.VISA_APPLICATION_IN_PROGRESS}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-indigo-600", 
+            bg: "bg-indigo-600/10" 
+        },
+        { 
+            id: "VISA_APPROVED", 
+            label: (
+                <div className="flex items-center gap-2">
+                    Approved
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-emerald-100 text-emerald-700 border-none">
+                        {counts.VISA_APPROVED}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-emerald-600", 
+            bg: "bg-emerald-600/10" 
+        },
+        { 
+            id: "VISA_REJECTED", 
+            label: (
+                <div className="flex items-center gap-2">
+                    Rejected
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-rose-100 text-rose-700 border-none">
+                        {counts.VISA_REJECTED}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-rose-600", 
+            bg: "bg-rose-600/10" 
+        },
+        { 
+            id: "VISA_REFUSED", 
+            label: (
+                <div className="flex items-center gap-2">
+                    Refused
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-red-100 text-red-700 border-none">
+                        {counts.VISA_REFUSED}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-red-700", 
+            bg: "bg-red-700/10" 
+        },
+        { 
+            id: "DEFERRED", 
+            label: (
+                <div className="flex items-center gap-2">
+                    Deferred
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-pink-100 text-pink-700 border-none">
+                        {counts.DEFERRED}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-pink-600", 
+            bg: "bg-pink-600/10" 
+        },
+        { 
+            id: "ENROLLED", 
+            label: (
+                <div className="flex items-center gap-2">
+                    Enrolled
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-cyan-100 text-cyan-700 border-none">
+                        {counts.ENROLLED}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-cyan-600", 
+            bg: "bg-cyan-600/10" 
+        },
+    ];
 
     // Reset page on search/filter changes
     useEffect(() => {
@@ -222,36 +346,11 @@ function VisaApplicationsPageContent({ role }: { role: string }) {
                         </div>
                     </div>
 
-                    {/* Filter Pills */}
-                    <div className="flex flex-wrap gap-2 mb-6">
-                        {[
-                            { id: "ALL", label: "All", color: "text-primary", bg: "bg-primary/10" },
-                            { id: "PENDING", label: "Pending", color: "text-amber-600", bg: "bg-amber-600/10" },
-                            { id: "VISA_APPLICATION_SUBMITTED", label: "Submitted", color: "text-blue-600", bg: "bg-blue-600/10" },
-                            { id: "VISA_APPLICATION_IN_PROGRESS", label: "In Process", color: "text-indigo-600", bg: "bg-indigo-600/10" },
-                            { id: "VISA_APPROVED", label: "Approved", color: "text-emerald-600", bg: "bg-emerald-600/10" },
-                            { id: "VISA_REJECTED", label: "Rejected", color: "text-rose-600", bg: "bg-rose-600/10" },
-                            { id: "VISA_REFUSED", label: "Refused", color: "text-red-700", bg: "bg-red-700/10" },
-                            { id: "DEFERRED", label: "Deferred", color: "text-pink-600", bg: "bg-pink-600/10" },
-                            { id: "ENROLLED", label: "Enrolled", color: "text-cyan-600", bg: "bg-cyan-600/10" },
-                        ].map((f) => (
-                            <button
-                                key={f.id}
-                                onClick={() => setStatus(f.id)}
-                                className={`
-                                    px-3 py-1.5 rounded-xl flex items-center gap-2 transition-all border
-                                    ${status === f.id
-                                        ? `${f.bg} border-transparent shadow-sm ring-1 ring-inset ${f.color.replace('text-', 'ring-')}/30`
-                                        : "bg-white dark:bg-transparent hover:bg-slate-50 dark:hover:bg-white/5 text-slate-500 dark:text-gray-400 border-slate-200 dark:border-white/10"
-                                    }
-                                `}
-                            >
-                                <span className={`text-[10px] font-extrabold uppercase tracking-widest ${status === f.id ? f.color : ""}`}>
-                                    {f.label}
-                                </span>
-                            </button>
-                        ))}
-                    </div>
+                    <StatusTabs 
+                        tabs={visaStatusTabs} 
+                        activeTab={status} 
+                        onTabChange={setStatus} 
+                    />
 
                     <VisaApplicationsTable
                         data={visaApplications}

@@ -52,7 +52,7 @@ export async function GET() {
             prisma.user.count({
                 where: {
                     role: 'EMPLOYEE',
-                    ...( !['ADMIN', 'SUPER_ADMIN', 'MANAGER'].includes(session.user.role || '') ? { id: 'none' } : {}) // Effectively hide if not admin
+                    ...( !['ADMIN', 'SUPER_ADMIN'].includes(session.user.role || '') ? { id: 'none' } : {}) // Effectively hide if not admin
                 }
             }),
             prisma.website.count({
@@ -183,7 +183,7 @@ export async function GET() {
                 pendingTasksCount,
                 totalAgents,
                 totalCounselors,
-                isAdmin: ['ADMIN', 'SUPER_ADMIN', 'MANAGER'].includes(session.user.role || '')
+                isAdmin: ['ADMIN', 'SUPER_ADMIN'].includes(session.user.role || '')
             },
             recentLeads,
             upcomingTasks,

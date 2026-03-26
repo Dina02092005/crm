@@ -72,7 +72,7 @@ export default function UniversityDetailPage() {
     const { data: session } = useSession() as any;
     const countryId = params.countryId as string;
     const role = params.role as string;
-    const canEdit = ["ADMIN", "MANAGER"].includes(session?.user?.role || "");
+    const canEdit = ["ADMIN", "SUPER_ADMIN"].includes(session?.user?.role || "");
 
     const [search, setSearch] = useState("");
     const [page, setPage] = useState(1);

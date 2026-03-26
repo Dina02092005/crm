@@ -86,7 +86,7 @@ export function AssignApplicationsModal({
     };
 
     const agents = (staffData?.employees || []).filter((s: any) =>
-        ["AGENT", "SALES_REP", "MANAGER", "ADMIN"].includes(s.role) &&
+        ["AGENT", "SALES_REP", "ADMIN"].includes(s.role) &&
         (s.name?.toLowerCase().includes(search.toLowerCase()) || s.email?.toLowerCase().includes(search.toLowerCase()))
     );
 
@@ -167,10 +167,10 @@ export function AssignApplicationsModal({
 
                                     <div className="p-4 bg-primary/5 dark:bg-primary/10 rounded-2xl border border-primary/10 relative overflow-hidden group">
                                         <div className="absolute top-0 right-0 p-8 bg-primary/10 blur-3xl opacity-20 -mr-4 -mt-4" />
-                                        <p className="text-[10px] font-black text-primary uppercase tracking-widest mb-3 flex items-center gap-2">
+                                        <div className="text-[10px] font-black text-primary uppercase tracking-widest mb-3 flex items-center gap-2">
                                             <div className="h-1 w-1 rounded-full bg-primary" />
                                             Primary Assignee
-                                        </p>
+                                        </div>
                                         <div className="flex items-center justify-between gap-4 relative z-10">
                                             <div className="flex items-center gap-3">
                                                  <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
@@ -191,10 +191,10 @@ export function AssignApplicationsModal({
                                     </div>
 
                                     <div className="space-y-3 px-1 pt-2">
-                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2 px-1">
+                                        <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2 px-1">
                                             <div className="h-1 w-1 rounded-full bg-muted-foreground/30" />
                                             Assign to a Counselor
-                                        </p>
+                                        </div>
                                         <div className="space-y-1">
                                             {loadingCounselors[selectedAgentId] ? (
                                                 <div className="py-10 flex flex-col items-center justify-center gap-2">

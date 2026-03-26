@@ -9,7 +9,7 @@ import { AuditLogService } from "@/lib/auditLog";
 export async function GET(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session || !["ADMIN", "MANAGER"].includes(session.user.role)) {
+        if (!session || session.user.role !== "ADMIN") {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
 
@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions);
-        if (!session || !["ADMIN", "MANAGER"].includes(session.user.role)) {
+        if (!session?.user?.id || session.user.role !== "ADMIN") {
             return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
         }
 
@@ -184,7 +184,7 @@ export async function POST(req: NextRequest) {
         });
 
         await AuditLogService.log({
-            userId: session.user.id,
+            userId: session.user.id as string,
             action: "CREATED",
             module: "MASTERS",
             entity: "Course",

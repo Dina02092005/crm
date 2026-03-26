@@ -1,4 +1,4 @@
-import { PrismaClient, Role, LeadStatus, LeadTemperature, LeadActivityType, TaskStatus, DocumentType, NotificationType } from './generated/client_v2';
+import { PrismaClient, Role, LeadStatus, LeadTemperature, LeadActivityType, TaskStatus, DocumentType, NotificationType } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
@@ -17,19 +17,6 @@ async function main() {
             name: 'System Admin',
             passwordHash: passwordHash,
             role: 'ADMIN',
-            isActive: true,
-            emailVerified: new Date(),
-        },
-    });
-
-    const manager = await prisma.user.upsert({
-        where: { email: 'manager@inter.in' },
-        update: {},
-        create: {
-            email: 'manager@inter.in',
-            name: 'Office Manager',
-            passwordHash: passwordHash,
-            role: 'MANAGER',
             isActive: true,
             emailVerified: new Date(),
         },
@@ -187,16 +174,6 @@ async function main() {
     */
 
     // 10. Audit Logs
-    await prisma.auditLog.create({
-        data: {
-            userId: admin.id,
-            action: 'CREATE_USER',
-            entity: 'User',
-            entityId: manager.id,
-            metadata: { role: 'MANAGER' },
-        },
-    });
-
     // 11. Application Checklist (Standard Documents)
     const checklistItems = [
         "10th Mark Sheet", "12th Mark Sheet", "Academic Transcripts", "Affidavit of Support",

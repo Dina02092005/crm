@@ -11,7 +11,6 @@ import type { NextRequest } from "next/server";
 const ROLE_PREFIX: Record<string, string> = {
     ADMIN: "/admin",
     SUPER_ADMIN: "/admin",
-    MANAGER: "/admin",
     AGENT: "/agent",
     COUNSELOR: "/counselor",
     SALES_REP: "/agent",
@@ -21,7 +20,7 @@ const ROLE_PREFIX: Record<string, string> = {
 
 // Which roles are allowed in each namespace
 const NAMESPACE_ROLES: Record<string, string[]> = {
-    "/admin": ["ADMIN", "MANAGER", "SUPER_ADMIN"],
+    "/admin": ["ADMIN", "SUPER_ADMIN"],
     "/agent": ["AGENT", "SALES_REP", "SUPPORT_AGENT"],
     "/counselor": ["COUNSELOR"],
     "/student": ["STUDENT"],

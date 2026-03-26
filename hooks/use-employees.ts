@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { User } from '@/lib/prisma'; // Assuming Employee uses User model? Or Employee? Checking.
+import type { User } from '@prisma/client';
 
 // Based on previous files, it seems Employees might be Users with specific roles.
 // Let's assume 'User' or 'Employee' model. Providing 'any' for now or checking schema is better.
@@ -66,11 +66,19 @@ export function useCreateEmployee() {
 
     return useMutation({
         mutationFn: async (employeeData: any) => {
-            console.log("Creating employee with payload:", employeeData);
             const role = employeeData.role;
             const endpoint = role === 'AGENT' ? '/api/agents' : role === 'COUNSELOR' ? '/api/counselors' : '/api/employees';
-            const { data } = await axios.post(endpoint, employeeData);
-            return data;
+            try {
+                const { data } = await axios.post(endpoint, employeeData);
+                return data;
+            } catch (error: any) {
+                console.error("Mutation failed!", {
+                    endpoint,
+                    payload: employeeData,
+                    response: error.response?.data
+                });
+                throw error;
+            }
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ["employees"] });

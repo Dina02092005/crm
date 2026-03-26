@@ -39,6 +39,7 @@ export function CreateEmployeeSheet({ onEmployeeCreated, defaultRole, title = "E
                     <EmployeeForm
                         formId="create-employee-form"
                         defaultRole={defaultRole}
+                        title={title}
                         onSuccess={() => {
                             setOpen(false);
                             onEmployeeCreated();

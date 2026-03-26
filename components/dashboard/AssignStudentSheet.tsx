@@ -59,7 +59,7 @@ export function AssignStudentSheet({
     const [isLoadingOptions, setIsLoadingOptions] = useState(false);
     const [loadingAgentsMap, setLoadingAgentsMap] = useState<Record<string, boolean>>({});
 
-    const isAdmin = ["ADMIN", "SUPER_ADMIN", "MANAGER"].includes(session?.user?.role);
+    const isAdmin = ["ADMIN", "SUPER_ADMIN"].includes(session?.user?.role);
     const isAgent = ["AGENT", "SALES_REP"].includes(session?.user?.role);
 
     useEffect(() => {
@@ -75,7 +75,7 @@ export function AssignStudentSheet({
         try {
             if (isAdmin) {
                 // Fetch Agents/Managers
-                const agentRoles = ["AGENT", "SALES_REP", "MANAGER"];
+                const agentRoles = ["AGENT", "SALES_REP"];
                 const agentRes = await Promise.all(agentRoles.map(role =>
                     axios.get(`/api/employees?role=${role}&status=active&limit=100`)
                 ));
@@ -166,7 +166,7 @@ export function AssignStudentSheet({
                             {isAdmin && (
                                 <>
                                     <div className="space-y-2">
-                                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Agent / Manager (Optional)</Label>
+                                        <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Agent (Optional)</Label>
                                         <Select value={selectedAgentId} onValueChange={handleAgentChange}>
                                             <SelectTrigger className="w-full h-12 rounded-xl bg-muted/20 border-border focus:ring-primary/20">
                                                 <SelectValue placeholder="Select Agent" />

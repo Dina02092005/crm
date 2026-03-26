@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
-import { User } from '@/lib/prisma';
+import type { User } from '@prisma/client';
 
 // Assuming User type from Prisma
 // We might need to extend it if profile has joined data

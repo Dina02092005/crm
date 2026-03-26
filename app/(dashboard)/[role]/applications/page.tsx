@@ -7,7 +7,7 @@ import { Search, FileSpreadsheet, Trash2, UserPlus, Mail, MessageSquare, Plus, F
 import { toast } from "sonner";
 import { ApplicationsTable } from "@/components/dashboard/ApplicationsTable";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { useApplications, useDeleteApplication, useBulkDeleteApplications } from "@/hooks/useApi";
+import { useApplications, useApplicationStats, useDeleteApplication, useBulkDeleteApplications } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Button } from "@/components/ui/button";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -16,6 +16,7 @@ import { Badge } from "@/components/ui/badge";
 import axios from "axios";
 import { Application } from "@/types/api";
 import { useCountries, useCounselors, useUniversities } from "@/hooks/use-masters";
+import { StatusTabs, StatusTab } from "@/components/dashboard/StatusTabs";
 import {
     Select,
     SelectContent,
@@ -104,6 +105,103 @@ function ApplicationsPageContent({ role }: { role: string }) {
 
     const applications = data?.applications || [];
     const pagination = data?.pagination || { page: 1, limit: 10, totalPages: 1, total: 0 };
+
+    const { data: stats } = useApplicationStats();
+    const counts = stats || { ALL: 0, PENDING: 0, FINALIZED: 0, READY_FOR_VISA: 0, DEFERRED: 0, ENROLLED: 0, REJECTED: 0 };
+
+    const applicationStatusTabs: StatusTab[] = [
+        { 
+            id: "ALL", 
+            label: (
+                <div className="flex items-center gap-2">
+                    All
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-primary/10 text-primary border-none">
+                        {counts.ALL}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-primary", 
+            bg: "bg-primary/10" 
+        },
+        { 
+            id: "PENDING", 
+            label: (
+                <div className="flex items-center gap-2">
+                    Pending
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-amber-100 text-amber-700 border-none">
+                        {counts.PENDING}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-amber-600", 
+            bg: "bg-amber-600/10" 
+        },
+        { 
+            id: "FINALIZED", 
+            label: (
+                <div className="flex items-center gap-2">
+                    Approved
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-emerald-100 text-emerald-700 border-none">
+                        {counts.FINALIZED}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-emerald-600", 
+            bg: "bg-emerald-600/10" 
+        },
+        { 
+            id: "READY_FOR_VISA", 
+            label: (
+                <div className="flex items-center gap-2">
+                    Ready for Visa
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-orange-100 text-orange-700 border-none">
+                        {counts.READY_FOR_VISA}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-orange-600", 
+            bg: "bg-orange-600/10" 
+        },
+        { 
+            id: "DEFERRED", 
+            label: (
+                <div className="flex items-center gap-2">
+                    Deferred
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-pink-100 text-pink-700 border-none">
+                        {counts.DEFERRED}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-pink-600", 
+            bg: "bg-pink-600/10" 
+        },
+        { 
+            id: "ENROLLED", 
+            label: (
+                <div className="flex items-center gap-2">
+                    Enrolled
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-cyan-100 text-cyan-700 border-none">
+                        {counts.ENROLLED}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-cyan-600", 
+            bg: "bg-cyan-600/10" 
+        },
+        { 
+            id: "REJECTED", 
+            label: (
+                <div className="flex items-center gap-2">
+                    Rejected
+                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-rose-100 text-rose-700 border-none">
+                        {counts.REJECTED}
+                    </Badge>
+                </div>
+            ), 
+            color: "text-rose-600", 
+            bg: "bg-rose-600/10" 
+        },
+    ];
 
     const handleBulkDelete = async () => {
         if (selectedIds.length === 0) return;
@@ -296,34 +394,11 @@ function ApplicationsPageContent({ role }: { role: string }) {
                         )}
                     </div>
 
-                    {/* Filter Pills */}
-                    <div className="flex flex-wrap gap-2 mb-6">
-                        {[
-                            { id: "ALL", label: "All", color: "text-primary", bg: "bg-primary/10" },
-                            { id: "PENDING", label: "Pending", color: "text-amber-600", bg: "bg-amber-600/10" },
-                            { id: "FINALIZED", label: "Approved", color: "text-emerald-600", bg: "bg-emerald-600/10" },
-                            { id: "READY_FOR_VISA", label: "Ready for Visa", color: "text-orange-600", bg: "bg-orange-600/10" },
-                            { id: "DEFERRED", label: "Deferred", color: "text-pink-600", bg: "bg-pink-600/10" },
-                            { id: "ENROLLED", label: "Enrolled", color: "text-cyan-600", bg: "bg-cyan-600/10" },
-                            { id: "REJECTED", label: "Rejected", color: "text-rose-600", bg: "bg-rose-600/10" },
-                        ].map((f) => (
-                            <button
-                                key={f.id}
-                                onClick={() => handleStatusChange(f.id)}
-                                className={`
-                                    px-3 py-1.5 rounded-xl flex items-center gap-2 transition-all border
-                                    ${(status === f.id || (f.id === "ALL" && !status))
-                                        ? `${f.bg} border-transparent shadow-sm ring-1 ring-inset ${f.color.replace('text-', 'ring-')}/30`
-                                        : "bg-white dark:bg-transparent hover:bg-slate-50 dark:hover:bg-white/5 text-slate-500 dark:text-gray-400 border-slate-200 dark:border-white/10"
-                                    }
-                                `}
-                            >
-                                <span className={`text-[10px] font-extrabold uppercase tracking-widest ${(status === f.id || (f.id === "ALL" && !status)) ? f.color : ""}`}>
-                                    {f.label}
-                                </span>
-                            </button>
-                        ))}
-                    </div>
+                    <StatusTabs 
+                        tabs={applicationStatusTabs} 
+                        activeTab={status || "ALL"} 
+                        onTabChange={handleStatusChange} 
+                    />
 
                     {isLoading && page === 1 ? (
                         <div className="space-y-4 p-4">

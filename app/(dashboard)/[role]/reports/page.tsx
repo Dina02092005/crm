@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import React, { useState, useEffect, Fragment } from "react";
 import {
     Download,
     Filter,
@@ -11,12 +11,17 @@ import {
     Search,
     ChevronLeft,
     ChevronRight,
+    CheckCircle2,
+    ChevronDown,
+    Building2,
+    MapPin,
+    Globe,
     LayoutDashboard,
     PieChart as PieChartIcon,
     BarChart3,
-    FileText,
-    CheckCircle2
+    FileText
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 import { format, subDays, startOfWeek, startOfMonth, startOfYear } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -50,7 +55,11 @@ const COLORS = ["#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"
 type ReportTab = 'overview' | 'distribution' | 'performance' | 'export';
 
 export default function ReportsPage() {
+    const { data: session } = useSession() as any;
+    const userRole = session?.user?.role;
+
     const [activeTab, setActiveTab] = useState<ReportTab>('overview');
+    const [expandedAgents, setExpandedAgents] = useState<string[]>([]);
     const [filters, setFilters] = useState<ReportFilters>({
         page: 1,
         limit: 25,
@@ -111,162 +120,205 @@ export default function ReportsPage() {
     ];
 
     return (
-        <div className="flex h-[calc(100vh-120px)] gap-6 overflow-hidden">
-            {/* Left Sidebar: Navigation & Filters */}
-            <div className="w-80 flex flex-col gap-4 shrink-0">
-                {/* Navigation Card */}
-                <Card className="border-border/60 shadow-sm rounded-3xl overflow-hidden shrink-0">
-                    <CardHeader className="p-5 pb-2">
-                        <CardTitle className="text-base font-black">Report Views</CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-2">
-                        <div className="flex flex-col gap-1">
+        <div className="flex flex-col h-full gap-3 overflow-hidden">
+            {/* Header & Main Controls */}
+            <div className="flex flex-col gap-3 shrink-0">
+                <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 px-4 py-1.5 rounded-2xl bg-primary/10 border border-primary/20">
+                            <LayoutDashboard className="h-4 w-4 text-primary" />
+                            <h1 className="text-xs font-black tracking-tight text-primary uppercase">Reports</h1>
+                        </div>
+                        
+                        <div className="flex items-center gap-1 bg-muted/20 p-1 rounded-2xl border border-border/40 backdrop-blur-xl shrink-0">
                             {TABS.map(tab => (
                                 <button
                                     key={tab.id}
                                     onClick={() => setActiveTab(tab.id as ReportTab)}
-                                    className={`flex items-center gap-3 p-3 rounded-2xl transition-all text-left w-full
+                                    className={`flex items-center gap-2 px-4 py-1.5 rounded-xl transition-all text-[11px] font-black uppercase
                                         ${activeTab === tab.id
-                                            ? "bg-primary/10 text-primary shadow-sm"
+                                            ? "bg-primary text-white shadow-lg shadow-primary/20"
                                             : "hover:bg-muted/40 text-muted-foreground hover:text-foreground"}`}
                                 >
-                                    <div className={`p-2 rounded-xl border ${activeTab === tab.id ? "bg-primary text-white border-transparent" : "bg-muted/50 border-border/40"}`}>
-                                        <tab.icon className="h-4 w-4" />
-                                    </div>
-                                    <span className="text-sm font-bold">{tab.label}</span>
-                                    {activeTab === tab.id && <ChevronRight className="h-4 w-4 ml-auto" />}
+                                    <tab.icon className="h-3.5 w-3.5" />
+                                    <span>{tab.label}</span>
                                 </button>
                             ))}
                         </div>
-                    </CardContent>
-                </Card>
+                    </div>
 
-                {/* Filters Card */}
-                <Card className="flex-1 overflow-hidden flex flex-col border-border/60 shadow-sm rounded-3xl">
-                    <CardHeader className="p-5 pb-2 shrink-0">
-                        <div className="flex items-center justify-between mb-2">
-                            <CardTitle className="text-base font-black">Filters</CardTitle>
-                            <Button variant="ghost" size="sm" onClick={handleReset} className="h-7 px-2 text-[10px] font-bold uppercase rounded-lg text-primary hover:bg-primary/5">
-                                Reset
-                            </Button>
-                        </div>
-                    </CardHeader>
-                    <CardContent className="p-5 pt-0 flex-1 overflow-hidden">
-                        <ScrollArea className="h-full pr-4">
-                            <div className="space-y-4">
-                                {/* Date Range */}
-                                <div className="space-y-2">
-                                    <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Date Range</label>
-                                    <div className="grid grid-cols-2 gap-2">
-                                        <Input
-                                            type="date"
-                                            value={filters.from}
-                                            onChange={e => setFilters({ ...filters, from: e.target.value })}
-                                            className="h-8 rounded-lg text-[10px] px-2"
-                                        />
-                                        <Input
-                                            type="date"
-                                            value={filters.to}
-                                            onChange={e => setFilters({ ...filters, to: e.target.value })}
-                                            className="h-8 rounded-lg text-[10px] px-2"
-                                        />
-                                    </div>
-                                    <div className="flex flex-wrap gap-1">
-                                        {['today', 'week', 'month', 'year'].map(q => (
-                                            <button
-                                                key={q}
-                                                onClick={() => setQuickFilter(q as any)}
-                                                className="px-2 py-1 rounded-md bg-muted/50 text-[9px] font-bold uppercase hover:bg-primary/10 hover:text-primary transition-colors"
-                                            >
-                                                {q}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
+                    <div className="flex items-center gap-3">
+                        <Button variant="outline" size="sm" onClick={handleReset} className="h-9 px-4 text-[10px] font-black uppercase rounded-xl border-border/60 hover:bg-primary/5 transition-all">
+                            Reset Filters
+                        </Button>
+                        <Button
+                            size="sm"
+                            onClick={handleApplyFilters}
+                            className="h-9 px-6 rounded-xl text-[10px] font-black uppercase shadow-lg shadow-primary/20 transition-all"
+                        >
+                            <Filter className="h-3.5 w-3.5 mr-2" /> Apply Filters
+                        </Button>
+                    </div>
+                </div>
 
-                                {/* Selectors */}
-                                {[
-                                    { label: 'Source', key: 'source', options: filterOptions?.sources?.map((s: string) => ({ id: s, name: s })) },
-                                    { label: 'Country', key: 'country', options: filterOptions?.countries },
-                                    { label: 'Agent', key: 'agentId', options: filterOptions?.agents },
-                                    { label: 'Counselor', key: 'counselorId', options: filterOptions?.counselors },
-                                ].map(group => (
-                                    <div key={group.key} className="space-y-1.5">
-                                        <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">{group.label}</label>
-                                        <Select
-                                            value={(filters as any)[group.key] || "all"}
-                                            onValueChange={v => setFilters({ ...filters, [group.key]: v === "all" ? "" : v })}
-                                        >
-                                            <SelectTrigger className="h-9 rounded-xl border-border/60 bg-muted/20 text-xs text-left">
-                                                <SelectValue placeholder={`All ${group.label}s`} />
-                                            </SelectTrigger>
-                                            <SelectContent className="rounded-xl">
-                                                <SelectItem value="all">All {group.label}s</SelectItem>
-                                                {group.options?.map((opt: any) => (
-                                                    <SelectItem key={opt.id} value={opt.id || opt.name}>{opt.name}</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
+                {/* Expanded Filters Grid */}
+                <Card className="border-border/60 shadow-xl rounded-2xl bg-card/10 backdrop-blur-xl p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-3">
+                        {/* Time Period Column */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest pl-1">Quick Selection</label>
+                            <div className="flex flex-wrap gap-1.5">
+                                {['today', 'week', 'month', 'year'].map(q => (
+                                    <button
+                                        key={q}
+                                        onClick={() => setQuickFilter(q as any)}
+                                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all border
+                                            ${filters.from === format(q === 'today' ? new Date() : q === 'week' ? startOfWeek(new Date()) : q === 'month' ? startOfMonth(new Date()) : startOfYear(new Date()), "yyyy-MM-dd")
+                                                ? "bg-primary text-white border-transparent shadow-md shadow-primary/20"
+                                                : "bg-muted/30 text-muted-foreground border-border/40 hover:bg-muted/60"}`}
+                                    >
+                                        {q}
+                                    </button>
                                 ))}
-
-                                {/* Status & Temp */}
-                                <div className="grid grid-cols-2 gap-2">
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Status</label>
-                                        <Select value={filters.status || "all"} onValueChange={v => setFilters({ ...filters, status: v === "all" ? "" : v })}>
-                                            <SelectTrigger className="h-8 rounded-lg border-border/60 bg-muted/20 text-[10px]">
-                                                <SelectValue placeholder="All" />
-                                            </SelectTrigger>
-                                            <SelectContent className="rounded-xl">
-                                                <SelectItem value="all">All</SelectItem>
-                                                <SelectItem value="NEW">New</SelectItem>
-                                                <SelectItem value="CONTACTED">Contacted</SelectItem>
-                                                <SelectItem value="CONVERTED">Converted</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Temp</label>
-                                        <Select value={filters.temperature || "all"} onValueChange={v => setFilters({ ...filters, temperature: v === "all" ? "" : v })}>
-                                            <SelectTrigger className="h-8 rounded-lg border-border/60 bg-muted/20 text-[10px]">
-                                                <SelectValue placeholder="All" />
-                                            </SelectTrigger>
-                                            <SelectContent className="rounded-xl">
-                                                <SelectItem value="all">All</SelectItem>
-                                                <SelectItem value="HOT">Hot</SelectItem>
-                                                <SelectItem value="WARM">Warm</SelectItem>
-                                                <SelectItem value="COLD">Cold</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                </div>
-
-                                <Button
-                                    size="sm"
-                                    onClick={handleApplyFilters}
-                                    className="w-full rounded-xl h-9 font-bold shadow-sm shadow-primary/20 mt-2"
-                                >
-                                    <Filter className="h-3.5 w-3.5 mr-2" /> Apply Filters
-                                </Button>
                             </div>
-                        </ScrollArea>
-                    </CardContent>
+                        </div>
+
+                        {/* Date Range Group */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest pl-1">Date Range</label>
+                            <div className="grid grid-cols-2 gap-2">
+                                <Input
+                                    type="date"
+                                    value={filters.from}
+                                    onChange={e => setFilters({ ...filters, from: e.target.value })}
+                                    className="h-10 rounded-xl text-xs px-3 border-border/60 bg-muted/20 focus:bg-background transition-colors"
+                                />
+                                <Input
+                                    type="date"
+                                    value={filters.to}
+                                    onChange={e => setFilters({ ...filters, to: e.target.value })}
+                                    className="h-10 rounded-xl text-xs px-3 border-border/60 bg-muted/20 focus:bg-background transition-colors"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Status Filter */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest pl-1">Lead Status</label>
+                            <Select value={filters.status || "all"} onValueChange={v => setFilters({ ...filters, status: v === "all" ? "" : v })}>
+                                <SelectTrigger className="h-10 rounded-xl border-border/60 bg-muted/20 text-xs px-3">
+                                    <SelectValue placeholder="All Status" />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-2xl border-border/60">
+                                    <SelectItem value="all">All Status</SelectItem>
+                                    <SelectItem value="NEW">New Lead</SelectItem>
+                                    <SelectItem value="CONTACTED">Contacted</SelectItem>
+                                    <SelectItem value="CONVERTED">Converted</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Source Filter */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest pl-1">Inquiry Source</label>
+                            <Select value={filters.source || "all"} onValueChange={v => setFilters({ ...filters, source: v === "all" ? "" : v })}>
+                                <SelectTrigger className="h-10 rounded-xl border-border/60 bg-muted/20 text-xs px-3">
+                                    <SelectValue placeholder="All Sources" />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-2xl border-border/60">
+                                    <SelectItem value="all">All Sources</SelectItem>
+                                    {filterOptions?.sources?.map((s: string) => (
+                                        <SelectItem key={s} value={s}>{s}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Country Filter */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest pl-1">Target Country</label>
+                            <Select value={filters.country || "all"} onValueChange={v => setFilters({ ...filters, country: v === "all" ? "" : v })}>
+                                <SelectTrigger className="h-10 rounded-xl border-border/60 bg-muted/20 text-xs px-3">
+                                    <SelectValue placeholder="All Countries" />
+                                </SelectTrigger>
+                                <SelectContent className="rounded-2xl border-border/60">
+                                    <SelectItem value="all">All Countries</SelectItem>
+                                    {filterOptions?.countries?.map((c: any) => (
+                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Temperature Filter */}
+                        <div className="space-y-2">
+                            <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest pl-1">Lead Temperature</label>
+                            <Select value={filters.temperature || "all"} onValueChange={v => setFilters({ ...filters, temperature: v === "all" ? "" : v })}>
+                                <SelectTrigger className="h-10 rounded-xl border-border/60 bg-muted/20 text-xs px-3 font-bold">
+                                    <div className="flex items-center gap-2">
+                                        <div className={`w-2 h-2 rounded-full ${filters.temperature === 'HOT' ? 'bg-rose-500' : filters.temperature === 'WARM' ? 'bg-amber-500' : filters.temperature === 'COLD' ? 'bg-blue-500' : 'bg-muted-foreground'}`} />
+                                        <SelectValue placeholder="All Temperat..." />
+                                    </div>
+                                </SelectTrigger>
+                                <SelectContent className="rounded-2xl border-border/60">
+                                    <SelectItem value="all">All Temperatures</SelectItem>
+                                    <SelectItem value="HOT" className="text-rose-500 font-bold text-xs">🔥 Hot</SelectItem>
+                                    <SelectItem value="WARM" className="text-amber-500 font-bold text-xs">☀️ Warm</SelectItem>
+                                    <SelectItem value="COLD" className="text-blue-500 font-bold text-xs">❄️ Cold</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+
+                        {/* Hierarchical Filters */}
+                        {['ADMIN', 'SUPER_ADMIN'].includes(userRole) && (
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest pl-1">Assigned Agent</label>
+                                <Select value={filters.agentId || "all"} onValueChange={v => setFilters({ ...filters, agentId: v === "all" ? "" : v })}>
+                                    <SelectTrigger className="h-10 rounded-xl border-border/60 bg-muted/20 text-xs px-3">
+                                        <SelectValue placeholder="All Agents" />
+                                    </SelectTrigger>
+                                    <SelectContent className="rounded-2xl border-border/60">
+                                        <SelectItem value="all">All Agents</SelectItem>
+                                        {filterOptions?.agents?.map((a: any) => (
+                                            <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+
+                        {['ADMIN', 'SUPER_ADMIN', 'AGENT'].includes(userRole) && (
+                            <div className="space-y-2">
+                                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest pl-1">Specific Counselor</label>
+                                <Select value={filters.counselorId || "all"} onValueChange={v => setFilters({ ...filters, counselorId: v === "all" ? "" : v })}>
+                                    <SelectTrigger className="h-10 rounded-xl border-border/60 bg-muted/20 text-xs px-3">
+                                        <SelectValue placeholder="All Counselors" />
+                                    </SelectTrigger>
+                                    <SelectContent className="rounded-2xl border-border/60">
+                                        <SelectItem value="all">All Counselors</SelectItem>
+                                        {filterOptions?.counselors?.map((c: any) => (
+                                            <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        )}
+                    </div>
                 </Card>
             </div>
 
-            {/* Right Panel: Content Area */}
-            <div className="flex-1 flex flex-col gap-4 overflow-hidden">
-                <Card className="flex-1 overflow-hidden flex flex-col border-border/60 shadow-sm rounded-3xl">
-                    <CardHeader className="p-6 pb-4 border-b border-border/40 bg-white/50 shrink-0">
+            {/* Main Content Area */}
+            <div className="flex-1 min-h-0 flex flex-col gap-3 overflow-hidden">
+                <Card className="flex-1 overflow-hidden flex flex-col border-border/60 shadow-md rounded-[2rem] bg-card/30 backdrop-blur-xl">
+                    <CardHeader className="p-4 border-b border-border/40 bg-muted/20 shrink-0">
                         <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="p-3 rounded-2xl border bg-primary/10 text-primary border-primary/20">
-                                    {(() => { const Icon = TABS.find(t => t.id === activeTab)?.icon || LayoutDashboard; return <Icon className="h-5 w-5" />; })()}
+                            <div className="flex items-center gap-2">
+                                <div className="p-2 rounded-xl border bg-primary/10 text-primary border-primary/20">
+                                    {(() => { const Icon = TABS.find(t => t.id === activeTab)?.icon || LayoutDashboard; return <Icon className="h-4 w-4" />; })()}
                                 </div>
-                                <div>
-                                    <h2 className="text-xl font-black">{TABS.find(t => t.id === activeTab)?.label}</h2>
-                                    <p className="text-xs text-muted-foreground/70">
+                                <div className="flex items-baseline gap-2">
+                                    <h2 className="text-base font-black">{TABS.find(t => t.id === activeTab)?.label}</h2>
+                                    <p className="text-[10px] text-muted-foreground/70 hidden md:block">
                                         {activeTab === 'overview' && "Key performance indicators and lead Acquisition trends."}
                                         {activeTab === 'distribution' && "Geographic and source distribution of your lead database."}
                                         {activeTab === 'performance' && "Comparative productivity tables for your team members."}
@@ -282,16 +334,16 @@ export default function ReportsPage() {
                         <div className="p-6">
                             {/* Summary Cards */}
                             {activeTab !== 'export' && (
-                                <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+                                <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 mb-4">
                                     {[
-                                        { label: "Leads", value: analytics?.summary?.totalLeads, icon: TrendingUp, color: "text-blue-600 bg-blue-50" },
-                                        { label: "Converted", value: analytics?.summary?.convertedLeads, icon: CheckCircle2, color: "text-emerald-600 bg-emerald-50" },
-                                        { label: "Assigned", value: analytics?.summary?.assignedLeads, icon: Users, color: "text-amber-600 bg-amber-50" },
-                                        { label: "Conv. Rate", value: `${analytics?.summary?.conversionRate}%`, icon: Percent, color: "text-violet-600 bg-violet-50" },
-                                        { label: "Cold/Old", value: analytics?.summary?.unassignedLeads, icon: UserMinus, color: "text-rose-600 bg-rose-50" },
+                                        { label: "Leads", value: analytics?.summary?.totalLeads, icon: TrendingUp, color: "text-blue-500 bg-blue-500/10" },
+                                        { label: "Converted", value: analytics?.summary?.convertedLeads, icon: CheckCircle2, color: "text-emerald-500 bg-emerald-500/10" },
+                                        { label: "Assigned", value: analytics?.summary?.assignedLeads, icon: Users, color: "text-amber-500 bg-amber-500/10" },
+                                        { label: "Conv. Rate", value: `${analytics?.summary?.conversionRate}%`, icon: Percent, color: "text-violet-500 bg-violet-500/10" },
+                                        { label: "Cold/Old", value: analytics?.summary?.unassignedLeads, icon: UserMinus, color: "text-rose-500 bg-rose-500/10" },
                                     ].map((card, i) => (
-                                        <div key={i} className="bg-muted/30 p-4 rounded-2xl border border-border/40 flex flex-col gap-2 transition-all hover:bg-muted/50">
-                                            <div className={`w-8 h-8 rounded-lg ${card.color} flex items-center justify-center`}>
+                                        <div key={i} className="bg-muted/30 p-3 rounded-xl border border-border/40 flex items-center gap-3 transition-all hover:bg-muted/50">
+                                            <div className={`w-8 h-8 shrink-0 rounded-lg ${card.color} flex items-center justify-center`}>
                                                 <card.icon className="h-4 w-4" />
                                             </div>
                                             <div>
@@ -307,17 +359,17 @@ export default function ReportsPage() {
 
                             {activeTab === 'overview' && (
                                 <div className="space-y-6">
-                                    <div className="bg-white p-6 rounded-2xl border border-border/40 shadow-sm relative group overflow-hidden">
+                                    <div className="bg-card/40 p-6 rounded-2xl border border-border/40 shadow-sm relative group overflow-hidden">
                                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-indigo-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                                         <h3 className="text-sm font-black text-foreground mb-6">Leads Created Trend</h3>
                                         <div className="h-[300px] w-full">
                                             <ResponsiveContainer width="100%" height="100%">
                                                 <LineChart data={analytics?.charts?.leadsOverTime}>
-                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
-                                                    <XAxis dataKey="date" tick={{ fontSize: 10, fill: "#9ca3af" }} axisLine={false} tickLine={false} tickFormatter={d => format(new Date(d), "MMM d")} />
-                                                    <YAxis tick={{ fontSize: 10, fill: "#9ca3af" }} axisLine={false} tickLine={false} allowDecimals={false} />
-                                                    <Tooltip contentStyle={{ borderRadius: 16, border: "none", boxShadow: "0 10px 25px rgba(0,0,0,0.05)", fontWeight: "bold" }} />
-                                                    <Line type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={4} dot={{ r: 0 }} activeDot={{ r: 6, fill: "#3b82f6", strokeWidth: 0 }} />
+                                                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" opacity={0.5} />
+                                                    <XAxis dataKey="date" tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} tickFormatter={d => format(new Date(d), "MMM d")} />
+                                                    <YAxis tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                                                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", borderRadius: 16, border: "1px solid hsl(var(--border))", boxShadow: "0 10px 25px rgba(0,0,0,0.2)", fontWeight: "bold" }} />
+                                                    <Line type="monotone" dataKey="count" stroke="#3b82f6" strokeWidth={3} dot={{ r: 2, fill: "#3b82f6", strokeWidth: 0 }} activeDot={{ r: 6, fill: "#3b82f6", strokeWidth: 0 }} />
                                                 </LineChart>
                                             </ResponsiveContainer>
                                         </div>
@@ -327,7 +379,7 @@ export default function ReportsPage() {
 
                             {activeTab === 'distribution' && (
                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                    <div className="bg-white p-6 rounded-2xl border border-border/40 shadow-sm">
+                                    <div className="bg-card/40 p-6 rounded-2xl border border-border/40 shadow-sm">
                                         <h3 className="text-sm font-black text-foreground mb-6">Leads by Source</h3>
                                         <div className="h-[280px]">
                                             <ResponsiveContainer width="100%" height="100%">
@@ -337,13 +389,13 @@ export default function ReportsPage() {
                                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                                         ))}
                                                     </Pie>
-                                                    <Tooltip />
-                                                    <Legend wrapperStyle={{ fontSize: 10, fontWeight: "bold", paddingTop: 20 }} />
+                                                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "12px" }} />
+                                                    <Legend wrapperStyle={{ fontSize: 10, fontWeight: "bold", paddingTop: 20, color: "hsl(var(--foreground))" }} />
                                                 </PieChart>
                                             </ResponsiveContainer>
                                         </div>
                                     </div>
-                                    <div className="bg-white p-6 rounded-2xl border border-border/40 shadow-sm">
+                                    <div className="bg-card/40 p-6 rounded-2xl border border-border/40 shadow-sm">
                                         <h3 className="text-sm font-black text-foreground mb-6">Leads by Country</h3>
                                         <div className="h-[280px]">
                                             <ResponsiveContainer width="100%" height="100%">
@@ -353,8 +405,8 @@ export default function ReportsPage() {
                                                             <Cell key={`cell-${index}`} fill={COLORS[(index + 2) % COLORS.length]} />
                                                         ))}
                                                     </Pie>
-                                                    <Tooltip />
-                                                    <Legend wrapperStyle={{ fontSize: 10, fontWeight: "bold", paddingTop: 20 }} />
+                                                    <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "12px" }} />
+                                                    <Legend wrapperStyle={{ fontSize: 10, fontWeight: "bold", paddingTop: 20, color: "hsl(var(--foreground))" }} />
                                                 </PieChart>
                                             </ResponsiveContainer>
                                         </div>
@@ -364,87 +416,148 @@ export default function ReportsPage() {
 
                             {activeTab === 'performance' && (
                                 <div className="space-y-6">
-                                    <div className="bg-white rounded-2xl border border-border/40 overflow-hidden shadow-sm">
-                                        <div className="p-4 border-b border-border/30 bg-muted/20">
-                                            <h3 className="text-sm font-black">Agent Performance</h3>
+                                    <div className="bg-card/40 rounded-2xl border border-border/40 overflow-hidden shadow-sm">
+                                        <div className="p-4 border-b border-border/30 bg-muted/20 flex items-center justify-between">
+                                            <h3 className="text-sm font-black">
+                                                {userRole === 'COUNSELOR' ? 'My Performance' : 
+                                                 userRole === 'AGENT' ? 'My Team Performance' : 
+                                                 'Network Hierarchy'}
+                                            </h3>
+                                            <Badge variant="outline" className="text-[10px] uppercase font-black px-2 rounded-lg">
+                                                {userRole} VIEW
+                                            </Badge>
                                         </div>
-                                        <Table>
-                                            <TableHeader className="bg-muted/10">
-                                                <TableRow>
-                                                    <TableHead className="text-[10px] uppercase font-black px-6">Name</TableHead>
-                                                    <TableHead className="text-[10px] uppercase font-black">Assigned</TableHead>
-                                                    <TableHead className="text-[10px] uppercase font-black">Converted</TableHead>
-                                                    <TableHead className="text-[10px] uppercase font-black px-6">Success Rate</TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {analytics?.performance?.agents?.length === 0 ? (
-                                                    <TableRow><TableCell colSpan={4} className="h-20 text-center text-muted-foreground text-xs italic">No agent data found</TableCell></TableRow>
-                                                ) : (
-                                                    analytics?.performance?.agents?.map((a: any) => (
-                                                        <TableRow key={a.name} className="hover:bg-muted/5">
-                                                            <TableCell className="px-6 font-bold text-xs">{a.name}</TableCell>
-                                                            <TableCell className="text-xs">{a.assigned}</TableCell>
-                                                            <TableCell className="text-xs">{a.converted}</TableCell>
-                                                            <TableCell className="px-6">
-                                                                <Badge variant="outline" className="text-primary bg-primary/5 rounded-lg border-primary/20 font-black">
-                                                                    {a.assigned > 0 ? ((a.converted / a.assigned) * 100).toFixed(1) : 0}%
-                                                                </Badge>
-                                                            </TableCell>
-                                                        </TableRow>
-                                                    ))
-                                                )}
-                                            </TableBody>
-                                        </Table>
-                                    </div>
+                                        <div className="overflow-x-auto">
+                                            <Table>
+                                                <TableHeader className="bg-muted/10">
+                                                    <TableRow className="border-b-0">
+                                                        <TableHead className="text-[10px] uppercase font-black px-6 w-[300px]">Entity</TableHead>
+                                                        <TableHead className="text-[10px] uppercase font-black px-4">Leads</TableHead>
+                                                        <TableHead className="text-[10px] uppercase font-black px-4">Conversion</TableHead>
+                                                        <TableHead className="text-[10px] uppercase font-black px-4">Onboarded</TableHead>
+                                                        <TableHead className="text-[10px] uppercase font-black px-4">Applications</TableHead>
+                                                        <TableHead className="text-[10px] uppercase font-black px-6 text-right">Visa Filed</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {analytics?.performance?.hierarchy?.length === 0 && !analytics?.performance?.counselors?.length ? (
+                                                        <TableRow><TableCell colSpan={6} className="h-40 text-center text-muted-foreground italic text-xs">No performance data found for the selected filters</TableCell></TableRow>
+                                                    ) : (
+                                                        <>
+                                                            {/* Hierarchical View for Admins/Agents */}
+                                                            {analytics?.performance?.hierarchy?.map((agent: any) => {
+                                                                const isExpanded = expandedAgents.includes(agent.id);
+                                                                return (
+                                                                    <Fragment key={agent.id}>
+                                                                        <TableRow 
+                                                                            className={`group transition-colors cursor-pointer ${isExpanded ? 'bg-primary/[0.03]' : 'hover:bg-muted/10'}`}
+                                                                            onClick={() => setExpandedAgents(prev => 
+                                                                                isExpanded ? prev.filter(id => id !== agent.id) : [...prev, agent.id]
+                                                                            )}
+                                                                        >
+                                                                            <TableCell className="px-6 py-4">
+                                                                                <div className="flex items-center gap-3">
+                                                                                    {agent.counselors?.length > 0 ? (
+                                                                                        isExpanded ? <ChevronDown className="h-4 w-4 text-primary" /> : <ChevronRight className="h-4 w-4 text-muted-foreground transition-transform group-hover:translate-x-1" />
+                                                                                    ) : <div className="w-4" />}
+                                                                                    <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500">
+                                                                                        <Building2 className="h-4 w-4" />
+                                                                                    </div>
+                                                                                    <div className="flex flex-col">
+                                                                                        <span className="text-sm font-black">{agent.name}</span>
+                                                                                        <span className="text-[10px] text-muted-foreground uppercase font-black tracking-tighter">Team Lead / Agent</span>
+                                                                                    </div>
+                                                                                </div>
+                                                                            </TableCell>
+                                                                            <TableCell className="px-4 font-bold text-sm">{agent.assigned}</TableCell>
+                                                                            <TableCell className="px-4">
+                                                                                <Badge variant="outline" className="text-[10px] font-black bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+                                                                                    {agent.assigned > 0 ? ((agent.converted / agent.assigned) * 100).toFixed(1) : 0}%
+                                                                                </Badge>
+                                                                            </TableCell>
+                                                                            <TableCell className="px-4 text-sm font-bold text-muted-foreground">
+                                                                                {agent.counselors?.reduce((acc: number, c: any) => acc + c.students, 0) || '-'}
+                                                                            </TableCell>
+                                                                            <TableCell className="px-4 text-sm font-bold text-muted-foreground">
+                                                                                {agent.counselors?.reduce((acc: number, c: any) => acc + c.applications, 0) || '-'}
+                                                                            </TableCell>
+                                                                            <TableCell className="px-6 text-right text-sm font-bold text-muted-foreground">
+                                                                                {agent.counselors?.reduce((acc: number, c: any) => acc + c.visaFiled, 0) || '-'}
+                                                                            </TableCell>
+                                                                        </TableRow>
+                                                                        {isExpanded && agent.counselors.map((c: any) => (
+                                                                            <TableRow key={c.id} className="bg-muted/5 border-l-2 border-primary/20 hover:bg-muted/10">
+                                                                                <TableCell className="pl-14 pr-6 py-3">
+                                                                                    <div className="flex items-center gap-2">
+                                                                                        <div className="p-1.5 rounded-lg bg-orange-500/10 text-orange-500">
+                                                                                            <Users className="h-3 w-3" />
+                                                                                        </div>
+                                                                                        <div className="flex flex-col">
+                                                                                            <span className="text-xs font-bold">{c.name}</span>
+                                                                                            <span className="text-[9px] text-muted-foreground uppercase font-black">Counselor</span>
+                                                                                        </div>
+                                                                                    </div>
+                                                                                </TableCell>
+                                                                                <TableCell className="px-4 text-xs font-medium">{c.assigned}</TableCell>
+                                                                                <TableCell className="px-4">
+                                                                                    <span className="text-xs font-black text-emerald-500">
+                                                                                        {c.assigned > 0 ? ((c.converted / c.assigned) * 100).toFixed(1) : 0}%
+                                                                                    </span>
+                                                                                </TableCell>
+                                                                                <TableCell className="px-4 text-xs font-black text-foreground">{c.students}</TableCell>
+                                                                                <TableCell className="px-4 text-xs font-black text-foreground">{c.applications}</TableCell>
+                                                                                <TableCell className="px-6 text-right text-xs font-black text-emerald-500">{c.visaFiled}</TableCell>
+                                                                            </TableRow>
+                                                                        ))}
+                                                                    </Fragment>
+                                                                );
+                                                            })}
 
-                                    <div className="bg-white rounded-2xl border border-border/40 overflow-hidden shadow-sm">
-                                        <div className="p-4 border-b border-border/30 bg-muted/20">
-                                            <h3 className="text-sm font-black">Counselor Processing</h3>
+                                                            {/* Direct Counselor View (for Counselor Role or others if data exists) */}
+                                                            {userRole === 'COUNSELOR' && analytics?.performance?.counselors?.map((c: any) => (
+                                                                <TableRow key={c.name} className="hover:bg-primary/[0.02]">
+                                                                    <TableCell className="px-6 py-4">
+                                                                        <div className="flex items-center gap-3">
+                                                                            <div className="p-2 rounded-lg bg-primary/10 text-primary">
+                                                                                <Users className="h-4 w-4" />
+                                                                            </div>
+                                                                            <div className="flex flex-col">
+                                                                                <span className="text-sm font-black">{c.name}</span>
+                                                                                <span className="text-[10px] text-muted-foreground uppercase font-black">Self Performance</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </TableCell>
+                                                                    <TableCell className="px-4 font-bold text-sm text-muted-foreground">-</TableCell>
+                                                                    <TableCell className="px-4 font-bold text-sm text-muted-foreground">-</TableCell>
+                                                                    <TableCell className="px-4 font-black">{c.students}</TableCell>
+                                                                    <TableCell className="px-4 font-black">{c.applications}</TableCell>
+                                                                    <TableCell className="px-6 text-right font-black text-emerald-500">{c.visaFiled}</TableCell>
+                                                                </TableRow>
+                                                            ))}
+                                                        </>
+                                                    )}
+                                                </TableBody>
+                                            </Table>
                                         </div>
-                                        <Table>
-                                            <TableHeader className="bg-muted/10">
-                                                <TableRow>
-                                                    <TableHead className="text-[10px] uppercase font-black px-6">Name</TableHead>
-                                                    <TableHead className="text-[10px] uppercase font-black">Students</TableHead>
-                                                    <TableHead className="text-[10px] uppercase font-black">Applications</TableHead>
-                                                    <TableHead className="text-[10px] uppercase font-black px-6 text-right">Visa Filed</TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {analytics?.performance?.counselors?.length === 0 ? (
-                                                    <TableRow><TableCell colSpan={4} className="h-20 text-center text-muted-foreground text-xs italic">No counselor data found</TableCell></TableRow>
-                                                ) : (
-                                                    analytics?.performance?.counselors?.map((c: any) => (
-                                                        <TableRow key={c.name} className="hover:bg-muted/5">
-                                                            <TableCell className="px-6 font-bold text-xs">{c.name}</TableCell>
-                                                            <TableCell className="text-xs">{c.students}</TableCell>
-                                                            <TableCell className="text-xs">{c.applications}</TableCell>
-                                                            <TableCell className="px-6 text-right text-xs font-black text-emerald-600">{c.visaFiled}</TableCell>
-                                                        </TableRow>
-                                                    ))
-                                                )}
-                                            </TableBody>
-                                        </Table>
                                     </div>
                                 </div>
                             )}
 
                             {activeTab === 'export' && (
                                 <div className="space-y-4">
-                                    <div className="bg-white rounded-2xl border border-border/40 shadow-sm overflow-hidden flex flex-col">
+                                    <div className="bg-card/40 rounded-2xl border border-border/40 shadow-sm overflow-hidden flex flex-col">
                                         <div className="p-4 bg-muted/20 border-b border-border/30 flex justify-between items-center gap-4">
                                             <div className="relative w-full max-w-sm">
                                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60" />
                                                 <Input
                                                     placeholder="Search leads..."
-                                                    className="pl-9 h-9 rounded-xl border-border/60 text-xs bg-white"
+                                                    className="pl-9 h-9 rounded-xl border-border/60 text-xs bg-muted/20"
                                                     value={filters.search}
                                                     onChange={e => setFilters({ ...filters, search: e.target.value })}
                                                 />
                                             </div>
                                             <div className="flex gap-2 shrink-0">
-                                                <Button variant="outline" size="sm" className="rounded-xl h-9 border-border/60 hover:bg-emerald-50 hover:text-emerald-600 transition-colors" onClick={() => handleExport('xlsx')}>
+                                                <Button variant="outline" size="sm" className="rounded-xl h-9 border-border/60 hover:bg-emerald-500/10 hover:text-emerald-500 transition-colors" onClick={() => handleExport('xlsx')}>
                                                     <Download className="h-4 w-4 mr-2" /> Excel
                                                 </Button>
                                                 <Button variant="outline" size="sm" className="rounded-xl h-9 border-border/60" onClick={() => handleExport('csv')}>

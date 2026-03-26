@@ -91,39 +91,39 @@ export function UniversityApplicationDetailTable({
         <div className="space-y-4">
             <div className="flex items-center justify-between px-1">
                 <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-bold text-foreground/80">University Application</h3>
+                    <h3 className="text-sm font-bold text-foreground/90">University Application</h3>
                 </div>
                 <div className="flex items-center gap-2">
                     <Button
                         variant="outline"
                         size="sm"
-                        className="h-8 text-[11px] font-semibold flex items-center gap-1.5 rounded-lg border-primary/20 hover:bg-primary/5 text-primary"
+                        className="h-8 text-[11px] font-bold flex items-center gap-1.5 rounded-xl border-primary/20 hover:bg-primary/5 text-primary"
                         onClick={onAdd}
                     >
                         <Plus className="h-3 w-3" />
                         Add University Application
                     </Button>
-                    <Button variant="outline" size="sm" className="h-8 text-[11px] font-semibold flex items-center gap-1.5 rounded-lg border-emerald-600/20 hover:bg-emerald-50 text-emerald-700">
+                    <Button variant="outline" size="sm" className="h-8 text-[11px] font-bold flex items-center gap-1.5 rounded-xl border-emerald-600/20 dark:border-emerald-500/30 hover:bg-emerald-50 dark:hover:bg-emerald-500/10 text-emerald-700 dark:text-emerald-500">
                         <Search className="h-3 w-3" />
                         Apply Through Course Finder
                     </Button>
                 </div>
             </div>
 
-            <div className="rounded-xl border border-border/60 overflow-hidden bg-white shadow-sm">
+            <div className="rounded-2xl border border-border/50 overflow-hidden bg-card shadow-lg dark:shadow-none ring-1 ring-border/5">
                 <Table>
-                    <TableHeader className="bg-muted/30">
-                        <TableRow className="hover:bg-transparent border-border/50">
-                            <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground py-3">Action</TableHead>
-                            <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground py-3">Created - Updated</TableHead>
-                            <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground py-3">Country</TableHead>
-                            <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground py-3">University</TableHead>
-                            <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground py-3">Course</TableHead>
-                            <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground py-3">Intake</TableHead>
-                            <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground py-3">Associate</TableHead>
-                            <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground py-3">Deadline Date</TableHead>
-                            <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground py-3">Status</TableHead>
-                            <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground py-3 text-right pr-6">Management</TableHead>
+                    <TableHeader className="bg-muted/40 dark:bg-slate-900/40">
+                        <TableRow className="hover:bg-transparent border-border/40">
+                            <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground py-4">Action</TableHead>
+                            <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground py-4">Created - Updated</TableHead>
+                            <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground py-4">Country</TableHead>
+                            <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground py-4">University</TableHead>
+                            <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground py-4">Course</TableHead>
+                            <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground py-4">Intake</TableHead>
+                            <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground py-4">Associate</TableHead>
+                            <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground py-4">Deadline Date</TableHead>
+                            <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground py-4">Status</TableHead>
+                            <TableHead className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground py-4 text-right pr-6">Management</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -236,18 +236,18 @@ export function UniversityApplicationDetailTable({
                                         <span className="text-[11px] font-medium text-foreground">{(app as any).courseName || (app as any).course?.name || 'N/A'}</span>
                                     </TableCell>
                                     <TableCell className="py-3">
-                                        <span className="text-[10px] text-muted-foreground italic">{app.intake || 'N/A'}</span>
+                                        <span className="text-[11px] font-medium text-muted-foreground italic">{app.intake || 'N/A'}</span>
                                     </TableCell>
                                     <TableCell className="py-3">
-                                        <span className="text-[11px] font-medium text-slate-600">{app.associate?.name || 'Not Assigned'}</span>
+                                        <span className="text-[11px] font-medium text-foreground/80">{app.associate?.name || 'Not Assigned'}</span>
                                     </TableCell>
                                     <TableCell className="py-3">
-                                        <span className="text-[11px] font-medium text-rose-600">
+                                        <span className="text-[11px] font-bold text-rose-600 dark:text-rose-500">
                                             {app.deadlineDate ? new Date(app.deadlineDate).toLocaleDateString() : 'N/A'}
                                         </span>
                                     </TableCell>
                                     <TableCell className="py-3">
-                                        <Badge className={`text-[9px] font-bold px-2 py-0.5 rounded-md border shadow-none ${getStatusColor(app.status)}`}>
+                                        <Badge className={`text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border shadow-none ${getStatusColor(app.status)}`}>
                                             {app.status}
                                         </Badge>
                                     </TableCell>
@@ -261,7 +261,7 @@ export function UniversityApplicationDetailTable({
                                                     e.preventDefault();
                                                     setCommentsApp(app);
                                                 }}
-                                                className="h-8 px-2 text-[10px] font-bold border-slate-200 text-slate-600 hover:bg-slate-50 shadow-sm"
+                                                className="h-8 px-2 text-[10px] font-black uppercase tracking-widest border-border text-muted-foreground hover:bg-muted dark:hover:bg-white/5 shadow-sm rounded-lg"
                                             >
                                                 <History className="h-3.5 w-3.5 mr-1" /> History
                                             </Button>

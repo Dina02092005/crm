@@ -49,7 +49,7 @@ export function AssignLeadSheet({
     const [selectedManagerId, setSelectedManagerId] = useState<string>("");
     const [selectedCounselorId, setSelectedCounselorId] = useState<string>("");
 
-    const isAdmin = ["ADMIN", "SUPER_ADMIN", "MANAGER"].includes(session?.user?.role);
+    const isAdmin = ["ADMIN", "SUPER_ADMIN"].includes(session?.user?.role);
     const isAgent = session?.user?.role === "AGENT";
 
     useEffect(() => {
@@ -65,7 +65,7 @@ export function AssignLeadSheet({
         try {
             if (isAdmin) {
                 // Fetch Agents/Managers
-                const agentRoles = ["AGENT", "SALES_REP", "MANAGER"];
+                const agentRoles = ["AGENT", "SALES_REP"];
                 const agentRes = await Promise.all(agentRoles.map(role =>
                     axios.get(`/api/employees?role=${role}&status=active&limit=100`)
                 ));
@@ -148,7 +148,7 @@ export function AssignLeadSheet({
                 <SheetHeader>
                     <SheetTitle>Assign Lead</SheetTitle>
                     <SheetDescription>
-                        Select a manager and optionally a counselor to assign <strong>{leadName}</strong>.
+                        Select an agent and optionally a counselor to assign <strong>{leadName}</strong>.
                     </SheetDescription>
                 </SheetHeader>
 
@@ -162,10 +162,10 @@ export function AssignLeadSheet({
                             {isAdmin && (
                                 <div className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label>Manager / Agent (Optional)</Label>
+                                        <Label>Agent (Optional)</Label>
                                         <Select value={selectedManagerId} onValueChange={handleManagerChange}>
                                             <SelectTrigger className="w-full h-12 rounded-xl bg-slate-50 border-slate-200">
-                                                <SelectValue placeholder="Select Manager or Agent" />
+                                                <SelectValue placeholder="Select Agent" />
                                             </SelectTrigger>
                                             <SelectContent className="rounded-xl shadow-xl border-slate-200">
                                                 <SelectItem value="none" className="py-2">None (Independent Counselor)</SelectItem>
@@ -193,7 +193,7 @@ export function AssignLeadSheet({
                                                 <SelectValue placeholder="Select Counselor" />
                                             </SelectTrigger>
                                             <SelectContent className="rounded-xl shadow-xl border-slate-200">
-                                                <SelectItem value="none" className="py-2">No Counselor (Assign to Manager)</SelectItem>
+                                                <SelectItem value="none" className="py-2">No Counselor (Assign to Agent)</SelectItem>
                                                 {((selectedManagerId && selectedManagerId !== "none") 
                                                     ? agentCounselors[selectedManagerId] 
                                                     : agentCounselors["all"])?.map((counselor) => (

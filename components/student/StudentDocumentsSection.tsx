@@ -166,11 +166,11 @@ export default function StudentDocumentsSection({ studentId, interestedCountry }
     return (
         <div className="space-y-4">
             {/* Header Banner */}
-            <div className="rounded-xl border border-primary/20 bg-primary/5 p-3 flex items-center justify-between gap-4 flex-wrap">
+            <div className="rounded-xl border border-primary/20 bg-primary/5 dark:bg-primary/20 p-3 flex items-center justify-between gap-4 flex-wrap backdrop-blur-sm">
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <AlertCircle className="h-3.5 w-3.5 text-primary shrink-0" />
                     <span className="text-xs">
-                        Allowed formats: <span className="font-semibold text-foreground">pdf, xls, xlsx, doc, docx, jpeg, jpg, png</span> &nbsp;&bull;&nbsp; Max size: <span className="font-semibold text-foreground">3MB</span>
+                        Allowed formats: <span className="font-bold text-foreground">pdf, xls, xlsx, doc, docx, jpeg, jpg, png</span> &nbsp;&bull;&nbsp; Max size: <span className="font-bold text-foreground">3MB</span>
                     </span>
                 </div>
             </div>
@@ -202,12 +202,12 @@ export default function StudentDocumentsSection({ studentId, interestedCountry }
                                 key={item.id}
                                 onClick={() => handleChecklistSelect(item.id)}
                                 className={`
-                                    inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border transition-all
+                                    inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black uppercase tracking-wider border transition-all
                                     ${isSelected
-                                        ? "bg-primary text-primary-foreground border-primary shadow-sm shadow-primary/20"
+                                        ? "bg-primary text-primary-foreground border-primary shadow-lg shadow-primary/20"
                                         : isUploaded
-                                            ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/30"
-                                            : "bg-background text-foreground border-border/60 hover:border-primary/40 hover:bg-primary/5"
+                                            ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-500 border-emerald-500/30"
+                                            : "bg-transparent text-foreground/80 border-border/80 hover:border-primary/40 hover:bg-primary/5 dark:hover:bg-white/5"
                                     }
                                 `}
                             >
@@ -283,23 +283,23 @@ export default function StudentDocumentsSection({ studentId, interestedCountry }
                         <div className="animate-spin rounded-full h-7 w-7 border-b-2 border-primary" />
                     </div>
                 ) : documents.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-12 rounded-xl border border-dashed border-border/60 bg-muted/20">
+                    <div className="flex flex-col items-center justify-center py-12 rounded-2xl border border-dashed border-border/60 bg-muted/10 dark:bg-slate-900/20">
                         <FolderOpen className="h-10 w-10 text-muted-foreground/30 mb-3" />
-                        <p className="text-xs text-muted-foreground font-medium italic">No documents uploaded yet</p>
-                        <p className="text-[10px] text-muted-foreground/60 mt-1">Select a document type and upload a file above</p>
+                        <p className="text-xs text-muted-foreground font-bold uppercase tracking-widest">No documents uploaded yet</p>
+                        <p className="text-[10px] text-muted-foreground/40 mt-1 uppercase tracking-widest">Select a document type and upload a file above</p>
                     </div>
                 ) : (
-                    <div className="rounded-xl border border-border/60 overflow-hidden">
+                    <div className="rounded-2xl border border-border/50 overflow-hidden bg-card/30">
                         <table className="w-full text-xs">
                             <thead>
-                                <tr className="bg-muted/40 border-b border-border/60">
-                                    <th className="text-left px-4 py-2.5 font-semibold text-muted-foreground uppercase tracking-tight text-[10px]">#</th>
-                                    <th className="text-left px-4 py-2.5 font-semibold text-muted-foreground uppercase tracking-tight text-[10px]">Document Name</th>
-                                    <th className="text-left px-4 py-2.5 font-semibold text-muted-foreground uppercase tracking-tight text-[10px]">File Name</th>
-                                    <th className="text-left px-4 py-2.5 font-semibold text-muted-foreground uppercase tracking-tight text-[10px]">Country</th>
-                                    <th className="text-left px-4 py-2.5 font-semibold text-muted-foreground uppercase tracking-tight text-[10px]">Uploaded By</th>
-                                    <th className="text-left px-4 py-2.5 font-semibold text-muted-foreground uppercase tracking-tight text-[10px]">Date</th>
-                                    <th className="text-right px-4 py-2.5 font-semibold text-muted-foreground uppercase tracking-tight text-[10px]">Actions</th>
+                                <tr className="bg-muted/40 dark:bg-slate-900/40 border-b border-border/60">
+                                    <th className="text-left px-4 py-3 font-black text-muted-foreground uppercase tracking-widest text-[9px]">#</th>
+                                    <th className="text-left px-4 py-3 font-black text-muted-foreground uppercase tracking-widest text-[9px]">Document Name</th>
+                                    <th className="text-left px-4 py-3 font-black text-muted-foreground uppercase tracking-widest text-[9px]">File Name</th>
+                                    <th className="text-left px-4 py-3 font-black text-muted-foreground uppercase tracking-widest text-[9px]">Country</th>
+                                    <th className="text-left px-4 py-3 font-black text-muted-foreground uppercase tracking-widest text-[9px]">Uploaded By</th>
+                                    <th className="text-left px-4 py-3 font-black text-muted-foreground uppercase tracking-widest text-[9px]">Date</th>
+                                    <th className="text-right px-4 py-3 font-black text-muted-foreground uppercase tracking-widest text-[9px] pr-6">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-border/40">

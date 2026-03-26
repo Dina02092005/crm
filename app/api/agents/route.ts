@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -74,7 +74,17 @@ export const GET = withPermission('AGENTS', 'VIEW', async (req) => {
 export const POST = withPermission('AGENTS', 'CREATE', async (req) => {
     try {
         const body = await req.json();
-        const { name, email, password, companyName, address, phone, commission, roleId } = body;
+        const { name, firstName, lastName, email, password, companyName, address, phone, commission, roleId } = body;
+
+        const effectiveName = name || (firstName && lastName ? `${firstName} ${lastName}`.trim() : firstName || lastName || "");
+
+        if (!effectiveName || !email || !password) {
+            const missing = [];
+            if (!effectiveName) missing.push("name/firstName/lastName");
+            if (!email) missing.push("email");
+            if (!password) missing.push("password");
+            return NextResponse.json({ error: `Required fields missing: ${missing.join(", ")}` }, { status: 400 });
+        }
 
         const existingUser = await prisma.user.findUnique({ where: { email } });
         if (existingUser) return NextResponse.json({ error: "Email already exists" }, { status: 400 });
@@ -83,7 +93,7 @@ export const POST = withPermission('AGENTS', 'CREATE', async (req) => {
 
         const agent = await prisma.user.create({
             data: {
-                name,
+                name: effectiveName,
                 email,
                 passwordHash,
                 role: "AGENT",
@@ -106,7 +116,7 @@ export const POST = withPermission('AGENTS', 'CREATE', async (req) => {
             const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/login`;
             await sendWelcomeEmail({
                 email,
-                name,
+                name: agent.name,
                 password,
                 loginUrl,
                 role: 'Agent'

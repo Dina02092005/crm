@@ -99,7 +99,6 @@ export async function checkPermission(
 
         // Role-enum based fallbacks (Internal Staff Defaults)
         const ROLE_DEFAULTS: Record<string, { actions: string[]; scope: PermissionScope }> = {
-            MANAGER: { actions: ["VIEW", "CREATE", "EDIT", "DELETE", "APPROVE", "DOWNLOAD"], scope: "ALL" },
             AGENT: { actions: ["VIEW", "CREATE", "EDIT", "DOWNLOAD"], scope: "ASSIGNED" },
             COUNSELOR: { actions: ["VIEW", "CREATE", "EDIT", "DOWNLOAD"], scope: "ASSIGNED" },
             SALES_REP: { actions: ["VIEW", "CREATE", "EDIT"], scope: "ASSIGNED" },

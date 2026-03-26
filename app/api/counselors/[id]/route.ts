@@ -55,7 +55,9 @@ export async function PATCH(
 
         const { id } = await params;
         const body = await req.json();
-        const { name, email, isActive, phone, department, designation, salary, joiningDate, agentId } = body;
+        const { name, firstName, lastName, email, isActive, phone, department, designation, salary, joiningDate, agentId } = body;
+
+        const effectiveName = name || (firstName && lastName ? `${firstName} ${lastName}`.trim() : firstName || lastName || undefined);
 
         // Check permissions
         if (!["SUPER_ADMIN", "ADMIN"].includes(session.user.role) && session.user.id !== id) {
@@ -67,7 +69,7 @@ export async function PATCH(
         const updatedCounselor = await prisma.user.update({
             where: { id },
             data: {
-                name,
+                name: effectiveName,
                 email,
                 isActive,
                 updatedById: session.user.id,

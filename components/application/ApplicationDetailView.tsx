@@ -102,9 +102,9 @@ export function ApplicationDetailView({ application, onUpdate }: ApplicationDeta
                 {/* --- PERSONAL DETAILS TAB --- */}
                 <TabsContent value="personal" className="focus-visible:ring-0">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        <Card className="rounded-2xl border-none shadow-sm">
+                        <Card className="rounded-2xl border border-border/50 shadow-sm bg-card/50">
                             <CardContent className="p-6 space-y-5">
-                                <h4 className="text-xs font-bold text-primary uppercase tracking-tight flex items-center gap-2 mb-2">
+                                <h4 className="text-xs font-black text-primary uppercase tracking-widest flex items-center gap-2 mb-2">
                                     <div className="h-1.5 w-1.5 rounded-full bg-primary" />
                                     Identity & Origin
                                 </h4>
@@ -117,9 +117,9 @@ export function ApplicationDetailView({ application, onUpdate }: ApplicationDeta
                             </CardContent>
                         </Card>
 
-                        <Card className="rounded-2xl border-none shadow-sm">
+                        <Card className="rounded-2xl border border-border/50 shadow-sm bg-card/50">
                             <CardContent className="p-6 space-y-5">
-                                <h4 className="text-xs font-bold text-indigo-600 uppercase tracking-tight flex items-center gap-2 mb-2">
+                                <h4 className="text-xs font-black text-indigo-500 uppercase tracking-widest flex items-center gap-2 mb-2">
                                     <div className="h-1.5 w-1.5 rounded-full bg-indigo-500" />
                                     Contact Details
                                 </h4>
@@ -132,9 +132,9 @@ export function ApplicationDetailView({ application, onUpdate }: ApplicationDeta
                             </CardContent>
                         </Card>
 
-                        <Card className="rounded-2xl border-none shadow-sm">
+                        <Card className="rounded-2xl border border-border/50 shadow-sm bg-card/50">
                             <CardContent className="p-6 space-y-5">
-                                <h4 className="text-xs font-bold text-emerald-600 uppercase tracking-tight flex items-center gap-2 mb-2">
+                                <h4 className="text-xs font-black text-emerald-500 uppercase tracking-widest flex items-center gap-2 mb-2">
                                     <div className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
                                     Interest & Motivation
                                 </h4>

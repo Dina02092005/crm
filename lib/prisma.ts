@@ -23,8 +23,5 @@ if (globalThis.prismaGlobal) {
   }
 }
 
-export default prisma
-export { prisma }
-
-// Re-export types and enums
-export * from '@prisma/client'
+export { prisma };
+export default prisma;

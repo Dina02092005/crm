@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 export async function POST(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions) as any;
-        if (!session?.user || !["ADMIN", "MANAGER", "AGENT"].includes(session.user.role)) {
+        if (!session?.user || !["ADMIN", "AGENT"].includes(session.user.role)) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
             const user = await prisma.user.findUnique({ where: { id: assignedToId }, select: { role: true } });
             if (user?.role === 'COUNSELOR') {
                 updateData.counselorId = assignedToId;
-            } else if (['AGENT', 'MANAGER', 'ADMIN'].includes(user?.role || '')) {
+            } else if (['AGENT', 'ADMIN'].includes(user?.role || '')) {
                 updateData.agentId = assignedToId;
                 updateData.assignedOfficerId = assignedToId;
             }

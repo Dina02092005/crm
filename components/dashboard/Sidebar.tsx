@@ -24,7 +24,7 @@ export function Sidebar() {
         if (status !== "authenticated") return null; // session not ready yet
         const role = session?.user?.role as string | undefined;
         if (!role) return null;
-        if (["ADMIN", "MANAGER", "SUPER_ADMIN"].includes(role)) return "/admin";
+        if (["ADMIN", "SUPER_ADMIN"].includes(role)) return "/admin";
         if (role === "COUNSELOR") return "/counselor";
         if (["AGENT", "SALES_REP", "SUPPORT_AGENT"].includes(role)) return "/agent";
         if (role === "STUDENT") return "/student";

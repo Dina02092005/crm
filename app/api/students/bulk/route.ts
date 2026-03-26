@@ -12,8 +12,8 @@ export async function DELETE(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        // RBAC: Only ADMIN and MANAGER can bulk delete students
-        if (!["ADMIN", "MANAGER"].includes(session.user.role)) {
+        // RBAC: Only ADMIN can bulk delete students
+        if (!["ADMIN", "SUPER_ADMIN"].includes(session.user.role)) {
             return NextResponse.json({ error: "Forbidden: Insufficient permissions" }, { status: 403 });
         }
 

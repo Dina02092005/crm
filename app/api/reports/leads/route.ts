@@ -6,11 +6,23 @@ import { startOfDay, endOfDay, parseISO } from 'date-fns';
 
 export async function GET(req: Request) {
     const session = await getServerSession(authOptions) as any;
-    if (!session || !['ADMIN', 'MANAGER'].includes(session.user.role)) {
+    if (!session || !['ADMIN', 'SUPER_ADMIN', 'AGENT', 'COUNSELOR'].includes(session.user.role)) {
         return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
     }
 
+    const { role, id: userId } = session.user;
     const { searchParams } = new URL(req.url);
+
+    // Role-based ID enforcement
+    let effectiveAgentId = searchParams.get('agentId');
+    let effectiveCounselorId = searchParams.get('counselorId');
+
+    if (role === 'AGENT') {
+        effectiveAgentId = userId;
+    } else if (role === 'COUNSELOR') {
+        effectiveCounselorId = userId;
+        effectiveAgentId = null;
+    }
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '25');
     const skip = (page - 1) * limit;
@@ -42,11 +54,30 @@ export async function GET(req: Request) {
         if (temperature) where.temperature = temperature;
         if (interest) where.interest = interest;
 
-        if (agentId || counselorId) {
+        if (role === 'AGENT' || role === 'COUNSELOR') {
+            const teamIds = [userId];
+            if (role === 'AGENT') {
+                const myCounselors = await prisma.user.findMany({
+                    where: { counselorProfile: { agent: { userId } } },
+                    select: { id: true }
+                });
+                teamIds.push(...myCounselors.map(c => c.id));
+            }
+
+            if (effectiveCounselorId && !teamIds.includes(effectiveCounselorId)) {
+                return NextResponse.json({ message: 'Access Denied' }, { status: 403 });
+            }
+
             where.assignments = {
                 some: {
-                    ...(agentId && { assignedTo: agentId }),
-                    ...(counselorId && { assignedTo: counselorId })
+                    assignedTo: effectiveCounselorId || { in: teamIds }
+                }
+            };
+        } else if (effectiveAgentId || effectiveCounselorId) {
+            where.assignments = {
+                some: {
+                    ...(effectiveAgentId && { assignedTo: effectiveAgentId }),
+                    ...(effectiveCounselorId && { assignedTo: effectiveCounselorId })
                 }
             };
         }

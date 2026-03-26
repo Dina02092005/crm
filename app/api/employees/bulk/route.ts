@@ -28,7 +28,7 @@ export async function DELETE(req: NextRequest) {
         const employees = await prisma.user.findMany({
             where: { 
                 id: { in: ids },
-                role: { in: ["ADMIN", "MANAGER", "COUNSELOR", "AGENT"] } // Ensure we only delete employees
+                role: { in: ["ADMIN", "SUPER_ADMIN", "COUNSELOR", "AGENT", "EMPLOYEE", "SUPPORT_AGENT", "SALES_REP"] } // Ensure we only delete employees
             }
         });
 

@@ -20,7 +20,7 @@ export async function GET(
         const { id } = await params;
 
         // RBAC Check
-        if (session.user.role !== "SUPER_ADMIN" && session.user.role !== "ADMIN" && session.user.role !== "MANAGER") {
+        if (session.user.role !== "SUPER_ADMIN" && session.user.role !== "ADMIN") {
             if (session.user.role === "AGENT") {
                 const agent = await prisma.agentProfile.findUnique({ where: { userId: session.user.id } });
                 const targetCounselor = await prisma.counselorProfile.findUnique({
@@ -119,7 +119,9 @@ export async function PATCH(
         }
 
         const body = await req.json();
-        const { name, email, role, phone, department, isActive, password } = body;
+        const { name, firstName, lastName, email, role, phone, department, isActive, password } = body;
+        
+        const effectiveName = name || (firstName && lastName ? `${firstName} ${lastName}`.trim() : firstName || lastName || undefined);
 
         // RBAC: Role Escalation Prevention
         if (role) {
@@ -148,7 +150,7 @@ export async function PATCH(
         }
 
         const updateData: any = {};
-        if (name) updateData.name = name;
+        if (effectiveName) updateData.name = effectiveName;
         if (email) updateData.email = email;
         if (role) updateData.role = role;
         if (body.roleId !== undefined) updateData.roleId = body.roleId;
@@ -164,7 +166,7 @@ export async function PATCH(
             where: { id },
             data: {
                 ...updateData,
-                agentProfile: ["AGENT", "SALES_REP", "MANAGER"].includes(role) ? {
+                agentProfile: ["AGENT", "SALES_REP"].includes(role) ? {
                     upsert: {
                         create: { phone: phone || null },
                         update: { phone: phone || null },

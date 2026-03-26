@@ -131,14 +131,14 @@ export interface MenuItem {
 export const menuItems: MenuItem[] = [
     { label: "Dashboard", icon: Icons.Dashboard, href: "/dashboard" },
     { label: "Call Center", icon: Icons.CallCenter, href: "/call-center", roles: ["AGENT", "COUNSELOR"] },
-    { label: "Leads", icon: Icons.Leads, href: "/leads", roles: ["ADMIN", "MANAGER", "AGENT", "COUNSELOR", "SALES_REP", "SUPPORT_AGENT"], permission: { action: "VIEW", module: "LEADS" } },
-    { label: "Students", icon: Icons.Students, href: "/students", roles: ["ADMIN", "MANAGER", "AGENT", "COUNSELOR", "SALES_REP", "SUPPORT_AGENT"], permission: { action: "VIEW", module: "STUDENTS" } },
-    { label: "Applications", icon: Icons.Applications, href: "/applications", roles: ["ADMIN", "MANAGER", "AGENT", "COUNSELOR", "SALES_REP", "SUPPORT_AGENT", "STUDENT"], permission: { action: "VIEW", module: "APPLICATIONS" } },
-    { label: "Visa Applications", icon: Icons.Visa, href: "/visa-applications", roles: ["ADMIN", "MANAGER", "AGENT", "COUNSELOR", "STUDENT"], permission: { action: "VIEW", module: "VISA" } },
+    { label: "Leads", icon: Icons.Leads, href: "/leads", roles: ["ADMIN", "AGENT", "COUNSELOR", "SALES_REP", "SUPPORT_AGENT"], permission: { action: "VIEW", module: "LEADS" } },
+    { label: "Students", icon: Icons.Students, href: "/students", roles: ["ADMIN", "AGENT", "COUNSELOR", "SALES_REP", "SUPPORT_AGENT"], permission: { action: "VIEW", module: "STUDENTS" } },
+    { label: "Applications", icon: Icons.Applications, href: "/applications", roles: ["ADMIN", "AGENT", "COUNSELOR", "SALES_REP", "SUPPORT_AGENT", "STUDENT"], permission: { action: "VIEW", module: "APPLICATIONS" } },
+    { label: "Visa Applications", icon: Icons.Visa, href: "/visa-applications", roles: ["ADMIN", "AGENT", "COUNSELOR", "STUDENT"], permission: { action: "VIEW", module: "VISA" } },
     {
         label: "Defer / Enrolled",
         icon: Icons.DeferEnrolled,
-        roles: ["ADMIN", "MANAGER", "AGENT", "COUNSELOR", "SALES_REP", "SUPPORT_AGENT"],
+        roles: ["ADMIN", "AGENT", "COUNSELOR", "SALES_REP", "SUPPORT_AGENT"],
         permission: { action: "VIEW", module: "APPLICATIONS" },
         submenu: [
             { label: "Defer Student", href: "/applications?status=DEFERRED", permission: { action: "VIEW", module: "APPLICATIONS" } },
@@ -161,14 +161,14 @@ export const menuItems: MenuItem[] = [
         label: "Agents",
         icon: Icons.Agents,
         href: "/agents",
-        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER"],
+        roles: ["SUPER_ADMIN", "ADMIN"],
         permission: { action: "VIEW", module: "AGENTS" }
     },
     {
         label: "Counselors",
         icon: Icons.Counselors,
         href: "/employees",
-        roles: ["SUPER_ADMIN", "ADMIN", "MANAGER", "AGENT"],
+        roles: ["SUPER_ADMIN", "ADMIN", "AGENT"],
         permission: { action: "VIEW", module: "COUNSELORS" }
     },
     {
@@ -194,18 +194,16 @@ export const menuItems: MenuItem[] = [
         label: "File Manager",
         icon: Icons.FileManager,
         href: "/file-manager",
-        roles: ["ADMIN", "MANAGER"],
+        roles: ["ADMIN"],
         permission: { action: "VIEW", module: "FILE_MANAGER" }
     },
     {
-        label: "Admin",
+        label: "Admins",
         icon: Icons.Roles,
         roles: ["SUPER_ADMIN", "ADMIN"],
         submenu: [
             { label: "Manage Admins", href: "/admin/admins", permission: { action: "VIEW", module: "USERS" } },
-            { label: "Manage Managers", href: "/admin/managers", permission: { action: "VIEW", module: "USERS" } },
-            { label: "Control Panel", href: "/admin/control-panel", permission: { action: "EDIT", module: "SETTINGS" } },
         ]
     },
-    { label: "Reports", icon: Icons.Reports, href: "/reports", roles: ["ADMIN", "MANAGER", "SUPER_ADMIN"], permission: { action: "VIEW", module: "REPORTS" } },
+    { label: "Reports", icon: Icons.Reports, href: "/reports", roles: ["ADMIN", "SUPER_ADMIN"], permission: { action: "VIEW", module: "REPORTS" } },
 ];

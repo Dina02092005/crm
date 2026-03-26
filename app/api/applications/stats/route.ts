@@ -1,0 +1,84 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
+import { withPermission } from '@/lib/permissions';
+import { ApplicationStatus } from '@prisma/client';
+
+export const dynamic = 'force-dynamic';
+
+export const GET = withPermission('APPLICATIONS', 'VIEW', async (req, { permission }) => {
+    try {
+        const { user: sessionUser, scope } = permission;
+
+        const where: any = {};
+
+        // RBAC logic matching app/api/applications/route.ts
+        if (scope === 'OWN' || scope === 'ASSIGNED') {
+            const secondaryIds: string[] = [sessionUser.id];
+
+            if (sessionUser.role === 'AGENT') {
+                const agent = await prisma.agentProfile.findUnique({
+                    where: { userId: sessionUser.id },
+                    select: { id: true }
+                });
+                if (agent) {
+                    const counselors = await prisma.counselorProfile.findMany({
+                        where: { agentId: agent.id },
+                        select: { userId: true }
+                    });
+                    secondaryIds.push(...counselors.map(c => c.userId));
+                }
+            } else if (sessionUser.role === 'COUNSELOR') {
+                const counselor = await prisma.counselorProfile.findUnique({
+                    where: { userId: sessionUser.id },
+                    select: { agent: { select: { userId: true } } }
+                });
+                if (counselor?.agent?.userId) {
+                    secondaryIds.push(counselor.agent.userId);
+                }
+            }
+
+            where.OR = [
+                { assignedToId: { in: secondaryIds } },
+                { assignedById: { in: secondaryIds as any } },
+                { agentId: { in: secondaryIds } },
+                { counselorId: { in: secondaryIds } },
+                { student: { onboardedBy: { in: secondaryIds } } },
+                { student: { agentId: { in: secondaryIds } } },
+                { student: { counselorId: { in: secondaryIds } } }
+            ];
+        }
+
+        const stats = await prisma.universityApplication.groupBy({
+            by: ['status'],
+            where,
+            _count: {
+                status: true,
+            },
+        });
+
+        const counts: Record<string, number> = {
+            ALL: 0,
+            PENDING: 0,
+            FINALIZED: 0,
+            READY_FOR_VISA: 0,
+            DEFERRED: 0,
+            ENROLLED: 0,
+            REJECTED: 0,
+        };
+
+        let total = 0;
+        stats.forEach((group) => {
+            const count = group._count.status;
+            if (counts[group.status] !== undefined) {
+                counts[group.status] = count;
+            }
+            total += count;
+        });
+        counts.ALL = total;
+
+        return NextResponse.json(counts);
+    } catch (error) {
+        console.error('Fetch applications stats error:', error);
+        return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+    }
+});

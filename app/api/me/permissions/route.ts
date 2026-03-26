@@ -37,7 +37,11 @@ export async function GET(req: NextRequest) {
             include: {
                 roleProfile: {
                     include: {
-                        permissions: true
+                        permissions: {
+                            include: {
+                                permission: true
+                            }
+                        }
                     }
                 }
             }
@@ -49,7 +53,6 @@ export async function GET(req: NextRequest) {
 
         // Role-enum based fallbacks when no roleProfile is assigned
         const ROLE_DEFAULTS: Record<string, { actions: string[]; scope: string }> = {
-            MANAGER: { actions: ["VIEW", "CREATE", "EDIT", "DELETE", "APPROVE", "DOWNLOAD"], scope: "ALL" },
             AGENT: { actions: ["VIEW", "CREATE", "EDIT"], scope: "ASSIGNED" },
             COUNSELOR: { actions: ["VIEW", "CREATE", "EDIT"], scope: "ASSIGNED" },
             SALES_REP: { actions: ["VIEW", "CREATE", "EDIT"], scope: "ASSIGNED" },
@@ -72,11 +75,10 @@ export async function GET(req: NextRequest) {
         if (user.roleProfile && user.roleProfile.isActive && user.roleProfile.permissions?.length > 0) {
             // Fine-grained permissions from roleProfile
             for (const perm of user.roleProfile.permissions) {
-                const mod = perm.module as string;
+                const mod = perm.permission.module as string;
+                const act = perm.permission.action as string;
                 if (permMap[mod]) {
-                    for (const act of PERMISSION_ACTIONS) {
-                        permMap[mod][act] = (perm.actions as string[]).includes(act);
-                    }
+                    permMap[mod][act] = true;
                     scopeMap[mod] = perm.scope;
                 }
             }

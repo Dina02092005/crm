@@ -7,7 +7,7 @@ import ExcelJS from "exceljs";
 export async function GET(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions) as any;
-        if (!session?.user || !["ADMIN", "MANAGER", "AGENT", "COUNSELOR"].includes(session.user.role)) {
+        if (!session?.user || !["ADMIN", "SUPER_ADMIN", "AGENT", "COUNSELOR"].includes(session.user.role)) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 

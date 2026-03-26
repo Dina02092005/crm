@@ -5,7 +5,7 @@ import { Role } from "@prisma/client";
  * 
  * Rules:
  * 1. Only SUPER_ADMIN can create or update someone to SUPER_ADMIN or ADMIN.
- * 2. ADMIN can create or update someone to any other role (MANAGER, EMPLOYEE, AGENT, COUNSELOR, etc.)
+ * 2. ADMIN can create or update someone to any other role (EMPLOYEE, AGENT, COUNSELOR, etc.)
  */
 export function validateRoleUpdate(currentUserRole: Role, targetRole: Role): { allowed: boolean, message?: string } {
     const highPrivilegeRoles: Role[] = ["SUPER_ADMIN", "ADMIN"];

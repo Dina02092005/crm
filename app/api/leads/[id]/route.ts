@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { LeadStatus } from '@/lib/prisma';
+import { LeadStatus } from '@prisma/client';
 
 export async function DELETE(
     req: Request,
@@ -47,7 +47,7 @@ export async function PATCH(
 
         // Check if this is an assignment request
         if (body.assignedTo) {
-            const allowedRoles = ['ADMIN', 'MANAGER', 'AGENT', 'SALES_REP'];
+            const allowedRoles = ['ADMIN', 'SUPER_ADMIN', 'AGENT', 'SALES_REP'];
             if (!allowedRoles.includes(session.user.role)) {
                 return NextResponse.json({ message: 'You do not have permission to assign leads' }, { status: 403 });
             }
@@ -60,7 +60,7 @@ export async function PATCH(
             }
 
             // Verify Hierarchy
-            // Admin/Manager can assign to anyone
+            // Admin can assign to anyone
             // Agent/Sales Rep can only assign to Counselor
             if (session.user.role === 'AGENT' || session.user.role === 'SALES_REP') {
                 if (employee.role !== 'COUNSELOR') {

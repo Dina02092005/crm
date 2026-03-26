@@ -49,7 +49,7 @@ export function EmployeesTable({ data, onUpdate, onDelete, onToggleStatus, pagin
     const [editingEmployee, setEditingEmployee] = useState<Employee | undefined>(undefined);
     const { data: session } = useSession() as any;
     const { prefixPath } = useRolePath();
-    const isAdmin = ["ADMIN", "SUPER_ADMIN", "MANAGER"].includes(session?.user?.role);
+    const isAdmin = ["ADMIN", "SUPER_ADMIN"].includes(session?.user?.role);
     const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
     const bulkDeleteMutation = useBulkDeleteEmployees();
 
@@ -400,6 +400,7 @@ export function EmployeesTable({ data, onUpdate, onDelete, onToggleStatus, pagin
                             <EmployeeForm
                                 employee={editingEmployee}
                                 formId="edit-employee-form"
+                                title={title}
                                 onSuccess={() => {
                                     setEditSheetOpen(false);
                                     onUpdate();

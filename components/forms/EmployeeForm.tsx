@@ -22,7 +22,7 @@ const employeeSchema = z.object({
     email: z.string().email("Invalid email address"),
     password: z.string().min(6, "Password must be at least 6 characters").optional().or(z.literal("")),
     phone: z.string().min(10, "Phone number must be at least 10 digits"),
-    role: z.enum(["SUPER_ADMIN", "ADMIN", "MANAGER", "SALES_REP", "SUPPORT_AGENT", "EMPLOYEE", "AGENT", "COUNSELOR"]).optional(),
+    role: z.enum(["SUPER_ADMIN", "ADMIN", "SALES_REP", "SUPPORT_AGENT", "EMPLOYEE", "AGENT", "COUNSELOR"]).optional(),
     roleId: z.string().optional().nullable(),
     department: z.string().min(2, "Department is required"),
     salary: z.coerce.number().min(0, "Salary must be a positive number"),
@@ -41,6 +41,7 @@ interface EmployeeFormProps {
     onSuccess?: () => void
     formId?: string
     defaultRole?: string
+    title?: string
 }
 
 function ErrorMessage({ field }: { field: any }) {
@@ -56,7 +57,7 @@ function ErrorMessage({ field }: { field: any }) {
     )
 }
 
-export default function EmployeeForm({ employee, onSuccess, formId, defaultRole }: EmployeeFormProps) {
+export default function EmployeeForm({ employee, onSuccess, formId, defaultRole, title = "Employee" }: EmployeeFormProps) {
     const createMutation = useCreateEmployee()
     const updateMutation = useUpdateEmployee()
     const { data: session } = useSession() as any;
@@ -72,7 +73,7 @@ export default function EmployeeForm({ employee, onSuccess, formId, defaultRole 
     // Fetch staff members who can have counselors reporting to them
     const { data: managersData } = useEmployees("active", 1, 100, ""); // Will filter manually below to be safe or use query params if API supports multiple roles
     const availableManagers = managersData?.employees?.filter((emp: any) =>
-        ["AGENT", "SALES_REP", "MANAGER", "ADMIN", "SUPER_ADMIN"].includes(emp.role)
+        ["AGENT", "SALES_REP", "ADMIN", "SUPER_ADMIN"].includes(emp.role)
     ) || [];
 
 
@@ -125,9 +126,11 @@ export default function EmployeeForm({ employee, onSuccess, formId, defaultRole 
                     delete payload.password;
                 }
 
+                console.log("Submitting EmployeeForm payload:", payload);
+
                 if (employee && employee.id) {
                     await updateMutation.mutateAsync({ id: employee.id, data: payload })
-                    toast.success("Counselor updated successfully");
+                    toast.success(`${title} updated successfully`);
                 } else {
                     // For creation, password is required
                     if (!payload.password) {
@@ -136,11 +139,15 @@ export default function EmployeeForm({ employee, onSuccess, formId, defaultRole 
                     }
                     // @ts-ignore
                     await createMutation.mutateAsync(payload)
-                    toast.success("Counselor created successfully");
+                    toast.success(`${title} created successfully`);
                 }
                 onSuccess?.()
             } catch (error: any) {
-                console.error("Form submission error:", error)
+                console.error("Form submission error detailed:", {
+                    status: error.response?.status,
+                    data: error.response?.data,
+                    message: error.message
+                })
                 const errorMsg = error.response?.data?.error || error.response?.data?.message || error.message || "Failed to submit form";
                 toast.error(errorMsg);
             }
@@ -263,7 +270,7 @@ export default function EmployeeForm({ employee, onSuccess, formId, defaultRole 
                     />
                 </div>
 
-                {["ADMIN", "SUPER_ADMIN", "MANAGER"].includes(session?.user?.role) && (
+                {["ADMIN", "SUPER_ADMIN"].includes(session?.user?.role) && (
                     <div className="grid grid-cols-2 gap-4">
                         <form.Field
                             name="role"
@@ -287,7 +294,6 @@ export default function EmployeeForm({ employee, onSuccess, formId, defaultRole 
                                         <option value="AGENT">Agent / Partner</option>
                                         <option value="SALES_REP">Sales Rep</option>
                                         <option value="SUPPORT_AGENT">Support Agent</option>
-                                        <option value="MANAGER">Manager</option>
                                         {session?.user?.role === "SUPER_ADMIN" && (
                                             <>
                                                 <option value="ADMIN">Admin</option>

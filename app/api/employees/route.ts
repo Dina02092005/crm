@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
         // The previous code restricted to ADMIN only.
 
         const userRole = session.user.role;
-        const allowedRoles = ['SUPER_ADMIN', 'ADMIN', 'MANAGER', 'AGENT', 'SALES_REP', 'COUNSELOR', 'SUPPORT_AGENT']; // All staff
+        const allowedRoles = ['SUPER_ADMIN', 'ADMIN', 'AGENT', 'SALES_REP', 'COUNSELOR', 'SUPPORT_AGENT']; // All staff
 
         if (!allowedRoles.includes(userRole)) {
             return NextResponse.json({ message: 'Unauthorized' }, { status: 403 });
@@ -160,7 +160,9 @@ export async function POST(req: NextRequest) {
     try {
         const session = await getServerSession(authOptions) as any;
         const body = await req.json();
-        const { name, email, password, role, imageUrl, phone, department, designation, salary, joiningDate, managerId } = body;
+        const { name, firstName, lastName, email, password, role, imageUrl, phone, department, designation, salary, joiningDate, managerId } = body;
+        
+        const effectiveName = name || (firstName && lastName ? `${firstName} ${lastName}`.trim() : firstName || lastName || "");
 
         if (!session?.user) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -180,8 +182,13 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Unauthorized to create users" }, { status: 403 });
         }
 
-        if (!name || !email || !password) {
-            return NextResponse.json({ error: "Name, email, and password are required" }, { status: 400 });
+        if (!effectiveName || !email || !password) {
+            const missing = [];
+            if (!effectiveName) missing.push("name/firstName/lastName");
+            if (!email) missing.push("email");
+            if (!password) missing.push("password");
+            console.warn(`Employee creation failed: Missing fields [${missing.join(", ")}]`, { body });
+            return NextResponse.json({ error: `Required fields missing: ${missing.join(", ")}` }, { status: 400 });
         }
 
         // Check if email already exists
@@ -199,7 +206,7 @@ export async function POST(req: NextRequest) {
         // Create employee
         const employee = await prisma.user.create({
             data: {
-                name,
+                name: effectiveName,
                 email,
                 passwordHash,
                 role: roleToAssign,
@@ -207,7 +214,7 @@ export async function POST(req: NextRequest) {
                 roleId: body.roleId || null,
                 imageUrl, // Save profile picture
                 emailVerified: new Date(), // Auto-verify employees created by admin
-                agentProfile: ["AGENT", "SALES_REP", "MANAGER"].includes(role) ? {
+                agentProfile: ["AGENT", "SALES_REP"].includes(role) ? {
                     create: {
                         phone: phone || null,
                         companyName: body.companyName || null,

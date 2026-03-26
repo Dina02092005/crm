@@ -26,6 +26,7 @@ const counsellorSchema = z.object({
 interface AdminCounsellorFormProps {
     onSuccess?: () => void
     formId?: string
+    title?: string
 }
 
 function ErrorMessage({ field }: { field: any }) {
@@ -40,7 +41,7 @@ function ErrorMessage({ field }: { field: any }) {
     )
 }
 
-export default function AdminCounsellorForm({ onSuccess, formId }: AdminCounsellorFormProps) {
+export default function AdminCounsellorForm({ onSuccess, formId, title = "Counselor" }: AdminCounsellorFormProps) {
     const queryClient = useQueryClient();
     const [availableRoles, setAvailableRoles] = useState<any[]>([]);
     const [availableAgents, setAvailableAgents] = useState<any[]>([]);
@@ -79,7 +80,7 @@ export default function AdminCounsellorForm({ onSuccess, formId }: AdminCounsell
         onSubmit: async ({ value }) => {
             try {
                 const res = await axios.post("/api/admin/counsellors", value);
-                toast.success("Counsellor created successfully");
+                toast.success(`${title} created successfully`);
                 queryClient.invalidateQueries({ queryKey: ["employees"] });
                 queryClient.invalidateQueries({ queryKey: ["counselors"] });
                 queryClient.invalidateQueries({ queryKey: ["employee-stats"] });

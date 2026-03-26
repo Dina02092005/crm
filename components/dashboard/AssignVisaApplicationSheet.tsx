@@ -52,7 +52,7 @@ export function AssignVisaApplicationSheet({
     const [selectedManagerId, setSelectedManagerId] = useState<string>("");
     const [selectedCounselorId, setSelectedCounselorId] = useState<string>("");
 
-    const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "MANAGER";
+    const isAdmin = session?.user?.role === "ADMIN" || session?.user?.role === "SUPER_ADMIN";
     const isAgent = session?.user?.role === "AGENT";
 
     useEffect(() => {
@@ -68,7 +68,7 @@ export function AssignVisaApplicationSheet({
         try {
             if (isAdmin) {
                 // Fetch Agents/Managers
-                const agentRoles = ["AGENT", "SALES_REP", "MANAGER"];
+                const agentRoles = ["AGENT", "SALES_REP"];
                 const agentRes = await Promise.all(agentRoles.map(role =>
                     axios.get(`/api/employees?role=${role}&status=active&limit=100`)
                 ));
@@ -160,10 +160,10 @@ export function AssignVisaApplicationSheet({
                             {isAdmin && (
                                 <div className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label>Manager / Agent</Label>
+                                        <Label>Agent</Label>
                                         <Select value={selectedManagerId} onValueChange={handleManagerChange}>
                                             <SelectTrigger className="w-full h-12 rounded-xl bg-slate-50 border-slate-200">
-                                                <SelectValue placeholder="Select Manager or Agent" />
+                                                <SelectValue placeholder="Select Agent" />
                                             </SelectTrigger>
                                             <SelectContent className="rounded-xl shadow-xl border-slate-200">
                                                 <SelectItem value="none" className="py-2">None (Independent Counselor)</SelectItem>
@@ -191,7 +191,7 @@ export function AssignVisaApplicationSheet({
                                                 <SelectValue placeholder="Select Counselor" />
                                             </SelectTrigger>
                                             <SelectContent className="rounded-xl shadow-xl border-slate-200">
-                                                <SelectItem value="none" className="py-2">No Counselor (Assign to Manager)</SelectItem>
+                                                <SelectItem value="none" className="py-2">No Counselor (Assign to Agent)</SelectItem>
                                                 {((selectedManagerId && selectedManagerId !== "none") 
                                                     ? agentCounselors[selectedManagerId] 
                                                     : agentCounselors["all"])?.map((counselor) => (
