@@ -1,0 +1,32 @@
+name: Deploy CRM
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy CRM via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SERVER_IP }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "Go to CRM folder"
+            cd /var/www/crm
+
+            echo "Pull latest code"
+            git fetch origin
+            git reset --hard origin/main
+
+            echo "Rebuild only CRM service"
+            cd /var/www
+            docker compose up -d --build crm
+
+            echo "Run Prisma migration"
+            docker compose exec crm npx prisma migrate deploy || true
