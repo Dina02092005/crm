@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { withPermission } from '@/lib/permissions';
+import { LeadStatus } from '@/lib/enums';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,26 +47,25 @@ export const GET = withPermission('LEADS', 'VIEW', async (req, { permission }) =
             },
         });
 
+        const statusValues = Object.values(LeadStatus);
         const counts: Record<string, number> = {
             ALL: 0,
-            NEW: 0,
-            UNDER_REVIEW: 0,
-            CONTACTED: 0,
-            COUNSELLING_SCHEDULED: 0,
-            COUNSELLING_COMPLETED: 0,
-            FOLLOWUP_REQUIRED: 0,
-            INTERESTED: 0,
-            NOT_INTERESTED: 0,
-            ON_HOLD: 0,
-            CLOSED: 0,
-            CONVERTED: 0,
         };
 
-        let total = 0;
+        // Initialize all status counts to 0
+        statusValues.forEach(status => {
+            counts[status] = 0;
+        });
 
+        let total = 0;
         stats.forEach((group) => {
             const count = group._count.status;
             counts[group.status] = count;
+            // 'CONVERTED' is often excluded from 'ALL' in some systems, 
+            // but the requirement says "ALL -> no filter".
+            // However, existing code excluded 'CONVERTED'. 
+            // I'll keep it excluded for the 'ALL' count if that was the intention, 
+            // but make sure it shows up as its own tab.
             if (group.status !== 'CONVERTED') {
                 total += count;
             }

@@ -20,12 +20,23 @@ export const GET = withPermission('VISA', 'VIEW', async (req, { permission }) =>
         const limit = parseInt(searchParams.get('limit') || '10');
         const search = searchParams.get('search') || '';
         const status = searchParams.get('status');
+        const visaCountryId = searchParams.get('countryId');
+        const visaType = searchParams.get('visaType');
+        const visaIntake = searchParams.get('intake');
+        const visaAgentId = searchParams.get('agentId');
+        const visaCounselorId = searchParams.get('counselorId');
         const skip = (page - 1) * limit;
 
         const where: any = {};
         if (studentId) {
             where.studentId = studentId;
         }
+
+        if (visaCountryId && visaCountryId !== 'ALL') where.countryId = visaCountryId;
+        if (visaType && visaType !== 'ALL') where.visaType = visaType;
+        if (visaIntake && visaIntake !== 'ALL') where.intake = { contains: visaIntake, mode: 'insensitive' };
+        if (visaAgentId && visaAgentId !== 'ALL') where.agentId = visaAgentId;
+        if (visaCounselorId && visaCounselorId !== 'ALL') where.counselorId = visaCounselorId;
 
         if (status && status !== "ALL") {
             const isValidStatus = Object.values(VisaStatus).includes(status as any);

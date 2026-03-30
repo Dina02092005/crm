@@ -35,7 +35,6 @@ import {
     History,
     Plus,
     Clock,
-    Mail,
     Phone,
     Globe,
     Eye,

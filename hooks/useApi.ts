@@ -10,10 +10,14 @@ import {
 
 import { toast } from 'sonner';
 
+interface Stats {
+    [key: string]: number;
+}
+
 // Students
-export const useStudents = (page = 1, limit = 10, search = "", status = "", onboardedBy = "", interestedCountry = "", intake = "") => {
+export const useStudents = (page = 1, limit = 10, search = "", status = "", onboardedBy = "", interestedCountry = "", intake = "", agentId = "", counselorId = "", countryId = "", appIntake = "") => {
     return useQuery({
-        queryKey: ['students', page, limit, search, status, onboardedBy, interestedCountry, intake],
+        queryKey: ['students', page, limit, search, status, onboardedBy, interestedCountry, intake, agentId, counselorId, countryId, appIntake],
         queryFn: async () => {
             const params = new URLSearchParams();
             params.append("page", page.toString());
@@ -23,6 +27,10 @@ export const useStudents = (page = 1, limit = 10, search = "", status = "", onbo
             if (onboardedBy) params.append("onboardedBy", onboardedBy);
             if (interestedCountry) params.append("interestedCountry", interestedCountry);
             if (intake) params.append("intake", intake);
+            if (agentId) params.append("agentId", agentId);
+            if (counselorId) params.append("counselorId", counselorId);
+            if (countryId) params.append("countryId", countryId);
+            if (appIntake) params.append("appIntake", appIntake);
 
             const { data } = await axios.get(`/api/students?${params.toString()}`);
             return data;
@@ -34,7 +42,7 @@ export const useStudentStats = () => {
     return useQuery({
         queryKey: ['student-stats'],
         queryFn: async () => {
-            const { data } = await axios.get('/api/students/stats');
+            const { data } = await axios.get<Stats>('/api/students/stats');
             return data;
         },
     });
@@ -136,11 +144,23 @@ export const useBulkDeleteEmployees = () => {
 };
 
 // Applications
-export const useApplications = (page = 1, limit = 10, search = '', status: string | null = null, studentId?: string, universityId?: string, countryId?: string, assignedToId?: string) => {
+export const useApplications = (page = 1, limit = 10, search = '', status: string | null = null, studentId?: string, universityId?: string, countryId?: string, assignedToId?: string, courseId?: string) => {
     return useQuery({
-        queryKey: ['applications', page, limit, search, status, studentId, universityId, countryId, assignedToId],
+        queryKey: ['applications', page, limit, search, status, studentId, universityId, countryId, assignedToId, courseId],
         queryFn: async () => {
-            return await getApplications(page, limit, search, studentId, status, universityId, countryId, assignedToId);
+             const params = new URLSearchParams();
+             params.append("page", page.toString());
+             params.append("limit", limit.toString());
+             if (search) params.append("search", search);
+             if (status && status !== 'ALL') params.append("status", status);
+             if (studentId) params.append("studentId", studentId);
+             if (universityId) params.append("universityId", universityId);
+             if (countryId) params.append("countryId", countryId);
+             if (assignedToId) params.append("assignedToId", assignedToId);
+             if (courseId) params.append("courseId", courseId);
+
+             const { data } = await axios.get(`/api/applications?${params.toString()}`);
+             return data;
         },
     });
 };
@@ -149,7 +169,7 @@ export const useApplicationStats = () => {
     return useQuery({
         queryKey: ['application-stats'],
         queryFn: async () => {
-            const { data } = await axios.get('/api/applications/stats');
+            const { data } = await axios.get<Stats>('/api/applications/stats');
             return data;
         },
     });
@@ -189,11 +209,24 @@ export const useBulkDeleteApplications = () => {
 };
 
 // Visa Applications
-export const useVisaApplications = (studentId?: string, page = 1, limit = 10, search = "", status = "") => {
+export const useVisaApplications = (studentId?: string, page = 1, limit = 10, search = "", status = "", countryId = "", visaType = "", intake = "", agentId = "", counselorId = "") => {
     return useQuery({
-        queryKey: ['visa-applications', studentId, page, limit, search, status],
+        queryKey: ['visa-applications', studentId, page, limit, search, status, countryId, visaType, intake, agentId, counselorId],
         queryFn: async () => {
-            return await getVisaApplications(studentId, page, limit, search, status);
+            const params = new URLSearchParams();
+            if (studentId) params.append("studentId", studentId);
+            params.append("page", page.toString());
+            params.append("limit", limit.toString());
+            if (search) params.append("search", search);
+            if (status && status !== 'ALL') params.append("status", status);
+            if (countryId) params.append("countryId", countryId);
+            if (visaType) params.append("visaType", visaType);
+            if (intake) params.append("intake", intake);
+            if (agentId) params.append("agentId", agentId);
+            if (counselorId) params.append("counselorId", counselorId);
+
+            const { data } = await axios.get(`/api/visa-applications?${params.toString()}`);
+            return data;
         },
     });
 };
@@ -202,7 +235,7 @@ export const useVisaStats = () => {
     return useQuery({
         queryKey: ['visa-stats'],
         queryFn: async () => {
-            const { data } = await axios.get('/api/visa-applications/stats');
+            const { data } = await axios.get<Stats>('/api/visa-applications/stats');
             return data;
         },
     });

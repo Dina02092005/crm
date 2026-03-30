@@ -26,6 +26,7 @@ interface LeadStats {
     ON_HOLD: number;
     CLOSED: number;
     CONVERTED: number;
+    [key: string]: number;
 }
 
 export function useLeadStats() {
@@ -48,6 +49,8 @@ interface FetchLeadsParams {
     highestQualification?: string;
     interest?: string;
     source?: string;
+    temperature?: string;
+    applyLevel?: string;
     intake?: string;
     from?: string;
     to?: string;
@@ -63,12 +66,14 @@ export function useLeads({
     highestQualification = "",
     interest = "",
     source = "",
+    temperature = "",
+    applyLevel = "",
     intake = "",
     from = "",
     to = ""
 }: FetchLeadsParams) {
     return useQuery({
-        queryKey: ["leads", { page, limit, search, status, assignedTo, interestedCountry, highestQualification, interest, source, intake, from, to }],
+        queryKey: ["leads", { page, limit, search, status, assignedTo, interestedCountry, highestQualification, interest, source, temperature, applyLevel, intake, from, to }],
         queryFn: async () => {
             const params = new URLSearchParams();
             if (search) params.append("search", search);
@@ -78,6 +83,8 @@ export function useLeads({
             if (highestQualification) params.append("highestQualification", highestQualification);
             if (interest) params.append("interest", interest);
             if (source) params.append("source", source);
+            if (temperature) params.append("temperature", temperature);
+            if (applyLevel) params.append("applyLevel", applyLevel);
             if (intake) params.append("intake", intake);
             if (from) params.append("from", from);
             if (to) params.append("to", to);

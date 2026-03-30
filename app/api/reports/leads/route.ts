@@ -39,20 +39,23 @@ export async function GET(req: Request) {
     const search = searchParams.get('search') || '';
 
     try {
-        const where: any = {};
+        const where: any = { AND: [] };
+        const and = where.AND;
 
         if (from && to) {
-            where.createdAt = {
-                gte: startOfDay(parseISO(from)),
-                lte: endOfDay(parseISO(to))
-            };
+            and.push({
+                createdAt: {
+                    gte: startOfDay(parseISO(from)),
+                    lte: endOfDay(parseISO(to))
+                }
+            });
         }
 
-        if (source) where.source = source;
-        if (country) where.interestedCountry = country;
-        if (status) where.status = status;
-        if (temperature) where.temperature = temperature;
-        if (interest) where.interest = interest;
+        if (source) and.push({ source });
+        if (country) and.push({ interestedCountry: country });
+        if (status) and.push({ status });
+        if (temperature) and.push({ temperature });
+        if (interest) and.push({ interest });
 
         if (role === 'AGENT' || role === 'COUNSELOR') {
             const teamIds = [userId];
@@ -68,26 +71,32 @@ export async function GET(req: Request) {
                 return NextResponse.json({ message: 'Access Denied' }, { status: 403 });
             }
 
-            where.assignments = {
-                some: {
-                    assignedTo: effectiveCounselorId || { in: teamIds }
+            and.push({
+                assignments: {
+                    some: {
+                        assignedTo: effectiveCounselorId || { in: teamIds }
+                    }
                 }
-            };
+            });
         } else if (effectiveAgentId || effectiveCounselorId) {
-            where.assignments = {
-                some: {
-                    ...(effectiveAgentId && { assignedTo: effectiveAgentId }),
-                    ...(effectiveCounselorId && { assignedTo: effectiveCounselorId })
+            and.push({
+                assignments: {
+                    some: {
+                        ...(effectiveAgentId && { assignedTo: effectiveAgentId }),
+                        ...(effectiveCounselorId && { assignedTo: effectiveCounselorId })
+                    }
                 }
-            };
+            });
         }
 
         if (search) {
-            where.OR = [
-                { name: { contains: search, mode: 'insensitive' } },
-                { email: { contains: search, mode: 'insensitive' } },
-                { phone: { contains: search, mode: 'insensitive' } }
-            ];
+            and.push({
+                OR: [
+                    { name: { contains: search, mode: 'insensitive' } },
+                    { email: { contains: search, mode: 'insensitive' } },
+                    { phone: { contains: search, mode: 'insensitive' } }
+                ]
+            });
         }
 
         const [leads, total] = await Promise.all([

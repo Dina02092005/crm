@@ -3,7 +3,7 @@
 import { useState, useEffect, Suspense, use } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Search, FileSpreadsheet, Trash2, UserPlus, Mail, MessageSquare, Plus, FilterX } from "lucide-react";
+import { Search, FileSpreadsheet, Trash2, UserPlus, Plus, FilterX } from "lucide-react";
 import { toast } from "sonner";
 import { ApplicationsTable } from "@/components/dashboard/ApplicationsTable";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
@@ -17,6 +17,10 @@ import axios from "axios";
 import { Application } from "@/types/api";
 import { useCountries, useCounselors, useUniversities } from "@/hooks/use-masters";
 import { StatusTabs, StatusTab } from "@/components/dashboard/StatusTabs";
+import { STATUS_CONFIG } from "@/lib/status-config";
+import { ApplicationStatus } from "@/lib/enums";
+import { DataTableFilters, FilterConfig } from "@/components/dashboard/DataTableFilters";
+import { cn } from "@/lib/utils";
 import {
     Select,
     SelectContent,
@@ -29,8 +33,6 @@ import {
 import { ApplicationHistoryModal } from "@/components/applications/ApplicationHistoryModal";
 import { ApplicationNotesModal } from "@/components/applications/ApplicationNotesModal";
 import { AssignApplicationsModal } from "@/components/applications/AssignApplicationsModal";
-import { EmailComposeModal } from "@/components/applications/EmailComposeModal";
-import { WhatsappMessageModal } from "@/components/applications/WhatsappMessageModal";
 import { StudentApplicationsModal } from "@/components/applications/StudentApplicationsModal";
 import { OfferLetterModal } from "@/components/applications/OfferLetterModal";
 import { ApplicationCommentsModal } from "@/components/applications/ApplicationCommentsModal";
@@ -54,6 +56,8 @@ function ApplicationsPageContent({ role }: { role: string }) {
     const [status, setStatus] = useState<string | null>(urlStatus);
     const [countryId, setCountryId] = useState("ALL");
     const [universityId, setUniversityId] = useState("ALL");
+    const [courseId, setCourseId] = useState("ALL");
+    const [intake, setIntake] = useState("ALL");
     const [assignedToId, setAssignedToId] = useState("ALL");
 
     const router = useRouter();
@@ -74,7 +78,8 @@ function ApplicationsPageContent({ role }: { role: string }) {
         undefined,
         universityId === "ALL" ? undefined : universityId,
         countryId === "ALL" ? undefined : countryId,
-        assignedToId === "ALL" ? undefined : assignedToId
+        assignedToId === "ALL" ? undefined : assignedToId,
+        courseId === "ALL" ? undefined : courseId
     );
 
     const { data: countries } = useCountries();
@@ -91,8 +96,6 @@ function ApplicationsPageContent({ role }: { role: string }) {
     const [historyApp, setHistoryApp] = useState<any>(null);
     const [notesApp, setNotesApp] = useState<any>(null);
     const [assignModalOpen, setAssignModalOpen] = useState(false);
-    const [emailModalOpen, setEmailModalOpen] = useState(false);
-    const [whatsappModalOpen, setWhatsappModalOpen] = useState(false);
     const [studentAppsModal, setStudentAppsModal] = useState<any>(null);
     const [offerLetterApp, setOfferLetterApp] = useState<any>(null);
     const [commentsApp, setCommentsApp] = useState<any>(null);
@@ -101,7 +104,7 @@ function ApplicationsPageContent({ role }: { role: string }) {
     // Reset page on search/filter changes
     useEffect(() => {
         setPage(1);
-    }, [debouncedSearch, status, countryId, universityId, assignedToId]);
+    }, [debouncedSearch, status, countryId, universityId, assignedToId, courseId, intake]);
 
     const applications = data?.applications || [];
     const pagination = data?.pagination || { page: 1, limit: 10, totalPages: 1, total: 0 };
@@ -110,98 +113,35 @@ function ApplicationsPageContent({ role }: { role: string }) {
     const counts = stats || { ALL: 0, PENDING: 0, FINALIZED: 0, READY_FOR_VISA: 0, DEFERRED: 0, ENROLLED: 0, REJECTED: 0 };
 
     const applicationStatusTabs: StatusTab[] = [
-        { 
-            id: "ALL", 
+        "ALL",
+        ...Object.values(ApplicationStatus)
+    ].map((key) => {
+        const config = STATUS_CONFIG[key as keyof typeof STATUS_CONFIG] || { 
+            label: key.replace(/_/g, ' '), 
+            color: "text-slate-600", 
+            bg: "bg-slate-600/10" 
+        };
+        return {
+            id: key,
             label: (
                 <div className="flex items-center gap-2">
-                    All
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-primary/10 text-primary border-none">
-                        {counts.ALL}
+                    {config.label}
+                    <Badge 
+                        variant="secondary" 
+                        className={cn(
+                            "h-4 px-1 text-[10px] font-bold border-none", 
+                            config.bg, 
+                            config.color
+                        )}
+                    >
+                        {counts[key as keyof typeof counts] || 0}
                     </Badge>
                 </div>
-            ), 
-            color: "text-primary", 
-            bg: "bg-primary/10" 
-        },
-        { 
-            id: "PENDING", 
-            label: (
-                <div className="flex items-center gap-2">
-                    Pending
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-amber-100 text-amber-700 border-none">
-                        {counts.PENDING}
-                    </Badge>
-                </div>
-            ), 
-            color: "text-amber-600", 
-            bg: "bg-amber-600/10" 
-        },
-        { 
-            id: "FINALIZED", 
-            label: (
-                <div className="flex items-center gap-2">
-                    Approved
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-emerald-100 text-emerald-700 border-none">
-                        {counts.FINALIZED}
-                    </Badge>
-                </div>
-            ), 
-            color: "text-emerald-600", 
-            bg: "bg-emerald-600/10" 
-        },
-        { 
-            id: "READY_FOR_VISA", 
-            label: (
-                <div className="flex items-center gap-2">
-                    Ready for Visa
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-orange-100 text-orange-700 border-none">
-                        {counts.READY_FOR_VISA}
-                    </Badge>
-                </div>
-            ), 
-            color: "text-orange-600", 
-            bg: "bg-orange-600/10" 
-        },
-        { 
-            id: "DEFERRED", 
-            label: (
-                <div className="flex items-center gap-2">
-                    Deferred
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-pink-100 text-pink-700 border-none">
-                        {counts.DEFERRED}
-                    </Badge>
-                </div>
-            ), 
-            color: "text-pink-600", 
-            bg: "bg-pink-600/10" 
-        },
-        { 
-            id: "ENROLLED", 
-            label: (
-                <div className="flex items-center gap-2">
-                    Enrolled
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-cyan-100 text-cyan-700 border-none">
-                        {counts.ENROLLED}
-                    </Badge>
-                </div>
-            ), 
-            color: "text-cyan-600", 
-            bg: "bg-cyan-600/10" 
-        },
-        { 
-            id: "REJECTED", 
-            label: (
-                <div className="flex items-center gap-2">
-                    Rejected
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-rose-100 text-rose-700 border-none">
-                        {counts.REJECTED}
-                    </Badge>
-                </div>
-            ), 
-            color: "text-rose-600", 
-            bg: "bg-rose-600/10" 
-        },
-    ];
+            ),
+            color: config.color,
+            bg: config.bg
+        };
+    });
 
     const handleBulkDelete = async () => {
         if (selectedIds.length === 0) return;
@@ -286,42 +226,78 @@ function ApplicationsPageContent({ role }: { role: string }) {
                         <UserPlus className="h-4 w-4 text-blue-600" />
                         Assign
                     </Button>
-
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setEmailModalOpen(true)}
-                        disabled={selectedIds.length === 0}
-                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold disabled:opacity-50"
-                    >
-                        <Mail className="h-4 w-4 text-amber-600" />
-                        Email
-                    </Button>
-
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setWhatsappModalOpen(true)}
-                        disabled={selectedIds.length === 0}
-                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold disabled:opacity-50"
-                    >
-                        <MessageSquare className="h-4 w-4 text-green-600" />
-                        Whatsapp
-                    </Button>
                 </div>
             </div>
 
             <Card className="border-0 dark:border dark:border-white/5 rounded-3xl overflow-hidden bg-white dark:bg-transparent shadow-sm dark:shadow-none">
                 <CardContent className="p-4">
-                    {/* Integrated Header Row */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-                        <div className="relative max-w-sm w-full">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground/40" />
-                            <Input
-                                placeholder="Search applications..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="pl-9 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-9 text-[13px] placeholder:text-muted-foreground/40 font-sans w-full"
+                    <DataTableFilters
+                        onSearch={setSearch}
+                        searchValue={search}
+                        onClear={() => {
+                            setSearch("");
+                            setStatus(null);
+                            setCountryId("ALL");
+                            setUniversityId("ALL");
+                            setCourseId("ALL");
+                            setIntake("ALL");
+                            setAssignedToId("ALL");
+                        }}
+                        filters={[
+                            {
+                                key: "countryId",
+                                label: "Country",
+                                type: "select",
+                                options: countries?.countries?.map((c: any) => ({ label: c.name, value: c.id })) || []
+                            },
+                            {
+                                key: "universityId",
+                                label: "University",
+                                type: "select",
+                                options: universities?.universities?.map((u: any) => ({ label: u.name, value: u.id })) || []
+                            },
+                            {
+                                key: "intake",
+                                label: "Intake",
+                                type: "select",
+                                options: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map(m => ({ label: `${m} 2024/25`, value: m }))
+                            },
+                            {
+                                key: "assignedToId",
+                                label: "Assigned To",
+                                type: "select",
+                                options: counselors?.map((c: any) => ({ label: c.name, value: c.id })) || []
+                            }
+                        ]}
+                        values={{
+                            countryId,
+                            universityId,
+                            courseId,
+                            intake,
+                            assignedToId: assignedToId || "ALL"
+                        }}
+                        onFilterChange={(key, value) => {
+                            if (key === "countryId") {
+                                setCountryId(value);
+                                setUniversityId("ALL");
+                                setCourseId("ALL");
+                            }
+                            if (key === "universityId") {
+                                setUniversityId(value);
+                                setCourseId("ALL");
+                            }
+                            if (key === "courseId") setCourseId(value);
+                            if (key === "intake") setIntake(value);
+                            if (key === "assignedToId") setAssignedToId(value);
+                        }}
+                    />
+
+                    <div className="flex items-center justify-between gap-4 mb-4">
+                        <div className="flex items-center gap-3">
+                            <StatusTabs 
+                                tabs={applicationStatusTabs} 
+                                activeTab={status || "ALL"} 
+                                onTabChange={handleStatusChange} 
                             />
                         </div>
 
@@ -332,73 +308,6 @@ function ApplicationsPageContent({ role }: { role: string }) {
                             </Badge>
                         </div>
                     </div>
-
-                    {/* Advanced Filters */}
-                    <div className="flex flex-wrap items-center gap-3 mb-6">
-                        <div className="w-full sm:w-[180px]">
-                            <Select value={countryId} onValueChange={(val) => { setCountryId(val); setUniversityId("ALL"); }}>
-                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 dark:bg-transparent border-0 dark:border dark:border-white/10 shadow-sm focus:ring-0">
-                                    <SelectValue placeholder="Country" />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl border-border dark:bg-slate-900">
-                                    <SelectItem value="ALL">All Countries</SelectItem>
-                                    {countries?.countries?.map((c: any) => (
-                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="w-full sm:w-[180px]">
-                            <Select value={universityId} onValueChange={setUniversityId}>
-                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 dark:bg-transparent border-0 dark:border dark:border-white/10 shadow-sm focus:ring-0">
-                                    <SelectValue placeholder="University" />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl border-border dark:bg-slate-900">
-                                    <SelectItem value="ALL">All Universities</SelectItem>
-                                    {universities?.universities?.map((u: any) => (
-                                        <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="w-full sm:w-[180px]">
-                            <Select value={assignedToId} onValueChange={setAssignedToId}>
-                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 dark:bg-transparent border-0 dark:border dark:border-white/10 shadow-sm focus:ring-0">
-                                    <SelectValue placeholder="Assigned To" />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl border-border dark:bg-slate-900">
-                                    <SelectItem value="ALL">All Counselors</SelectItem>
-                                    {counselors?.map((c: any) => (
-                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        {(status || countryId !== "ALL" || universityId !== "ALL" || assignedToId !== "ALL") && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                    setStatus(null);
-                                    setCountryId("ALL");
-                                    setUniversityId("ALL");
-                                    setAssignedToId("ALL");
-                                }}
-                                className="h-8 text-[11px] text-muted-foreground hover:text-destructive gap-1"
-                            >
-                                <FilterX className="h-3 w-3" /> Clear Filters
-                            </Button>
-                        )}
-                    </div>
-
-                    <StatusTabs 
-                        tabs={applicationStatusTabs} 
-                        activeTab={status || "ALL"} 
-                        onTabChange={handleStatusChange} 
-                    />
 
                     {isLoading && page === 1 ? (
                         <div className="space-y-4 p-4">
@@ -444,55 +353,6 @@ function ApplicationsPageContent({ role }: { role: string }) {
                 isOpen={!!notesApp}
                 onClose={() => setNotesApp(null)}
                 application={notesApp}
-                onUpdate={refetch}
-            />
-
-            <AssignApplicationsModal
-                isOpen={assignModalOpen}
-                onClose={() => setAssignModalOpen(false)}
-                selectedIds={selectedIds}
-                selectedNames={applications.filter((a: Application) => selectedIds.includes(a.id)).map((a: Application) => a.student?.name || "Unknown")}
-                onSuccess={() => {
-                    setSelectedIds([]);
-                    refetch();
-                }}
-            />
-
-            <EmailComposeModal
-                isOpen={emailModalOpen}
-                onClose={() => setEmailModalOpen(false)}
-                selectedEmails={applications.filter((a: Application) => selectedIds.includes(a.id)).map((a: Application) => a.student?.email).filter((email: any): email is string => !!email)}
-            />
-
-            <WhatsappMessageModal
-                isOpen={whatsappModalOpen}
-                onClose={() => setWhatsappModalOpen(false)}
-                selectedStudents={applications.filter((a: Application) => selectedIds.includes(a.id)).map((a: Application) => ({
-                    id: a.studentId,
-                    name: a.student?.name || "Unknown",
-                    phone: a.student?.phone || "No Phone",
-                    leadId: a.student?.leadId
-                }))}
-            />
-
-            <StudentApplicationsModal
-                isOpen={!!studentAppsModal}
-                onClose={() => setStudentAppsModal(null)}
-                student={studentAppsModal}
-                onUpdate={refetch}
-            />
-
-            <OfferLetterModal
-                isOpen={!!offerLetterApp}
-                onClose={() => setOfferLetterApp(null)}
-                application={offerLetterApp}
-                onUpdate={refetch}
-            />
-
-            <ApplicationCommentsModal
-                isOpen={!!commentsApp}
-                onClose={() => setCommentsApp(null)}
-                application={commentsApp}
                 onUpdate={refetch}
             />
 

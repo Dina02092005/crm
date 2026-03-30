@@ -31,25 +31,26 @@ export async function GET(req: Request) {
         effectiveAgentId = null;
     }
 
+    const search = searchParams.get('search') || '';
+
     try {
         // Build Where Clause
-        const where: any = {};
+        const where: any = { AND: [] };
+        const and = where.AND;
 
         if (from && to) {
-            where.createdAt = {
-                gte: startOfDay(parseISO(from)),
-                lte: endOfDay(parseISO(to))
-            };
-        } else if (from) {
-            where.createdAt = { gte: startOfDay(parseISO(from)) };
-        } else if (to) {
-            where.createdAt = { lte: endOfDay(parseISO(to)) };
+            and.push({
+                createdAt: {
+                    gte: startOfDay(parseISO(from)),
+                    lte: endOfDay(parseISO(to))
+                }
+            });
         }
 
-        if (source) where.source = source;
-        if (country) where.interestedCountry = country;
-        if (status) where.status = status;
-        if (temperature) where.temperature = temperature;
+        if (source) and.push({ source });
+        if (country) and.push({ interestedCountry: country });
+        if (status) and.push({ status });
+        if (temperature) and.push({ temperature });
 
         // Security & Isolation for Leads
         if (role === 'AGENT' || role === 'COUNSELOR') {
@@ -62,24 +63,36 @@ export async function GET(req: Request) {
                 teamIds.push(...myCounselors.map(c => c.id));
             }
 
-            // If a specific ID was requested, ensure it belongs to the team
             if (effectiveCounselorId && !teamIds.includes(effectiveCounselorId)) {
                 return NextResponse.json({ message: 'Access Denied' }, { status: 403 });
             }
 
-            where.assignments = {
-                some: {
-                    assignedTo: effectiveCounselorId || { in: teamIds }
+            and.push({
+                assignments: {
+                    some: {
+                        assignedTo: effectiveCounselorId || { in: teamIds }
+                    }
                 }
-            };
+            });
         } else if (effectiveAgentId || effectiveCounselorId) {
-            // Admin filtering
-            where.assignments = {
-                some: {
-                    ...(effectiveAgentId && { assignedTo: effectiveAgentId }),
-                    ...(effectiveCounselorId && { assignedTo: effectiveCounselorId })
+            and.push({
+                assignments: {
+                    some: {
+                        ...(effectiveAgentId && { assignedTo: effectiveAgentId }),
+                        ...(effectiveCounselorId && { assignedTo: effectiveCounselorId })
+                    }
                 }
-            };
+            });
+        }
+
+        if (search) {
+            and.push({
+                OR: [
+                    { name: { contains: search, mode: 'insensitive' } },
+                    { email: { contains: search, mode: 'insensitive' } },
+                    { phone: { contains: search, mode: 'insensitive' } }
+                ]
+            });
         }
 
         // 1. Fetch Raw Data
@@ -88,15 +101,71 @@ export async function GET(req: Request) {
             convertedLeads,
             assignedLeads,
             unassignedLeads,
+            totalStudents,
+            totalApps,
+            visaApprovals,
             leadsOverTimeRaw,
             leadsBySourceRaw,
             leadsByCountryRaw,
+            appsByStatusRaw,
+            visaByStatusRaw,
             hierarchyRaw
         ] = await Promise.all([
             prisma.lead.count({ where }),
-            prisma.lead.count({ where: { ...where, status: 'CONVERTED' } }),
-            prisma.lead.count({ where: { ...where, assignments: { some: {} } } }),
-            prisma.lead.count({ where: { ...where, assignments: { none: {} } } }),
+            prisma.lead.count({ where: { ...where, AND: [...(where.AND || []), { status: 'CONVERTED' }] } }),
+            prisma.lead.count({ where: { ...where, AND: [...(where.AND || []), { assignments: { some: {} } }] } }),
+            prisma.lead.count({ where: { ...where, AND: [...(where.AND || []), { assignments: { none: {} } }] } }),
+            prisma.student.count({ 
+                where: { 
+                    AND: where.AND.map((c: any) => {
+                        const nc = { ...c };
+                        if (nc.interestedCountry) delete nc.interestedCountry; // Students don't have this
+                        if (nc.assignments) {
+                           // Adapt assignments check if needed, but Student has agentId/counselorId
+                           delete nc.assignments;
+                        }
+                        return nc;
+                    }).filter((c: any) => Object.keys(c).length > 0)
+                } 
+            }),
+            prisma.universityApplication.count({ 
+                where: { 
+                    AND: where.AND.map((c: any) => {
+                        const nc = { ...c };
+                        if (nc.interestedCountry) delete nc.interestedCountry;
+                        if (nc.assignments) delete nc.assignments;
+                        if (nc.OR) {
+                            // Adapt search OR
+                            nc.OR = nc.OR.map((o: any) => {
+                                if (o.name || o.email || o.phone) {
+                                    return { student: o };
+                                }
+                                return o;
+                            });
+                        }
+                        return nc;
+                    }).filter((c: any) => Object.keys(c).length > 0)
+                } 
+            }),
+            prisma.visaApplication.count({ 
+                where: { 
+                    AND: [
+                        ...where.AND.map((c: any) => {
+                            const nc = { ...c };
+                            if (nc.interestedCountry) delete nc.interestedCountry;
+                            if (nc.assignments) delete nc.assignments;
+                            if (nc.OR) {
+                                nc.OR = nc.OR.map((o: any) => {
+                                    if (o.name || o.email || o.phone) return { student: o };
+                                    return o;
+                                });
+                            }
+                            return nc;
+                        }),
+                        { status: 'VISA_APPROVED' }
+                    ].filter((c: any) => Object.keys(c).length > 0)
+                } 
+            }),
             prisma.lead.findMany({
                 where,
                 select: { createdAt: true },
@@ -111,6 +180,16 @@ export async function GET(req: Request) {
                 by: ['interestedCountry'],
                 where: { ...where, interestedCountry: { not: null } },
                 _count: { interestedCountry: true }
+            }),
+            prisma.universityApplication.groupBy({
+                by: ['status'],
+                where,
+                _count: { status: true }
+            }),
+            prisma.visaApplication.groupBy({
+                by: ['status'],
+                where,
+                _count: { status: true }
             }),
             // Hierarchical Performance (Admin/SuperAdmin sees all, Agent sees self+team)
             prisma.user.findMany({
@@ -257,12 +336,17 @@ export async function GET(req: Request) {
                 convertedLeads,
                 assignedLeads,
                 unassignedLeads,
+                totalStudents,
+                totalApps,
+                visaApprovals,
                 conversionRate: totalLeads > 0 ? ((convertedLeads / totalLeads) * 100).toFixed(2) : 0
             },
             charts: {
                 leadsOverTime,
                 leadsBySource: leadsBySourceRaw.map(s => ({ name: s.source || 'Unknown', value: s._count.source || 0 })),
-                leadsByCountry: leadsByCountryRaw.map(c => ({ name: c.interestedCountry || 'Unknown', value: c._count.interestedCountry || 0 }))
+                leadsByCountry: leadsByCountryRaw.map(c => ({ name: c.interestedCountry || 'Unknown', value: c._count.interestedCountry || 0 })),
+                appsByStatus: appsByStatusRaw.map(a => ({ name: a.status, value: a._count.status })),
+                visaByStatus: visaByStatusRaw.map(v => ({ name: v.status, value: v._count.status }))
             },
             performance: {
                 agents: agentPerformance,

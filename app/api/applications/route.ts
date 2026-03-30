@@ -31,6 +31,7 @@ export const GET = withPermission('APPLICATIONS', 'VIEW', async (req, { permissi
         const dateFrom = searchParams.get("dateFrom");
         const dateTo = searchParams.get("dateTo");
         const universityId = searchParams.get("universityId");
+        const courseId = searchParams.get("courseId");
         const studentIdString = searchParams.get("studentId");
 
         const userRole = session.user.role as string;
@@ -114,6 +115,7 @@ export const GET = withPermission('APPLICATIONS', 'VIEW', async (req, { permissi
         }
         if (countryId) appWhere.countryId = countryId;
         if (universityId) appWhere.universityId = universityId;
+        if (courseId) appWhere.courseId = courseId;
         if (assignedToId) appWhere.assignedToId = assignedToId;
         if (assignedById) appWhere.assignedById = assignedById;
         if (intake) appWhere.intake = { contains: intake, mode: "insensitive" };

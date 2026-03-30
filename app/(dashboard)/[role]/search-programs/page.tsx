@@ -24,6 +24,8 @@ import { Search, SlidersHorizontal, MapPin, Calendar, Clock, GraduationCap, Doll
 import axios from "axios";
 import { toast } from "sonner";
 import { useRolePath } from "@/hooks/use-role-path";
+import { useCountries, useUniversities } from "@/hooks/use-masters";
+import { DataTableFilters, FilterConfig } from "@/components/dashboard/DataTableFilters";
 
 // Quick Filter Constants
 const QUICK_FILTERS = [
@@ -88,6 +90,7 @@ export default function SearchProgramsPage() {
     const [nationality, setNationality] = useState("India");
     const [studentState, setStudentState] = useState("All");
     const [country, setCountry] = useState("ALL");
+    const [universityId, setUniversityId] = useState("ALL");
 
     // Advanced search states
     const [showAdvanced, setShowAdvanced] = useState(false);
@@ -106,6 +109,7 @@ export default function SearchProgramsPage() {
             if (intake !== "All") params.append("intake", intake);
             if (year !== "All") params.append("year", year);
             if (country !== "ALL") params.append("country", country);
+            if (universityId !== "ALL") params.append("universityId", universityId);
             if (selectedDuration !== "All") params.append("duration", selectedDuration);
             params.append("page", page.toString());
             params.append("limit", limit.toString());
@@ -117,6 +121,9 @@ export default function SearchProgramsPage() {
         },
         placeholderData: (previousData) => previousData, // keep old data while fetching
     });
+ 
+    const { data: countries } = useCountries();
+    const { data: universities } = useUniversities(country === "ALL" ? undefined : country);
 
     const handleSearch = () => {
         setPage(1);
@@ -149,81 +156,73 @@ export default function SearchProgramsPage() {
             {/* Basic Search Top Bar */}
             <Card className="rounded-3xl border-none shadow-sm overflow-hidden bg-white/50 backdrop-blur-sm">
                 <CardContent className="p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4 items-end">
-                        <div className="lg:col-span-2 space-y-2">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Search Program / University</label>
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                                <Input
-                                    placeholder="Keyword, Program Name, etc..."
-                                    className="pl-10 h-11 bg-slate-50/50 border-slate-200 rounded-xl rounded-r-none focus-visible:ring-primary/20"
-                                    value={q}
-                                    onChange={e => setQ(e.target.value)}
-                                    onKeyDown={e => e.key === 'Enter' && handleSearch()}
-                                />
-                            </div>
-                        </div>
+                    <DataTableFilters
+                        onSearch={(val) => { setQ(val); setPage(1); }}
+                        searchValue={q}
+                        onClear={() => {
+                            setQ("");
+                            setIntake("All");
+                            setYear("All");
+                            setCountry("ALL");
+                            setUniversityId("ALL");
+                            setSelectedLevels([]);
+                            setSelectedDuration("All");
+                        }}
+                        filters={[
+                            {
+                                key: "country",
+                                label: "Country",
+                                type: "select",
+                                options: countries?.countries?.map((c: any) => ({ label: c.name, value: c.id })) || []
+                            },
+                            {
+                                key: "universityId",
+                                label: "University",
+                                type: "select",
+                                options: universities?.universities?.map((u: any) => ({ label: u.name, value: u.id })) || []
+                            },
+                            {
+                                key: "intake",
+                                label: "Intake",
+                                type: "select",
+                                options: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => ({ label: m, value: m }))
+                            },
+                            {
+                                key: "applyLevel",
+                                label: "Level",
+                                type: "select",
+                                options: EDU_LEVELS.map(l => ({ label: l, value: l }))
+                            }
+                        ]}
+                        values={{
+                            country,
+                            universityId,
+                            intake,
+                            applyLevel: selectedLevels[0] || "ALL"
+                        }}
+                        onFilterChange={(key, value) => {
+                            if (key === "country") {
+                                setCountry(value);
+                                setUniversityId("ALL");
+                            }
+                            if (key === "universityId") setUniversityId(value);
+                            if (key === "intake") setIntake(value);
+                            if (key === "applyLevel") {
+                                setSelectedLevels(value === "ALL" ? [] : [value]);
+                            }
+                            setPage(1);
+                        }}
+                    />
 
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Intake</label>
-                            <Select value={intake} onValueChange={setIntake}>
-                                <SelectTrigger className="h-11 bg-slate-50/50 border-slate-200 rounded-none border-l-0">
-                                    <SelectValue placeholder="All" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="All">All Intakes</SelectItem>
-                                    {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (
-                                        <SelectItem key={m} value={m}>{m}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Year</label>
-                            <Select value={year} onValueChange={setYear}>
-                                <SelectTrigger className="h-11 bg-slate-50/50 border-slate-200 rounded-none border-l-0">
-                                    <SelectValue placeholder="Year" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="All">All Years</SelectItem>
-                                    {["2024", "2025", "2026", "2027", "2028"].map(y => (
-                                        <SelectItem key={y} value={y}>{y}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Nationality</label>
-                            <Select value={nationality} onValueChange={setNationality}>
-                                <SelectTrigger className="h-11 bg-slate-50/50 border-slate-200 rounded-none border-l-0">
-                                    <SelectValue placeholder="Select" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {["India", "Nepal", "Bangladesh", "Pakistan", "Sri Lanka", "Other"].map(n => (
-                                        <SelectItem key={n} value={n}>{n}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="flex gap-2 h-11">
-                            <Button
-                                onClick={handleSearch}
-                                className="h-11 flex-1 bg-primary hover:bg-primary/90 text-white rounded-xl rounded-l-none font-bold shadow-sm"
-                            >
-                                Search
-                            </Button>
-                            <Button
-                                variant={showAdvanced ? "default" : "outline"}
-                                onClick={() => setShowAdvanced(!showAdvanced)}
-                                className={`h-11 w-11 p-0 rounded-xl shrink-0 border-slate-200 ${showAdvanced ? "bg-slate-800 text-white hover:bg-slate-700" : ""}`}
-                                title="Advanced Search"
-                            >
-                                <SlidersHorizontal className="h-4 w-4" />
-                            </Button>
-                        </div>
+                    <div className="flex items-center gap-2 mb-4">
+                        <Button
+                            variant={showAdvanced ? "default" : "outline"}
+                            onClick={() => setShowAdvanced(!showAdvanced)}
+                            className={`h-9 px-4 rounded-xl border-slate-200 text-xs font-bold gap-2 ${showAdvanced ? "bg-slate-800 text-white hover:bg-slate-700" : ""}`}
+                        >
+                            <SlidersHorizontal className="h-4 w-4" />
+                            {showAdvanced ? "Hide Advanced Filters" : "Show Advanced Filters"}
+                        </Button>
                     </div>
 
                     {/* Advanced Search Panel */}

@@ -24,6 +24,7 @@ export const GET = withPermission('LEADS', 'VIEW', async (req, { permission }) =
         const to = searchParams.get('to');
         const interest = searchParams.get('interest');
         const intake = searchParams.get('intake');
+        const applyLevel = searchParams.get('applyLevel');
 
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '10');
@@ -43,6 +44,7 @@ export const GET = withPermission('LEADS', 'VIEW', async (req, { permission }) =
         if (highestQualification && highestQualification !== 'ALL') where.highestQualification = { contains: highestQualification, mode: 'insensitive' };
         if (interest && interest !== 'ALL') where.interest = interest;
         if (intake && intake !== 'ALL') where.intake = { contains: intake, mode: 'insensitive' };
+        if (applyLevel && applyLevel !== 'ALL') where.applyLevel = applyLevel;
 
         if (from && to && from !== "" && to !== "") {
             where.createdAt = {

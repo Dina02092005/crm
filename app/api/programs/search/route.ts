@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { Prisma } from '@/lib/prisma';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,12 +19,13 @@ export async function GET(req: Request) {
         const year = searchParams.get('year');
         const country = searchParams.get('country');
         const educationLevel = searchParams.getAll('level[]');
+        const universityId = searchParams.get('universityId');
         const duration = searchParams.get('duration');
         const page = parseInt(searchParams.get('page') || '1');
         const limit = parseInt(searchParams.get('limit') || '10');
         const skip = (page - 1) * limit;
 
-        const where: Prisma.CourseWhereInput = {};
+        const where: any = {};
 
         if (q) {
             where.OR = [
@@ -36,7 +36,7 @@ export async function GET(req: Request) {
 
         if (country && country !== "ALL") {
             where.university = {
-                ...(where.university as Prisma.UniversityWhereInput || {}),
+                ...(where.university || {}),
                 country: {
                     name: { contains: country, mode: 'insensitive' }
                 }

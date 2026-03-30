@@ -27,7 +27,6 @@ import {
     Trash2,
     User,
     Phone,
-    Mail,
     Globe,
     Briefcase,
     GraduationCap,

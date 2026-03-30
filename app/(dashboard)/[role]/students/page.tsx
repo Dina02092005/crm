@@ -15,13 +15,11 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { 
-    Search, 
-    Plus, 
-    FileSpreadsheet, 
-    Mail, 
+    Search,
+    Plus,
+    FileSpreadsheet,
     Trash2, 
     UserPlus, 
-    MessageCircle, 
     FilterX,
     Users
 } from "lucide-react";
@@ -29,14 +27,16 @@ import { toast } from "sonner";
 import { StudentsTable } from "@/components/dashboard/StudentsTable";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { AssignApplicationsModal } from "@/components/applications/AssignApplicationsModal";
-import { EmailComposeModal } from "@/components/applications/EmailComposeModal";
-import { WhatsappMessageModal } from "@/components/applications/WhatsappMessageModal";
 import { useStudents, useStudentStats } from "@/hooks/useApi";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useRolePath } from "@/hooks/use-role-path";
 import { useCountries, useCounselors } from "@/hooks/use-masters";
 import { Badge } from "@/components/ui/badge";
 import { StatusTabs, StatusTab } from "@/components/dashboard/StatusTabs";
+import { STATUS_CONFIG } from "@/lib/status-config";
+import { StudentStatus } from "@/lib/enums";
+import { DataTableFilters, FilterConfig } from "@/components/dashboard/DataTableFilters";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 
 export default function StudentsPage() {
@@ -45,16 +45,15 @@ export default function StudentsPage() {
     const { prefixPath } = useRolePath();
     const [search, setSearch] = useState("");
     const [status, setStatus] = useState("ALL");
-    const [onboardedBy, setOnboardedBy] = useState("ALL");
-    const [interestedCountry, setInterestedCountry] = useState("ALL");
-    const [intake, setIntake] = useState("ALL");
+    const [agentId, setAgentId] = useState("ALL");
+    const [counselorId, setCounselorId] = useState("ALL");
+    const [countryId, setCountryId] = useState("ALL");
+    const [appIntake, setAppIntake] = useState("ALL");
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
 
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [showAssignModal, setShowAssignModal] = useState(false);
-    const [showEmailModal, setShowEmailModal] = useState(false);
-    const [showWhatsappModal, setShowWhatsappModal] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     const [isBulkDeleting, setIsBulkDeleting] = useState(false);
     const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
@@ -67,9 +66,13 @@ export default function StudentsPage() {
         limit,
         debouncedSearch,
         status === "ALL" ? "" : status,
-        onboardedBy === "ALL" ? "" : onboardedBy,
-        interestedCountry === "ALL" ? "" : interestedCountry,
-        intake === "ALL" ? "" : intake
+        "", // legacy onboardedBy
+        "", // legacy interestedCountry
+        "", // legacy intake
+        agentId === "ALL" ? "" : agentId,
+        counselorId === "ALL" ? "" : counselorId,
+        countryId === "ALL" ? "" : countryId,
+        appIntake === "ALL" ? "" : appIntake
     );
 
     const { data: stats } = useStudentStats();
@@ -78,77 +81,40 @@ export default function StudentsPage() {
     const counts = stats || { ALL: 0, NEW: 0, DOCUMENT_PENDING: 0, DOCUMENT_VERIFIED: 0, APPLICATION_SUBMITTED: 0 };
 
     const studentStatusTabs: StatusTab[] = [
-        { 
-            id: "ALL", 
+        "ALL",
+        ...Object.values(StudentStatus)
+    ].map((key) => {
+        const config = STATUS_CONFIG[key] || { 
+            label: key.replace(/_/g, ' '), 
+            color: "text-slate-600", 
+            bg: "bg-slate-600/10" 
+        };
+        return {
+            id: key,
             label: (
                 <div className="flex items-center gap-2">
-                    All
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-primary/10 text-primary border-none">
-                        {counts.ALL}
+                    {config.label}
+                    <Badge 
+                        variant="secondary" 
+                        className={cn(
+                            "h-4 px-1 text-[10px] font-bold border-none", 
+                            config.bg, 
+                            config.color
+                        )}
+                    >
+                        {counts[key] || 0}
                     </Badge>
                 </div>
-            ), 
-            color: "text-primary", 
-            bg: "bg-primary/10" 
-        },
-        { 
-            id: "NEW", 
-            label: (
-                <div className="flex items-center gap-2">
-                    New
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-blue-100 text-blue-700 border-none">
-                        {counts.NEW}
-                    </Badge>
-                </div>
-            ), 
-            color: "text-blue-600", 
-            bg: "bg-blue-600/10" 
-        },
-        { 
-            id: "DOCUMENT_PENDING", 
-            label: (
-                <div className="flex items-center gap-2">
-                    Doc Pending
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-amber-100 text-amber-700 border-none">
-                        {counts.DOCUMENT_PENDING}
-                    </Badge>
-                </div>
-            ), 
-            color: "text-amber-600", 
-            bg: "bg-amber-600/10" 
-        },
-        { 
-            id: "DOCUMENT_VERIFIED", 
-            label: (
-                <div className="flex items-center gap-2">
-                    Doc Verified
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-emerald-100 text-emerald-700 border-none">
-                        {counts.DOCUMENT_VERIFIED}
-                    </Badge>
-                </div>
-            ), 
-            color: "text-emerald-600", 
-            bg: "bg-emerald-600/10" 
-        },
-        { 
-            id: "APPLICATION_SUBMITTED", 
-            label: (
-                <div className="flex items-center gap-2">
-                    Applied
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-indigo-100 text-indigo-700 border-none">
-                        {counts.APPLICATION_SUBMITTED}
-                    </Badge>
-                </div>
-            ), 
-            color: "text-indigo-600", 
-            bg: "bg-indigo-600/10" 
-        },
-    ];
+            ),
+            color: config.color,
+            bg: config.bg
+        };
+    });
 
     // Reset page on search/filter changes
     useEffect(() => {
         setPage(1);
-    }, [debouncedSearch, status, onboardedBy, interestedCountry, intake]);
+    }, [debouncedSearch, status, agentId, counselorId, countryId, appIntake]);
 
     const students = data?.students || [];
     const pagination = data?.pagination || { page: 1, limit: 10, totalPages: 1, total: 0 };
@@ -249,28 +215,6 @@ export default function StudentsPage() {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setShowEmailModal(true)}
-                        disabled={selectedIds.length === 0}
-                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold disabled:opacity-50"
-                    >
-                        <Mail className="h-4 w-4 text-amber-600" />
-                        Email
-                    </Button>
-
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowWhatsappModal(true)}
-                        disabled={selectedIds.length === 0}
-                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold disabled:opacity-50"
-                    >
-                        <MessageCircle className="h-4 w-4 text-green-600" />
-                        Whatsapp
-                    </Button>
-
-                    <Button
-                        variant="outline"
-                        size="sm"
                         onClick={() => setShowBulkDeleteConfirm(true)}
                         disabled={selectedIds.length === 0}
                         className="h-9 rounded-xl border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 gap-2 text-[12px] font-bold disabled:opacity-50"
@@ -283,15 +227,63 @@ export default function StudentsPage() {
 
             <Card className="border-0 dark:border dark:border-white/5 rounded-3xl overflow-hidden bg-white dark:bg-transparent shadow-sm dark:shadow-none">
                 <CardContent className="p-4">
-                    {/* Integrated Search Row */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-                        <div className="relative max-w-sm w-full">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground/40" />
-                            <Input
-                                placeholder="Search students..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="pl-9 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-9 text-[13px] placeholder:text-muted-foreground/40 font-sans w-full"
+                    <DataTableFilters
+                        onSearch={setSearch}
+                        searchValue={search}
+                        onClear={() => {
+                            setSearch("");
+                            setStatus("ALL");
+                            setAgentId("ALL");
+                            setCounselorId("ALL");
+                            setCountryId("ALL");
+                            setAppIntake("ALL");
+                        }}
+                        filters={[
+                            {
+                                key: "agentId",
+                                label: "Agent",
+                                type: "select",
+                                options: counselors?.filter((e: any) => e.role === "AGENT").map((c: any) => ({ label: c.name, value: c.id })) || []
+                            },
+                            {
+                                key: "counselorId",
+                                label: "Counselor",
+                                type: "select",
+                                options: counselors?.filter((e: any) => e.role === "COUNSELOR").map((c: any) => ({ label: c.name, value: c.id })) || []
+                            },
+                            {
+                                key: "countryId",
+                                label: "Country",
+                                type: "select",
+                                options: countries?.countries?.map((c: any) => ({ label: c.name, value: c.id })) || []
+                            },
+                            {
+                                key: "appIntake",
+                                label: "Intake",
+                                type: "select",
+                                options: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map(m => ({ label: `${m} 2024/25`, value: m }))
+                            }
+                        ]}
+                        values={{
+                            agentId,
+                            counselorId,
+                            countryId,
+                            appIntake
+                        }}
+                        onFilterChange={(key, value) => {
+                            if (key === "agentId") setAgentId(value);
+                            if (key === "counselorId") setCounselorId(value);
+                            if (key === "countryId") setCountryId(value);
+                            if (key === "appIntake") setAppIntake(value);
+                        }}
+                    />
+
+                    <div className="flex items-center justify-between gap-4 mb-4">
+                        <div className="flex items-center gap-3">
+                            <StatusTabs 
+                                tabs={studentStatusTabs} 
+                                activeTab={status} 
+                                onTabChange={setStatus} 
                             />
                         </div>
 
@@ -308,74 +300,6 @@ export default function StudentsPage() {
                         </div>
                     </div>
 
-                    <StatusTabs 
-                        tabs={studentStatusTabs} 
-                        activeTab={status} 
-                        onTabChange={setStatus} 
-                    />
-
-                    {/* Advanced Filters */}
-                    <div className="flex flex-wrap items-center gap-3 mb-6">
-                        {/* Status Select replaced by StatusTabs */}
-
-                        <div className="w-full sm:w-[150px]">
-                            <Select value={onboardedBy} onValueChange={setOnboardedBy}>
-                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 dark:bg-transparent border-0 dark:border dark:border-white/10 shadow-sm focus:ring-0">
-                                    <SelectValue placeholder="Onboarded By" />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl border-border dark:bg-slate-900">
-                                    <SelectItem value="ALL">All Staff</SelectItem>
-                                    {counselors?.map((c: any) => (
-                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="w-full sm:w-[150px]">
-                            <Select value={interestedCountry} onValueChange={setInterestedCountry}>
-                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 dark:bg-transparent border-0 dark:border dark:border-white/10 shadow-sm focus:ring-0">
-                                    <SelectValue placeholder="Country" />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl border-border dark:bg-slate-900">
-                                    <SelectItem value="ALL">All Countries</SelectItem>
-                                    {countries?.countries?.map((c: any) => (
-                                        <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="w-full sm:w-[150px]">
-                            <Select value={intake} onValueChange={setIntake}>
-                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 dark:bg-transparent border-0 dark:border dark:border-white/10 shadow-sm focus:ring-0">
-                                    <SelectValue placeholder="Intake" />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl border-border dark:bg-slate-900">
-                                    <SelectItem value="ALL">All Intakes</SelectItem>
-                                    {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map(m => (
-                                        <SelectItem key={m} value={m}>{m} 2024/25</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        {(status !== "ALL" || onboardedBy !== "ALL" || interestedCountry !== "ALL" || intake !== "ALL") && (
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => {
-                                    setStatus("ALL");
-                                    setOnboardedBy("ALL");
-                                    setInterestedCountry("ALL");
-                                    setIntake("ALL");
-                                }}
-                                className="h-8 text-[11px] text-muted-foreground hover:text-destructive gap-1"
-                            >
-                                <FilterX className="h-3 w-3" /> Clear filters
-                            </Button>
-                        )}
-                    </div>
 
                     {isLoading && page === 1 ? (
                         <div className="space-y-4 p-4">
@@ -417,24 +341,6 @@ export default function StudentsPage() {
                 apiEndpoint="/api/students/bulk-assign"
                 title="Students"
                 moduleName="students"
-            />
-
-            <EmailComposeModal
-                isOpen={showEmailModal}
-                onClose={() => setShowEmailModal(false)}
-                selectedEmails={students.filter((s: any) => selectedIds.includes(s.id)).map((s: any) => s.email).filter(Boolean)}
-                apiEndpoint="/api/applications/email" 
-            />
-
-            <WhatsappMessageModal
-                isOpen={showWhatsappModal}
-                onClose={() => setShowWhatsappModal(false)}
-                selectedLeads={students.filter((s: any) => selectedIds.includes(s.id)).map((s: any) => ({
-                    id: s.id,
-                    name: s.name,
-                    phone: s.phone || ""
-                }))}
-                apiEndpoint="/api/applications/whatsapp"
             />
 
             <ConfirmDialog

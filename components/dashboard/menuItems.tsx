@@ -200,7 +200,7 @@ export const menuItems: MenuItem[] = [
     {
         label: "Admins",
         icon: Icons.Roles,
-        roles: ["SUPER_ADMIN", "ADMIN"],
+        roles: ["SUPER_ADMIN"],
         submenu: [
             { label: "Manage Admins", href: "/admin/admins", permission: { action: "VIEW", module: "USERS" } },
         ]

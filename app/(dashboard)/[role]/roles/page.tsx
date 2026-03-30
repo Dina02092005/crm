@@ -8,7 +8,8 @@ import {
     Zap, Lock, Globe, AlertCircle, Copy, MoreHorizontal,
     Monitor, Database, Key, Layout, FileText, Activity,
     Eye, Pencil, Download, Printer, CheckCircle2,
-    Filter, ArrowRight, CheckSquare, Square
+    Filter, ArrowRight, CheckSquare, Square, ChevronDown, ChevronUp,
+    ShieldAlert
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,6 +84,7 @@ export default function RolesPage() {
     const [userSearch, setUserSearch] = useState("");
     const [isAssigning, setIsAssigning] = useState(false);
     const [newRoleData, setNewRoleData] = useState({ name: "", description: "" });
+    const [expandedModules, setExpandedModules] = useState<string[]>([]);
 
     useEffect(() => { fetchRoles(); }, []);
 
@@ -225,29 +227,88 @@ export default function RolesPage() {
         finally { setIsSaving(false); }
     };
 
-    const togglePermissionAction = (module: string, action: string) => {
-        setPermissions(prev => prev.map(p => {
-            if (p.module === module) {
-                const newActions = p.actions.includes(action)
-                    ? p.actions.filter((a: string) => a !== action)
-                    : [...p.actions, action];
-                return { ...p, actions: newActions };
-            }
-            return p;
-        }));
+    const syncPermission = async (permId: string, enabled: boolean, scope?: string) => {
+        if (!selectedRole) return;
+        try {
+            const res = await fetch(`/api/roles/${selectedRole.id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ permissionId: permId, enabled, scope: scope || "ALL" })
+            });
+            if (!res.ok) throw new Error("Sync failed");
+            return true;
+        } catch {
+            toast.error("Cloud sync failed");
+            return false;
+        }
     };
 
-    const updatePermissionScope = (module: string, scope: string) => {
-        setPermissions(prev => prev.map(p => p.module === module ? { ...p, scope } : p));
+    const togglePermissionAction = async (module: string, action: string) => {
+        const perm = permissions.find(p => p.module === module && p.action === action);
+        if (!perm) return;
+
+        const isEnabled = !!perm.rolePermission;
+        const newEnabled = !isEnabled;
+
+        // Optimistic update
+        setPermissions(prev => prev.map(p => 
+            p.id === perm.id 
+                ? { ...p, rolePermission: newEnabled ? { scope: "ALL" } : null } 
+                : p
+        ));
+
+        const success = await syncPermission(perm.id, newEnabled, "ALL");
+        if (!success) {
+            // Rollback
+            setPermissions(prev => prev.map(p => p.id === perm.id ? perm : p));
+        } else {
+            toast.success(`${action} ${module} updated`, { icon: <Zap className="h-3 w-3" />, duration: 1000 });
+        }
     };
 
-    const bulkUpdateAction = (action: string, enabled: boolean) => {
-        setPermissions(prev => prev.map(p => {
-            const newActions = enabled 
-                ? Array.from(new Set([...p.actions, action]))
-                : p.actions.filter((a: string) => a !== action);
-            return { ...p, actions: newActions };
-        }));
+    const updatePermissionScope = async (module: string, scope: string) => {
+        // Find all active permissions for this module
+        const modulePerms = permissions.filter(p => p.module === module && !!p.rolePermission);
+        if (modulePerms.length === 0) return;
+
+        // Optimistic update
+        const oldPerms = [...permissions];
+        setPermissions(prev => prev.map(p => 
+            (p.module === module && p.rolePermission) 
+                ? { ...p, rolePermission: { ...p.rolePermission, scope } } 
+                : p
+        ));
+
+        // Atomic updates for all enabled actions in the module
+        try {
+            await Promise.all(modulePerms.map(p => syncPermission(p.id, true, scope)));
+            toast.success(`${module} scope: ${scope}`, { icon: <Database className="h-3 w-3" />, duration: 1500 });
+        } catch {
+            setPermissions(oldPerms);
+        }
+    };
+
+    const toggleModule = (module: string) => {
+        setExpandedModules(prev => prev.includes(module) ? prev.filter(m => m !== module) : [...prev, module]);
+    };
+
+    const handleGrantAll = async (module: string, grant: boolean) => {
+        const modulePerms = permissions.filter(p => p.module === module);
+        const oldPerms = [...permissions];
+
+        // Optimistic update
+        setPermissions(prev => prev.map(p => 
+            p.module === module 
+                ? { ...p, rolePermission: grant ? { scope: "ALL" } : null } 
+                : p
+        ));
+
+        try {
+            await Promise.all(modulePerms.map(p => syncPermission(p.id, grant, "ALL")));
+            toast.success(`${grant ? 'Granted' : 'Revoked'} all ${module}`, { duration: 2000 });
+        } catch {
+            setPermissions(oldPerms);
+        }
     };
 
     const deleteRole = async () => {
@@ -263,8 +324,8 @@ export default function RolesPage() {
     const filteredRoles = roles.filter(r => r.name.toLowerCase().includes(search.toLowerCase()));
     
     const stats = useMemo(() => ({
-        modules: permissions.filter(p => p.actions.length > 0).length,
-        actions: permissions.reduce((acc, p) => acc + p.actions.length, 0),
+        modules: Array.from(new Set(permissions.filter(p => !!p.rolePermission).map(p => p.module))).length,
+        actions: permissions.filter(p => !!p.rolePermission).length,
         users: roleUsers.length
     }), [permissions, roleUsers]);
 
@@ -273,335 +334,382 @@ export default function RolesPage() {
     }
 
     return (
-        <div className="flex h-[calc(100vh-80px)] bg-slate-50/20 overflow-hidden text-slate-900 border-t border-slate-100">
-            {/* Sidebar: Role Selector (Pinned) */}
-            <div className="w-64 flex flex-col h-full border-r border-slate-100 shrink-0 bg-white">
-                <div className="p-4 pt-6">
-                    <div className="flex items-center justify-between mb-4">
-                        <p className="text-[10px] font-black uppercase tracking-tighter text-slate-400">System Roles</p>
-                        <button onClick={() => setShowCreateDialog(true)} className="text-primary hover:text-primary/70 transition-colors">
-                            <Plus className="h-4 w-4" />
-                        </button>
+        <div className="flex flex-col h-[calc(100vh-80px)] bg-slate-50/30 overflow-hidden text-slate-900">
+            {/* 1. Header Section */}
+            <div className="bg-white border-b border-slate-200/60 px-6 py-4 shrink-0 shadow-sm">
+                <div className="max-w-[1600px] mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex flex-col">
+                        <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                            <ShieldCheck className="h-6 w-6 text-primary" />
+                            Roles & Permissions
+                        </h1>
+                        <p className="text-xs text-slate-500 font-medium mt-0.5">
+                            Toggle granular feature access for each system role
+                        </p>
                     </div>
-                    <div className="relative mb-6">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300" />
-                        <Input 
-                            value={search} onChange={e => setSearch(e.target.value)}
-                            placeholder="Find..." className="pl-9 h-9 border-slate-100 rounded-lg text-xs" 
-                        />
+
+                    <div className="flex items-center gap-3">
+                        <div className="relative w-64 group">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 group-focus-within:text-primary transition-colors" />
+                            <Input 
+                                value={search} 
+                                onChange={e => setSearch(e.target.value)}
+                                placeholder="Search modules..." 
+                                className="pl-9 h-10 border-slate-200 bg-slate-50/50 rounded-xl text-xs font-medium focus-visible:ring-primary/10 transition-all" 
+                            />
+                        </div>
+                        <Button 
+                            onClick={() => setShowCreateDialog(true)} 
+                            size="sm"
+                            className="rounded-xl h-10 px-4 text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-200 transition-all border-0"
+                        >
+                            <Plus className="h-4 w-4 mr-1.5" />
+                            New Role
+                        </Button>
                     </div>
                 </div>
-
-                <ScrollArea className="flex-1 px-4">
-                    <div className="space-y-1 pb-10">
-                        {filteredRoles.map(role => {
-                            const isSelected = selectedRole?.id === role.id;
-                            const Icon = isSelected ? ShieldCheck : Shield;
-                            return (
-                                <button
-                                    key={role.id}
-                                    onClick={() => handleSelectRole(role)}
-                                    className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all text-left
-                                        ${isSelected ? "bg-slate-900 text-white shadow-md shadow-slate-300" : "hover:bg-slate-100 text-slate-600"}`}
-                                >
-                                    <Icon className={`h-4 w-4 shrink-0 ${isSelected ? "text-primary" : "text-slate-300"}`} />
-                                    <div className="min-w-0 flex-1">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-[11px] font-bold uppercase truncate tracking-wide">{role.name}</span>
-                                            {role.isSystem && <Lock className="h-2.5 w-2.5 opacity-30 shrink-0" />}
-                                        </div>
-                                    </div>
-                                </button>
-                            );
-                        })}
-                    </div>
-                </ScrollArea>
             </div>
 
-            {/* Main Panel: High Density Matrix */}
-            <div className="flex-1 min-w-0 h-full flex flex-col bg-white">
-                {selectedRole ? (
-                    <Tabs value={activeTab} onValueChange={setActiveTab} className="h-full flex flex-col bg-white rounded-2xl border border-slate-200/60 shadow-xl overflow-hidden shadow-slate-200/40">
-                        {/* Compact Context Header */}
-                        <div className="px-6 h-16 flex items-center justify-between border-b border-slate-100 shrink-0 gap-8">
-                            <div className="flex items-center gap-4 flex-1 min-w-0">
-                                <div className="h-9 w-9 bg-slate-50 flex items-center justify-center rounded-lg border border-slate-100 shrink-0">
-                                    <Key className="h-4 w-4 text-slate-400" />
+            {/* 2. Role Switch Bar */}
+            <div className="bg-white border-b border-slate-100 flex items-center px-6 py-2 shrink-0 overflow-x-auto no-scrollbar gap-1">
+                {roles.filter(r => r.name.toLowerCase().includes(search.toLowerCase())).map(role => {
+                    const isSelected = selectedRole?.id === role.id;
+                    return (
+                        <button
+                            key={role.id}
+                            onClick={() => handleSelectRole(role)}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold transition-all whitespace-nowrap
+                                ${isSelected 
+                                    ? "bg-primary text-white shadow-md shadow-primary/20 scale-105" 
+                                    : "text-slate-500 hover:bg-slate-100/80 active:scale-95"}`}
+                        >
+                            {isSelected ? <ShieldCheck className="h-3.5 w-3.5" /> : <Shield className="h-3.5 w-3.5 opacity-50" />}
+                            {role.name.toUpperCase()}
+                        </button>
+                    );
+                })}
+            </div>
+
+            <ScrollArea className="flex-1 bg-slate-50/40">
+                <div className="max-w-[1600px] mx-auto p-6 space-y-6">
+                    {selectedRole ? (
+                        <div className="space-y-6">
+                            {/* 3. Info Banner */}
+                            <div className="bg-blue-50/50 border border-blue-100 p-4 rounded-xl flex items-center gap-4 animate-in fade-in slide-in-from-top-1">
+                                <div className="h-10 w-10 bg-blue-100 rounded-lg flex items-center justify-center shrink-0">
+                                    <Info className="h-5 w-5 text-blue-600" />
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
-                                        <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest">{roleName}</h2>
-                                        <div className="flex items-center gap-4 text-[10px] font-bold text-slate-300 ml-4 border-l pl-4">
-                                            <span className="flex items-center gap-1"><Monitor className="h-3 w-3" /> {stats.modules} Mod</span>
-                                            <span className="flex items-center gap-1"><Activity className="h-3 w-3" /> {stats.actions} Prms</span>
-                                            <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {stats.users} Staff</span>
-                                        </div>
+                                <div className="flex-1">
+                                    <p className="text-xs font-bold text-blue-800">Changes are applied in real-time.</p>
+                                    <p className="text-[11px] text-blue-600/80 font-medium">Super Admins bypass all restriction protocols and retain absolute system access.</p>
+                                </div>
+                                <div className="flex items-center gap-3 shrink-0">
+                                    <div className="flex items-center gap-2 bg-white/60 border border-blue-200/50 px-3 py-1.5 rounded-lg">
+                                        <Switch 
+                                            checked={roleIsActive} 
+                                            onCheckedChange={setRoleIsActive} 
+                                            disabled={selectedRole.isSystem} 
+                                            className="scale-75 data-[state=checked]:bg-blue-600" 
+                                        />
+                                        <span className="text-[10px] font-bold text-blue-800 uppercase">{roleIsActive ? "ACTIVE" : "INACTIVE"}</span>
                                     </div>
-                                    <p className="text-[10px] text-slate-400 font-medium italic truncate">{roleDesc || "Functional permissions profile"}</p>
-                                </div>
-                            </div>
-
-                            <div className="flex items-center gap-3 shrink-0">
-                                <div className="mr-8">
-                                    <TabsList className="bg-slate-100/50 h-9 p-0.5 rounded-lg border border-slate-100">
-                                        <TabsTrigger value="permissions" className="rounded-md px-4 h-full text-[10px] font-black uppercase tracking-tight data-[state=active]:bg-white data-[state=active]:text-primary">
-                                            Matrix
-                                        </TabsTrigger>
-                                        <TabsTrigger value="users" className="rounded-md px-4 h-full text-[10px] font-black uppercase tracking-tight data-[state=active]:bg-white data-[state=active]:text-primary">
-                                            Assignment
-                                        </TabsTrigger>
-                                    </TabsList>
-                                </div>
-
-                                <div className="flex items-center gap-2 bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-lg">
-                                    <Switch checked={roleIsActive} onCheckedChange={setRoleIsActive} disabled={selectedRole.isSystem} className="scale-75" />
-                                    <span className="text-[9px] font-black text-slate-500 uppercase">{roleIsActive ? "ACTIVE" : "OFF"}</span>
-                                </div>
-
-                                <Button 
-                                    onClick={handleSave} 
-                                    disabled={isSaving}
-                                    className="h-9 px-6 rounded-lg text-[10px] font-black uppercase tracking-wider shadow-lg shadow-primary/20 bg-primary hover:bg-primary/90"
-                                >
-                                    {isSaving ? "Syncing..." : "Sync Role"}
-                                </Button>
-                                
-                                {!selectedRole.isSystem && (
-                                    <Button variant="ghost" size="icon" className="h-9 w-9 text-rose-300 hover:text-rose-500 hover:bg-rose-50" onClick={deleteRole}>
-                                        <Trash2 className="h-4 w-4" />
+                                    <Button 
+                                        onClick={handleSave} 
+                                        disabled={isSaving}
+                                        size="sm"
+                                        className="rounded-lg h-9 bg-blue-600 hover:bg-blue-700 text-white shadow-md shadow-blue-200"
+                                    >
+                                        {isSaving ? "Saving..." : "Save Changes"}
                                     </Button>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* The Matrix Body */}
-                        <div className="flex-1 overflow-hidden">
-                            <TabsContent value="permissions" className="m-0 h-full overflow-hidden flex flex-col">
-                                {/* Fixed Matrix Header */}
-                                <div className="flex items-center h-12 bg-slate-50/50 border-b border-slate-100 px-8 text-[9px] font-black text-slate-400 uppercase tracking-widest shrink-0 shadow-sm">
-                                    <div className="w-56">Functional Module</div>
-                                    <div className="flex-1 flex items-center justify-center gap-6">
-                                        {PERMISSION_ACTIONS.map(action => (
-                                            <div key={action} className="w-10 text-center flex flex-col items-center group relative cursor-help">
-                                                {(() => { const Icon = ACTION_ICON_MAP[action]; return <Icon className="h-3.5 w-3.5 mb-1 group-hover:text-primary transition-colors" />; })()}
-                                                <span className="opacity-0 group-hover:opacity-100 absolute -bottom-4 bg-slate-900 text-white px-2 py-0.5 rounded text-[8px] transition-all whitespace-nowrap z-50">{action}</span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    <div className="w-48 text-right pr-4">Matrix Scope</div>
+                                    {!selectedRole.isSystem && (
+                                        <Button 
+                                            variant="ghost" size="icon" 
+                                            className="h-9 w-9 text-rose-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg" 
+                                            onClick={deleteRole}
+                                        >
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                    )}
                                 </div>
+                            </div>
 
-                                <ScrollArea className="flex-1">
-                                    <div className="px-8 py-4 pb-20 space-y-8">
-                                        {Object.entries(MODULE_GROUPS).map(([groupName, modules]) => (
-                                            <div key={groupName} className="space-y-1">
-                                                <div className="flex items-center gap-3 mb-3 border-b border-slate-100 pb-2">
-                                                    <h3 className="text-[10px] font-black text-slate-900 uppercase tracking-[0.2em]">{groupName}</h3>
-                                                    <div className="flex-1 h-[1px] bg-slate-50" />
+                            {/* 4. Module Matrix Navigation */}
+                            <div className="grid grid-cols-1 gap-6">
+                                {PERMISSION_MODULES.filter(m => m.toLowerCase().includes(search.toLowerCase()) || search === "").map((module) => {
+                                    const modulePermissions = permissions.filter(p => p.module === module);
+                                    const enabledCount = modulePermissions.filter(p => !!p.rolePermission).length;
+                                    const totalCount = PERMISSION_ACTIONS.length;
+                                    const isAllEnabled = enabledCount === totalCount;
+                                    
+                                    // Get common scope for the module (if any)
+                                    const firstEnabled = modulePermissions.find(p => !!p.rolePermission);
+                                    const commonScope = firstEnabled?.rolePermission?.scope || "ALL";
+
+                                    const ModuleIcon = MODULE_ICON_MAP[module] || LayoutDashboard;
+                                    const isExpanded = expandedModules.includes(module);
+
+                                    return (
+                                        <div key={module} className="bg-white rounded-2xl border border-slate-200/60 shadow-sm overflow-hidden transition-all hover:shadow-md hover:border-slate-300/40">
+                                            {/* Card Header */}
+                                            <div 
+                                                className={`px-5 py-4 flex items-center justify-between cursor-pointer transition-colors
+                                                    ${isExpanded ? "bg-slate-50/80 border-b border-slate-100" : "hover:bg-slate-50/50"}`}
+                                                onClick={() => toggleModule(module)}
+                                            >
+                                                <div className="flex items-center gap-4">
+                                                    <div className={`p-2 rounded-xl transition-colors ${enabledCount > 0 ? "bg-primary/10 text-primary" : "bg-slate-100 text-slate-400"}`}>
+                                                        <ModuleIcon className="h-5 w-5" />
+                                                    </div>
+                                                    <div>
+                                                        <h3 className="text-sm font-bold text-slate-800 tracking-tight uppercase">
+                                                            {module.replace(/_/g, " ")}
+                                                        </h3>
+                                                        <p className="text-[10px] font-mono font-bold text-slate-400">{module}</p>
+                                                    </div>
                                                 </div>
-                                                
-                                                <div className="space-y-0.5">
-                                                    {modules.map((module) => {
-                                                        const perm = permissions.find(p => p.module === module) || { actions: [], scope: "OWN" };
-                                                        const ModuleIcon = MODULE_ICON_MAP[module] || LayoutDashboard;
-                                                        const isActive = perm.actions.length > 0;
 
-                                                        return (
-                                                            <motion.div 
-                                                                key={module}
-                                                                whileHover={{ x: 4 }}
-                                                                className={`flex items-center h-10 px-4 rounded-lg transition-all group
-                                                                    ${isActive ? "bg-white border border-slate-100 shadow-sm" : "bg-transparent grayscale opacity-50"}`}
-                                                            >
-                                                                <div className="w-52 shrink-0 flex items-center gap-3">
-                                                                    <div className={`h-6 w-6 rounded flex items-center justify-center border transition-colors
-                                                                        ${isActive ? "bg-primary text-white border-primary" : "bg-slate-100 text-slate-400 border-slate-200"}`}>
-                                                                        <ModuleIcon className="h-3 w-3" />
-                                                                    </div>
-                                                                    <span className="text-[10px] font-bold text-slate-700 uppercase tracking-tighter truncate">
-                                                                        {module.replace(/_/g, " ")}
-                                                                    </span>
-                                                                </div>
-
-                                                                <div className="flex-1 flex items-center justify-center gap-6">
-                                                                    {PERMISSION_ACTIONS.map(action => (
-                                                                        <button
-                                                                            key={action}
-                                                                            onClick={() => togglePermissionAction(module, action)}
-                                                                            disabled={roleName === "Super Admin"}
-                                                                            className={`w-10 h-7 rounded flex items-center justify-center transition-all border
-                                                                                ${perm.actions.includes(action)
-                                                                                    ? "bg-slate-900 border-slate-900 text-white shadow-sm ring-1 ring-slate-900"
-                                                                                    : "bg-white border-slate-100 text-slate-300 hover:border-slate-300 hover:text-slate-600"}`}
-                                                                        >
-                                                                            {perm.actions.includes(action) ? <CheckSquare className="h-4 w-4" /> : <Square className="h-4 w-4 opacity-50" />}
-                                                                        </button>
-                                                                    ))}
-                                                                </div>
-
-                                                                <div className="w-48 shrink-0 flex justify-end pr-2">
-                                                                    <Select 
-                                                                        value={perm.scope || "OWN"} 
-                                                                        onValueChange={(v) => updatePermissionScope(module, v)} 
-                                                                        disabled={roleName === "Super Admin" || !isActive}
-                                                                    >
-                                                                        <SelectTrigger className="h-7 w-36 rounded-md bg-slate-50 border-none px-3 text-[9px] font-black uppercase tracking-widest hover:bg-slate-100 transition-colors focus:ring-0">
-                                                                            <SelectValue />
-                                                                        </SelectTrigger>
-                                                                        <SelectContent className="rounded-xl border-slate-100 shadow-2xl">
-                                                                            {PERMISSION_SCOPES.map(scope => (
-                                                                                <SelectItem key={scope} value={scope} className="text-[9px] font-black uppercase py-2 cursor-pointer transition-colors hover:bg-primary/5">
-                                                                                    {scope} RECORDS
-                                                                                </SelectItem>
-                                                                            ))}
-                                                                        </SelectContent>
-                                                                    </Select>
-                                                                </div>
-                                                            </motion.div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </ScrollArea>
-                            </TabsContent>
-
-                            <TabsContent value="users" className="m-0 h-full overflow-hidden">
-                                <ScrollArea className="h-full">
-                                    <div className="p-8 pb-20">
-                                        <div className="flex items-center justify-between mb-8">
-                                            <div>
-                                                <h3 className="text-xl font-black text-slate-800 tracking-tight">Access Control List</h3>
-                                                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Staff assigned to this specific permission profile</p>
-                                            </div>
-                                            <Button onClick={handleOpenAssignDialog} className="rounded-xl h-11 px-8 font-black bg-slate-100 text-primary hover:bg-primary hover:text-white transition-all border-0 shadow-none">
-                                                <UserPlus className="h-4 w-4 mr-2" /> Add Staff Member
-                                            </Button>
-                                        </div>
-
-                                        {roleUsers.length === 0 ? (
-                                            <div className="h-64 flex flex-col items-center justify-center text-slate-200">
-                                                <Users className="h-16 w-16 mb-4 opacity-10" />
-                                                <p className="text-[10px] font-black uppercase tracking-[0.2em]">Matrix is currently isolated</p>
-                                            </div>
-                                        ) : (
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                                                {roleUsers.map(user => (
-                                                    <motion.div 
-                                                        layout
-                                                        key={user.id} 
-                                                        className="group p-4 bg-white border border-slate-100 rounded-2xl flex flex-col gap-4 hover:border-primary/20 hover:shadow-xl hover:shadow-primary/5 transition-all"
-                                                    >
-                                                        <div className="flex items-center gap-3">
-                                                            <Avatar className="h-10 w-10 rounded-xl shrink-0 border-2 border-slate-50">
-                                                                <AvatarImage src={user.imageUrl} className="object-cover" />
-                                                                <AvatarFallback className="rounded-xl bg-slate-50 text-primary font-black text-xs">{user.name?.charAt(0)}</AvatarFallback>
-                                                            </Avatar>
-                                                            <div className="min-w-0 flex-1">
-                                                                <p className="text-xs font-black text-slate-800 truncate uppercase leading-none">{user.name}</p>
-                                                                <p className="text-[9px] text-slate-400 font-bold truncate mt-1">{user.email}</p>
+                                                <div className="flex items-center gap-6" onClick={e => e.stopPropagation()}>
+                                                    <div className="flex flex-col items-end">
+                                                        <div className="flex items-center gap-2">
+                                                            <span className={`text-[10px] font-black tracking-tighter ${enabledCount > 0 ? "text-primary" : "text-slate-400"}`}>
+                                                                {enabledCount} / {totalCount} ENABLED
+                                                            </span>
+                                                            <div className="w-16 h-1 bg-slate-100 rounded-full overflow-hidden">
+                                                                <div 
+                                                                    className="h-full bg-primary transition-all duration-500" 
+                                                                    style={{ width: `${(enabledCount / totalCount) * 100}%` }}
+                                                                />
                                                             </div>
                                                         </div>
-                                                        <div className="flex items-center justify-between pt-3 border-t border-slate-50">
-                                                            <Badge variant="outline" className={`text-[8px] font-black uppercase ${user.isActive ? 'text-emerald-500 border-emerald-100' : 'text-slate-300 border-slate-100'}`}>
-                                                                {user.isActive ? 'Online' : 'Offline'}
-                                                            </Badge>
-                                                            <button 
-                                                                onClick={() => handleRemoveUser(user.id)}
-                                                                className="text-rose-200 hover:text-rose-500 transition-colors p-1"
-                                                            >
-                                                                <UserMinus className="h-3.5 w-3.5" />
-                                                            </button>
+                                                    </div>
+
+                                                    <div className="h-8 w-[1px] bg-slate-200 hidden md:block" />
+
+                                                    <div className="flex items-center gap-2 bg-slate-100/50 px-3 py-1.5 rounded-xl border border-slate-200/40">
+                                                        <Label className="text-[9px] font-black text-slate-500 uppercase cursor-pointer">Grant All</Label>
+                                                        <Switch 
+                                                            checked={isAllEnabled} 
+                                                            onCheckedChange={(v) => handleGrantAll(module, v)}
+                                                            className="scale-75"
+                                                        />
+                                                    </div>
+
+                                                    <button className="p-1 hover:bg-slate-200/50 rounded-lg transition-colors">
+                                                        {isExpanded ? <ChevronUp className="h-5 w-5 text-slate-400" /> : <ChevronDown className="h-5 w-5 text-slate-400" />}
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* Card Content - Collapsible */}
+                                            <AnimatePresence>
+                                                {isExpanded && (
+                                                    <motion.div
+                                                        initial={{ height: 0, opacity: 0 }}
+                                                        animate={{ height: "auto", opacity: 1 }}
+                                                        exit={{ height: 0, opacity: 0 }}
+                                                        transition={{ duration: 0.2, ease: "easeInOut" }}
+                                                    >
+                                                        <div className="p-6 bg-white border-t border-slate-50">
+                                                            {/* Scope Selector */}
+                                                            <div className="flex items-center justify-between mb-6 p-3 bg-slate-50/50 border border-slate-100 rounded-xl">
+                                                                <div className="flex items-center gap-2">
+                                                                    <div className="h-6 w-6 bg-white rounded flex items-center justify-center border border-slate-200 shadow-sm">
+                                                                        <Database className="h-3 w-3 text-slate-400" />
+                                                                    </div>
+                                                                    <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest">Access Scope</span>
+                                                                </div>
+                                                                <Select 
+                                                                    value={commonScope} 
+                                                                    onValueChange={(v) => updatePermissionScope(module, v)} 
+                                                                    disabled={selectedRole.isSystem && selectedRole.name === "Super Admin"}
+                                                                >
+                                                                    <SelectTrigger className="h-9 w-48 bg-white border border-slate-200 rounded-lg text-[10px] font-black uppercase tracking-widest hover:border-primary transition-all">
+                                                                        <SelectValue />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent className="rounded-xl border-slate-200 shadow-xl overflow-hidden">
+                                                                        {PERMISSION_SCOPES.map(scope => (
+                                                                            <SelectItem key={scope} value={scope} className="text-[10px] font-black uppercase py-2.5 hover:bg-slate-50 transition-colors">
+                                                                                {scope} RECORDS
+                                                                            </SelectItem>
+                                                                        ))}
+                                                                    </SelectContent>
+                                                                </Select>
+                                                            </div>
+
+                                                            {/* Permissions Grid */}
+                                                            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                                                                {PERMISSION_ACTIONS.map(action => {
+                                                                    const p = modulePermissions.find(mp => mp.action === action);
+                                                                    const isEnabled = !!p?.rolePermission;
+                                                                    const ActionIcon = ACTION_ICON_MAP[action] || Shield;
+                                                                    return (
+                                                                        <div 
+                                                                            key={action}
+                                                                            className={`p-4 rounded-2xl border transition-all flex items-center justify-between gap-4
+                                                                                ${isEnabled 
+                                                                                    ? "bg-white border-primary/20 shadow-sm shadow-primary/5" 
+                                                                                    : "bg-slate-50/50 border-slate-100 grayscale-[0.5] opacity-80"}`}
+                                                                        >
+                                                                            <div className="flex items-center gap-3">
+                                                                                <div className={`h-8 w-8 rounded-xl flex items-center justify-center transition-colors
+                                                                                    ${isEnabled ? "bg-primary/10 text-primary" : "bg-slate-200 text-slate-400"}`}>
+                                                                                    <ActionIcon className="h-4 w-4" />
+                                                                                </div>
+                                                                                <div className="flex flex-col">
+                                                                                    <span className="text-xs font-bold text-slate-800 tracking-tight">{action}</span>
+                                                                                    <span className="text-[9px] font-mono font-bold text-slate-400">{action}_{module}</span>
+                                                                                </div>
+                                                                            </div>
+                                                                            <Switch 
+                                                                                checked={isEnabled} 
+                                                                                onCheckedChange={() => togglePermissionAction(module, action)}
+                                                                                disabled={selectedRole.isSystem && selectedRole.name === "Super Admin"}
+                                                                                className="scale-90"
+                                                                            />
+                                                                        </div>
+                                                                    );
+                                                                })}
+                                                            </div>
                                                         </div>
                                                     </motion.div>
-                                                ))}
-                                            </div>
-                                        )}
-                                    </div>
-                                </ScrollArea>
-                            </TabsContent>
-                        </div>
-                    </Tabs>
-                ) : (
-                    <div className="flex-1 flex flex-col items-center justify-center bg-white space-y-6">
-                        <div className="h-16 w-16 bg-slate-50 rounded-2xl flex items-center justify-center border border-slate-100 text-slate-200 shadow-inner">
-                            <Shield className="h-8 w-8" />
-                        </div>
-                        <div className="text-center">
-                            <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Select Permission Set</h3>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Audit or modify system access rights</p>
-                        </div>
-                    </div>
-                )}
-            </div>
+                                                )}
+                                            </AnimatePresence>
+                                        </div>
+                                    );
+                                })}
+                            </div>
 
-            {/* Core Creation Dialog */}
-            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-                <DialogContent className="rounded-2xl max-w-sm p-8 flex flex-col gap-8 shadow-2xl border-0">
-                    <DialogHeader className="flex flex-col gap-2">
-                        <div className="h-12 w-12 bg-primary/10 rounded-xl flex items-center justify-center mb-2">
-                            <Plus className="h-6 w-6 text-primary" />
+                            {/* 5. Assignment Section (Only if needed) */}
+                            <div className="pt-6 border-t border-slate-200/60 text-center">
+                                <Button 
+                                    variant="outline" 
+                                    onClick={() => setActiveTab(activeTab === "permissions" ? "users" : "permissions")}
+                                    className="rounded-xl h-12 px-8 font-black border-slate-200 hover:bg-slate-50 transition-all text-[10px] uppercase tracking-widest"
+                                >
+                                    <Users className="h-4 w-4 mr-2" />
+                                    {activeTab === "permissions" ? "Manage Direct Assignments" : "Return to Matrix"}
+                                </Button>
+                            </div>
+
+                            {activeTab === "users" && (
+                                <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+                                    <div className="flex items-center justify-between mb-6">
+                                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest">Active Assignments</h3>
+                                        <Button onClick={handleOpenAssignDialog} size="sm" className="rounded-lg h-9 bg-slate-900 font-bold text-[10px] uppercase tracking-widest">
+                                            <UserPlus className="h-3.5 w-3.5 mr-1.5" /> Assign Staff
+                                        </Button>
+                                    </div>
+
+                                    {roleUsers.length === 0 ? (
+                                        <div className="bg-white border border-dashed border-slate-200 rounded-3xl p-12 flex flex-col items-center justify-center text-slate-300">
+                                            <Users className="h-16 w-16 mb-4 opacity-10" />
+                                            <p className="text-xs font-bold uppercase tracking-widest">No staff currently assigned to this role</p>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                            {roleUsers.map(user => (
+                                                <div key={user.id} className="bg-white p-4 border border-slate-200/60 rounded-2xl flex items-center justify-between hover:border-primary/20 transition-all hover:shadow-lg hover:shadow-slate-100">
+                                                    <div className="flex items-center gap-3">
+                                                        <Avatar className="h-10 w-10 border border-slate-100 shadow-sm">
+                                                            <AvatarImage src={user.imageUrl} className="object-cover" />
+                                                            <AvatarFallback className="font-bold text-xs bg-slate-50 text-slate-400">{user.name?.charAt(0)}</AvatarFallback>
+                                                        </Avatar>
+                                                        <div className="flex flex-col min-w-0">
+                                                            <span className="text-[11px] font-black text-slate-800 uppercase truncate">{user.name}</span>
+                                                            <span className="text-[9px] font-bold text-slate-400 truncate">{user.email}</span>
+                                                        </div>
+                                                    </div>
+                                                    <button 
+                                                        onClick={() => handleRemoveUser(user.id)}
+                                                        className="p-2 hover:bg-rose-50 text-rose-300 hover:text-rose-500 rounded-lg transition-all"
+                                                    >
+                                                        <UserMinus className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
-                        <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight">New Matrix</DialogTitle>
-                        <DialogDescription className="text-xs text-slate-500 font-bold uppercase tracking-widest">Define a unique functional role</DialogDescription>
+                    ) : (
+                        <div className="h-96 flex flex-col items-center justify-center text-slate-200">
+                            <ShieldAlert className="h-20 w-20 mb-4 opacity-5" />
+                            <h3 className="text-sm font-black text-slate-400 uppercase tracking-[0.2em]">Select a role to visualize matrix</h3>
+                        </div>
+                    )}
+                </div>
+            </ScrollArea>
+
+            {/* Modals & Dialogs (Original functionality) */}
+            <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
+                <DialogContent className="rounded-3xl max-w-sm p-8 shadow-2xl border-0 overflow-hidden">
+                    <div className="absolute top-0 right-0 p-8 opacity-5">
+                        <Plus className="h-24 w-24" />
+                    </div>
+                    <DialogHeader className="mb-6 relative">
+                        <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight uppercase">New Role</DialogTitle>
+                        <DialogDescription className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mt-1">
+                            Define a unique permission profile
+                        </DialogDescription>
                     </DialogHeader>
 
-                    <div className="space-y-4">
+                    <div className="space-y-5 relative">
                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Formal Label</Label>
+                            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">Role Label</Label>
                             <Input 
-                                placeholder="e.g. Finance Admin" 
-                                className="h-12 bg-slate-50 border-0 rounded-xl font-bold focus-visible:ring-primary/20"
+                                placeholder="e.g. Operation Lead" 
+                                className="h-12 bg-slate-50 border-slate-100 rounded-xl font-bold focus-visible:ring-primary/10 transition-all border-0 shadow-inner"
                                 value={newRoleData.name}
                                 onChange={e => setNewRoleData(prev => ({ ...prev, name: e.target.value }))}
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Context Description</Label>
+                            <Label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.15em]">Context Info</Label>
                             <Input 
-                                placeholder="Internal use only..." 
-                                className="h-12 bg-slate-50 border-0 rounded-xl font-bold focus-visible:ring-primary/20"
+                                placeholder="Core management tasks..." 
+                                className="h-12 bg-slate-50 border-slate-100 rounded-xl font-bold focus-visible:ring-primary/10 transition-all border-0 shadow-inner"
                                 value={newRoleData.description}
                                 onChange={e => setNewRoleData(prev => ({ ...prev, description: e.target.value }))}
                             />
                         </div>
                     </div>
 
-                    <div className="flex gap-3 pt-4 font-black">
+                    <div className="flex gap-3 mt-8 font-black">
                         <Button 
-                            variant="ghost" className="flex-1 rounded-xl h-12 text-slate-400 uppercase text-[10px]"
+                            variant="ghost" 
+                            className="flex-1 rounded-xl h-12 text-slate-400 uppercase text-[11px] tracking-widest hover:bg-slate-50"
                             onClick={() => setShowCreateDialog(false)}
-                        >Cancel</Button>
+                        >Discard</Button>
                         <Button 
-                            className="flex-1 rounded-xl h-12 bg-slate-900 hover:bg-primary shadow-xl shadow-slate-200 uppercase text-[10px] tracking-widest transition-all"
+                            className="flex-1 rounded-xl h-12 bg-slate-900 hover:bg-primary shadow-xl shadow-slate-200 uppercase text-[11px] tracking-widest transition-all"
                             onClick={handleCreateRole}
                             disabled={isSaving}
-                        >Create Set</Button>
+                        >Initialize</Button>
                     </div>
                 </DialogContent>
             </Dialog>
 
             <Dialog open={showAssignDialog} onOpenChange={setShowAssignDialog}>
-                <DialogContent className="rounded-2xl max-w-md p-0 flex flex-col h-[520px] shadow-2xl overflow-hidden border-0">
-                    <div className="p-8 bg-slate-50/50 border-b border-slate-100 flex flex-col gap-6">
+                <DialogContent className="rounded-3xl max-w-md p-0 flex flex-col h-[600px] shadow-2xl overflow-hidden border-0">
+                    <div className="p-8 bg-white border-b border-slate-100 flex flex-col gap-6">
                         <DialogHeader>
-                            <DialogTitle className="text-xl font-black text-slate-900 tracking-tight uppercase">Staff Directory</DialogTitle>
-                            <DialogDescription className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">Assign an active member to this role</DialogDescription>
+                            <DialogTitle className="text-2xl font-black text-slate-900 tracking-tight uppercase">Assign Role</DialogTitle>
+                            <DialogDescription className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Search staff roster to apply this set</DialogDescription>
                         </DialogHeader>
                         <div className="relative group">
                             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-300 group-focus-within:text-primary transition-colors" />
                             <Input
-                                placeholder="Search by name, email or ID..."
+                                placeholder="Search by name, email or staff ID..."
                                 value={userSearch}
                                 onChange={e => setUserSearch(e.target.value)}
-                                className="pl-11 h-12 border-slate-100 bg-white shadow-sm rounded-xl text-xs font-bold focus-visible:ring-primary/10 transition-all font-mono"
+                                className="pl-11 h-12 border-slate-100 bg-slate-50 shadow-inner rounded-xl text-xs font-bold focus-visible:ring-primary/10 transition-all font-mono"
                                 autoFocus
                             />
                         </div>
                     </div>
-                    <ScrollArea className="flex-1 p-6">
-                        <div className="space-y-1.5 pb-10">
+                    <ScrollArea className="flex-1 p-6 bg-slate-50/30">
+                        <div className="space-y-2 pb-10">
                             {allUsers
                                 .filter(u => !roleUsers.some(ru => ru.id === u.id))
                                 .filter(u => u.name?.toLowerCase().includes(userSearch.toLowerCase()) || u.email?.toLowerCase().includes(userSearch.toLowerCase()))
@@ -610,9 +718,9 @@ export default function RolesPage() {
                                     key={user.id} 
                                     onClick={() => handleAssignUser(user.id)}
                                     disabled={isAssigning}
-                                    className="w-full flex items-center gap-4 p-3 rounded-xl hover:bg-slate-50 transition-all text-left group border border-transparent hover:border-slate-100"
+                                    className="w-full flex items-center gap-4 p-4 rounded-2xl bg-white hover:bg-primary/5 transition-all text-left group border border-slate-100 hover:border-primary/20 shadow-sm"
                                 >
-                                    <Avatar className="h-10 w-10 rounded-xl border border-white shadow-sm shrink-0">
+                                    <Avatar className="h-11 w-11 rounded-xl border-2 border-white shadow-sm shrink-0">
                                         <AvatarImage src={user.imageUrl} className="object-cover" />
                                         <AvatarFallback className="rounded-xl bg-slate-100 text-primary font-black text-xs">{user.name?.charAt(0)}</AvatarFallback>
                                     </Avatar>
@@ -620,8 +728,8 @@ export default function RolesPage() {
                                         <p className="text-[11px] font-black text-slate-800 uppercase tracking-tighter truncate">{user.name}</p>
                                         <p className="text-[10px] font-bold text-slate-400 mt-0.5">{user.email}</p>
                                     </div>
-                                    <div className="h-8 w-8 rounded-lg bg-white border border-slate-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-sm">
-                                        <Plus className="h-4 w-4 text-primary" />
+                                    <div className="h-9 w-9 rounded-xl bg-white border border-slate-100 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all shadow-md">
+                                        <ArrowRight className="h-4 w-4 text-primary" />
                                     </div>
                                 </button>
                             ))}

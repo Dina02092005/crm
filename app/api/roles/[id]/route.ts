@@ -23,29 +23,29 @@ export const GET = withPermission('ROLES', 'VIEW', async (req, { params }) => {
             return NextResponse.json({ error: "Role not found" }, { status: 404 });
         }
 
-        // Transform RolePermission records into a grouped module-based structure for the frontend
-        const groupedPermissions: Record<string, any> = {};
-
-        role.permissions.forEach(rp => {
-            const mod = rp.permission.module;
-            if (!groupedPermissions[mod]) {
-                groupedPermissions[mod] = {
-                    module: mod,
-                    actions: [],
-                    scope: rp.scope
-                };
-            }
-            groupedPermissions[mod].actions.push(rp.permission.action);
+        // Fetch ALL system permissions to ensure we have the full matrix
+        const allPermissions = await prisma.permission.findMany({
+            orderBy: [{ module: 'asc' }, { action: 'asc' }]
         });
 
-        // Ensure all system modules are present (even with empty actions)
-        const finalPermissions = PERMISSION_MODULES.map(module => {
-            return groupedPermissions[module] || { module, actions: [], scope: "OWN" };
+        // Map system permissions and attach role-specific data if it exists
+        const permissions = allPermissions.map(p => {
+            const rolePerm = role.permissions.find(rp => rp.permissionId === p.id);
+            return {
+                id: p.id,
+                name: p.name,
+                module: p.module,
+                action: p.action,
+                rolePermission: rolePerm ? {
+                    id: rolePerm.id,
+                    scope: rolePerm.scope
+                } : null
+            };
         });
 
         return NextResponse.json({
             ...role,
-            permissions: finalPermissions
+            permissions
         });
     } catch (error) {
         console.error("Error fetching role:", error);
@@ -55,72 +55,68 @@ export const GET = withPermission('ROLES', 'VIEW', async (req, { params }) => {
 
 export const PATCH = withPermission('ROLES', 'EDIT', async (req, { params }) => {
     try {
-        const { id } = await params;
+        const { id: roleId } = await params;
         const body = await req.json();
-        const { name, description, isActive, permissions } = body;
 
-        const role = await prisma.userRole.findUnique({ where: { id } });
-        if (!role) {
-            return NextResponse.json({ error: "Role not found" }, { status: 404 });
+        // 1. Check if we're updating a single permission (Atomic Update)
+        if (body.permissionId) {
+            const { permissionId, scope, enabled } = body;
+
+            if (enabled === false) {
+                // Delete the RolePermission if it exists
+                await prisma.rolePermission.deleteMany({
+                    where: { roleId, permissionId }
+                });
+                return NextResponse.json({ success: true, action: 'removed' });
+            } else {
+                // Upsert the RolePermission
+                const rp = await prisma.rolePermission.upsert({
+                    where: {
+                        roleId_permissionId: { roleId, permissionId }
+                    },
+                    update: { scope: scope || "ALL" },
+                    create: { roleId, permissionId, scope: scope || "ALL" }
+                });
+                return NextResponse.json({ success: true, action: 'synced', data: rp });
+            }
         }
 
-        // Update role and its permissions
+        // 2. Fallback to existing Full Sync logic if permissions array is provided
+        const { name, description, isActive, permissions } = body;
+
+        const role = await prisma.userRole.findUnique({ where: { id: roleId } });
+        if (!role) return NextResponse.json({ error: "Role not found" }, { status: 404 });
+
         const updatedRole = await prisma.$transaction(async (tx) => {
-            // 1. Update basic info
+            // Update role basic info
             await tx.userRole.update({
-                where: { id },
-                data: {
-                    name,
-                    description,
-                    isActive
-                }
+                where: { id: roleId },
+                data: { name, description, isActive }
             });
 
-            // 2. If permissions are provided, sync them
+            // If permissions is a list of granular permissions
             if (permissions && Array.isArray(permissions)) {
-                // First, delete old permissions for this role
-                await tx.rolePermission.deleteMany({
-                    where: { roleId: id }
-                });
+                await tx.rolePermission.deleteMany({ where: { roleId } });
 
-                // Fetch all existing permissions to match them in-memory
-                const allSystemPermissions = await tx.permission.findMany();
-                const permissionsDataToInsert: any[] = [];
-
-                // Match and prepare
+                const insertData: any[] = [];
                 for (const p of permissions) {
-                    if (!p.actions || p.actions.length === 0) continue;
-
-                    for (const action of p.actions) {
-                        const permRecord = allSystemPermissions.find(
-                            sp => sp.module === p.module && sp.action === action
-                        );
-
-                        if (permRecord) {
-                            permissionsDataToInsert.push({
-                                roleId: id,
-                                permissionId: permRecord.id,
-                                scope: p.scope || "OWN"
-                            });
-                        }
+                    if (p.rolePermission) {
+                        insertData.push({
+                            roleId,
+                            permissionId: p.id,
+                            scope: p.rolePermission.scope || "ALL"
+                        });
                     }
                 }
 
-                // Bulk insert
-                if (permissionsDataToInsert.length > 0) {
-                    await tx.rolePermission.createMany({
-                        data: permissionsDataToInsert
-                    });
+                if (insertData.length > 0) {
+                    await tx.rolePermission.createMany({ data: insertData });
                 }
             }
 
             return tx.userRole.findUnique({
-                where: { id },
-                include: {
-                    permissions: {
-                        include: { permission: true }
-                    }
-                }
+                where: { id: roleId },
+                include: { permissions: { include: { permission: true } } }
             });
         });
 

@@ -37,7 +37,6 @@ import {
     Plus,
     StickyNote,
     Phone,
-    Mail,
     Undo2,
     Plane,
     CheckSquare,

@@ -69,10 +69,28 @@ export const GET = withPermission('STUDENTS', 'VIEW', async (req, { permission }
             where.status = status;
         }
 
+        const agentId = searchParams.get("agentId");
+        const counselorId = searchParams.get("counselorId");
+        if (agentId && agentId !== 'ALL') where.agentId = agentId;
+        if (counselorId && counselorId !== 'ALL') where.counselorId = counselorId;
+
+        // Country and Intake from applications
+        const filterCountryId = searchParams.get("countryId");
+        const filterIntake = searchParams.get("appIntake"); // named differently to avoid clash with student intake
+
+        if (filterCountryId || filterIntake) {
+            where.applications = {
+                some: {
+                    ...(filterCountryId && filterCountryId !== 'ALL' && { countryId: filterCountryId }),
+                    ...(filterIntake && filterIntake !== 'ALL' && { intake: { contains: filterIntake, mode: 'insensitive' } })
+                }
+            };
+        }
+
         if (interestedCountry || intake) {
             where.lead = {
-                ...(interestedCountry && { interestedCountry: { contains: interestedCountry, mode: 'insensitive' } }),
-                ...(intake && { intake: { contains: intake, mode: 'insensitive' } })
+                ...(interestedCountry && interestedCountry !== 'ALL' && { interestedCountry: { contains: interestedCountry, mode: 'insensitive' } }),
+                ...(intake && intake !== 'ALL' && { intake: { contains: intake, mode: 'insensitive' } })
             };
         }
 

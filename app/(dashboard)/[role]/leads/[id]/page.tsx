@@ -11,7 +11,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
     Phone,
-    Mail,
     Calendar as CalendarIcon,
     MapPin,
     User,
@@ -670,13 +669,6 @@ export default function LeadDetailPage() {
                                     </Button>
                                     <Button
                                         variant="outline"
-                                        className="rounded-xl border-emerald-500/20 text-emerald-600 h-10 gap-2 hover:bg-emerald-500/10 bg-card flex-1 font-bold text-xs"
-                                        onClick={() => handleLogActivity('WHATSAPP', 'Sent WhatsApp message', true)}
-                                    >
-                                        <MessageSquare className="h-4 w-4" /> WhatsApp
-                                    </Button>
-                                    <Button
-                                        variant="outline"
                                         className="rounded-xl border-blue-500/20 text-blue-600 h-10 gap-2 hover:bg-blue-500/10 bg-card flex-1 font-bold text-xs"
                                         onClick={() => setShowProposalDialog(true)}
                                     >
@@ -896,8 +888,6 @@ export default function LeadDetailPage() {
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="CALL">Call</SelectItem>
-                                            <SelectItem value="WHATSAPP">WhatsApp</SelectItem>
-                                            <SelectItem value="EMAIL">Email</SelectItem>
                                             <SelectItem value="VISIT">In-Person Visit</SelectItem>
                                         </SelectContent>
                                     </Select>
@@ -940,13 +930,9 @@ export default function LeadDetailPage() {
                                 followUps.map((fu: any) => (
                                     <div key={fu.id} className="p-4 rounded-3xl border border-border bg-card hover:bg-muted/50 transition-colors flex items-start gap-4">
                                         <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${fu.type === 'CALL' ? 'bg-emerald-500/10 text-emerald-500' :
-                                            fu.type === 'WHATSAPP' ? 'bg-green-500/10 text-green-500' :
-                                                fu.type === 'EMAIL' ? 'bg-blue-500/10 text-blue-500' :
                                                     'bg-purple-500/10 text-purple-500'
                                             }`}>
                                             {fu.type === 'CALL' && <Phone className="h-5 w-5" />}
-                                            {fu.type === 'WHATSAPP' && <MessageSquare className="h-5 w-5" />}
-                                            {fu.type === 'EMAIL' && <Mail className="h-5 w-5" />}
                                             {fu.type === 'VISIT' && <MapPin className="h-5 w-5" />}
                                         </div>
                                         <div className="flex-1">
@@ -1560,16 +1546,12 @@ export default function LeadDetailPage() {
                                         .map((act: any, idx: number) => (
                                             <div key={idx} className="flex items-start gap-4 p-4 rounded-3xl border border-border bg-card hover:bg-muted/50 transition-colors group">
                                                 <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${act.type === 'CALL' ? 'bg-emerald-500/10 text-emerald-500' :
-                                                    act.type === 'WHATSAPP' ? 'bg-green-500/10 text-green-500' :
-                                                        act.type === 'EMAIL' ? 'bg-blue-500/10 text-blue-500' :
-                                                            act.type === 'NOTE' ? 'bg-purple-500/10 text-purple-500' :
-                                                                'bg-muted text-muted-foreground'
+                                                    act.type === 'NOTE' ? 'bg-purple-500/10 text-purple-500' :
+                                                        'bg-muted text-muted-foreground'
                                                     }`}>
                                                     {act.type === 'CALL' && <Phone className="h-5 w-5" />}
-                                                    {act.type === 'WHATSAPP' && <MessageSquare className="h-5 w-5" />}
-                                                    {act.type === 'EMAIL' && <Mail className="h-5 w-5" />}
                                                     {act.type === 'NOTE' && <MessageSquare className="h-5 w-5" />}
-                                                    {!['CALL', 'WHATSAPP', 'EMAIL', 'NOTE'].includes(act.type) && <History className="h-5 w-5" />}
+                                                    {!['CALL', 'NOTE'].includes(act.type) && <History className="h-5 w-5" />}
                                                 </div>
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-2 mb-1">

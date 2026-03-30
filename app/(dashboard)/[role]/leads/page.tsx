@@ -14,27 +14,17 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { 
-    Search, 
-    Plus, 
-    FileSpreadsheet, 
-    Mail, 
+import {
+    Search,
     Trash2, 
     UserPlus, 
-    MessageCircle, 
-    FilterX,
-    TrendingUp,
-    ChevronDown,
-    MapPin,
-    Calendar,
-    Users
+    Plus,
+    FileSpreadsheet,
+    TrendingUp
 } from "lucide-react";
 import { toast } from "sonner";
 import { LeadsTable } from "@/components/dashboard/LeadsTable";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
-import { AssignApplicationsModal } from "@/components/applications/AssignApplicationsModal";
-import { EmailComposeModal } from "@/components/applications/EmailComposeModal";
-import { WhatsappMessageModal } from "@/components/applications/WhatsappMessageModal";
 import { useLeads, useLeadStats } from "@/hooks/use-leads";
 import { useDebounce } from "@/hooks/use-debounce";
 import { useRolePath } from "@/hooks/use-role-path";
@@ -42,8 +32,12 @@ import { useCountries, useCounselors } from "@/hooks/use-masters";
 import { Badge } from "@/components/ui/badge";
 import { BulkUploadLeadsButton } from "@/components/dashboard/BulkUploadLeadsButton";
 import { StatusTabs, StatusTab } from "@/components/dashboard/StatusTabs";
+import { AssignApplicationsModal } from "@/components/applications/AssignApplicationsModal";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { STATUS_CONFIG } from "@/lib/status-config";
+import { LeadStatus, LeadTemperature } from "@/lib/enums";
+import { DataTableFilters, FilterConfig } from "@/components/dashboard/DataTableFilters";
 
 export default function LeadsPage() {
     const router = useRouter();
@@ -56,18 +50,18 @@ export default function LeadsPage() {
     const [onboardedBy, setOnboardedBy] = useState("ALL");
     const [interestedCountry, setInterestedCountry] = useState("ALL");
     const [intake, setIntake] = useState("ALL");
+    const [source, setSource] = useState("ALL");
+    const [temperature, setTemperature] = useState("ALL");
+    const [applyLevel, setApplyLevel] = useState("ALL");
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
 
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [deleteId, setDeleteId] = useState<string | null>(null);
     const [showAssignModal, setShowAssignModal] = useState(false);
-    const [showEmailModal, setShowEmailModal] = useState(false);
-    const [showWhatsappModal, setShowWhatsappModal] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     const [isBulkDeleting, setIsBulkDeleting] = useState(false);
     const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
-    const [deleteId, setDeleteId] = useState<string | null>(null);
-    const [showFilters, setShowFilters] = useState(false);
 
     const debouncedSearch = useDebounce(search, 500);
 
@@ -78,7 +72,10 @@ export default function LeadsPage() {
         status: status === "ALL" ? "" : status,
         assignedTo: onboardedBy === "ALL" ? "" : onboardedBy,
         interestedCountry: interestedCountry === "ALL" ? "" : interestedCountry,
-        intake: intake === "ALL" ? "" : intake
+        intake: intake === "ALL" ? "" : intake,
+        source: source === "ALL" ? "" : source,
+        temperature: temperature === "ALL" ? "" : temperature,
+        applyLevel: applyLevel === "ALL" ? "" : applyLevel
     });
 
     const { data: stats } = useLeadStats();
@@ -100,103 +97,44 @@ export default function LeadsPage() {
     };
 
     const leadStatusTabs: StatusTab[] = [
-        { 
-            id: "ALL", 
+        "ALL",
+        ...Object.values(LeadStatus)
+    ].map((key) => {
+        const config = STATUS_CONFIG[key] || { 
+            label: key.replace(/_/g, ' '), 
+            color: "text-slate-600", 
+            bg: "bg-slate-600/10" 
+        };
+        return {
+            id: key,
             label: (
                 <div className="flex items-center gap-2">
-                    All
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-primary/10 text-primary border-none">
-                        {counts.ALL}
+                    {config.label}
+                    <Badge 
+                        variant="secondary" 
+                        className={cn(
+                            "h-4 px-1 text-[10px] font-bold border-none", 
+                            config.bg, 
+                            config.color
+                        )}
+                    >
+                        {counts[key] || 0}
                     </Badge>
                 </div>
-            ), 
-            color: "text-primary", 
-            bg: "bg-primary/10" 
-        },
-        { 
-            id: "NEW", 
-            label: (
-                <div className="flex items-center gap-2">
-                    New
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-blue-100 text-blue-700 border-none">
-                        {counts.NEW}
-                    </Badge>
-                </div>
-            ), 
-            color: "text-blue-600", 
-            bg: "bg-blue-600/10" 
-        },
-        { 
-            id: "CONTACTED", 
-            label: (
-                <div className="flex items-center gap-2">
-                    Contacted
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-amber-100 text-amber-700 border-none">
-                        {counts.CONTACTED}
-                    </Badge>
-                </div>
-            ), 
-            color: "text-amber-600", 
-            bg: "bg-amber-600/10" 
-        },
-        { 
-            id: "INTERESTED", 
-            label: (
-                <div className="flex items-center gap-2">
-                    Qualified
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-emerald-100 text-emerald-700 border-none">
-                        {counts.INTERESTED}
-                    </Badge>
-                </div>
-            ), 
-            color: "text-emerald-600", 
-            bg: "bg-emerald-600/10" 
-        },
-        { 
-            id: "NOT_INTERESTED", 
-            label: (
-                <div className="flex items-center gap-2">
-                    Lost
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-rose-100 text-rose-700 border-none">
-                        {counts.NOT_INTERESTED}
-                    </Badge>
-                </div>
-            ), 
-            color: "text-rose-600", 
-            bg: "bg-rose-600/10" 
-        },
-    ];
+            ),
+            color: config.color,
+            bg: config.bg
+        };
+    });
 
     // Reset page on search/filter changes
     useEffect(() => {
         setPage(1);
-    }, [debouncedSearch, status, onboardedBy, interestedCountry, intake]);
+    }, [debouncedSearch, status, onboardedBy, interestedCountry, intake, source, temperature, applyLevel]);
 
     const leads = data?.leads || [];
     const totalLeads = data?.pagination?.total || 0;
     const totalPages = data?.pagination?.totalPages || 1;
-
-    const handleExportExcel = async () => {
-        try {
-            setIsExporting(true);
-            const response = await axios.get('/api/leads/export', {
-                params: { search: debouncedSearch, status: status === "ALL" ? "" : status },
-                responseType: 'blob'
-            });
-            const url = window.URL.createObjectURL(new Blob([response.data]));
-            const link = document.createElement('a');
-            link.href = url;
-            link.setAttribute('download', `leads_export_${new Date().toISOString()}.xlsx`);
-            document.body.appendChild(link);
-            link.click();
-            link.remove();
-            toast.success("Excel exported successfully");
-        } catch (error) {
-            toast.error("Failed to export Excel");
-        } finally {
-            setIsExporting(false);
-        }
-    };
 
     const handleBulkDelete = async () => {
         try {
@@ -211,10 +149,6 @@ export default function LeadsPage() {
             setIsBulkDeleting(false);
             setShowBulkDeleteConfirm(false);
         }
-    };
-
-    const handleDeleteLead = (id: string) => {
-        setDeleteId(id);
     };
 
     const confirmDelete = async () => {
@@ -248,47 +182,12 @@ export default function LeadsPage() {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={handleExportExcel}
-                        disabled={isExporting}
-                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold"
-                    >
-                        <FileSpreadsheet className="h-4 w-4 text-emerald-600" />
-                        {isExporting ? "Exporting..." : "Excel"}
-                    </Button>
-
-                    <div className="h-6 w-px bg-slate-200 mx-1 hidden sm:block" />
-
-                    <Button
-                        variant="outline"
-                        size="sm"
                         onClick={() => setShowAssignModal(true)}
                         disabled={selectedIds.length === 0}
                         className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold disabled:opacity-50"
                     >
                         <UserPlus className="h-4 w-4 text-blue-600" />
                         Assign
-                    </Button>
-
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowEmailModal(true)}
-                        disabled={selectedIds.length === 0}
-                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold disabled:opacity-50"
-                    >
-                        <Mail className="h-4 w-4 text-amber-600" />
-                        Email
-                    </Button>
-
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowWhatsappModal(true)}
-                        disabled={selectedIds.length === 0}
-                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold disabled:opacity-50"
-                    >
-                        <MessageCircle className="h-4 w-4 text-green-600" />
-                        Whatsapp
                     </Button>
 
                     <Button
@@ -306,20 +205,99 @@ export default function LeadsPage() {
 
             <Card className="border-0 dark:border dark:border-white/5 rounded-3xl overflow-hidden bg-white dark:bg-transparent shadow-sm dark:shadow-none">
                 <CardContent className="p-4">
-                    {/* Integrated Search Row */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-                        <div className="relative max-w-sm w-full">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground/40" />
-                            <Input
-                                placeholder="Search leads..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="pl-9 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-9 text-[13px] placeholder:text-muted-foreground/40 font-sans w-full"
+                    <DataTableFilters
+                        onSearch={setSearch}
+                        searchValue={search}
+                        onClear={() => {
+                            setSearch("");
+                            setStatus("ALL");
+                            setOnboardedBy("ALL");
+                            setInterestedCountry("ALL");
+                            setIntake("ALL");
+                            setSource("ALL");
+                            setTemperature("ALL");
+                            setApplyLevel("ALL");
+                        }}
+                        filters={[
+                            {
+                                key: "source",
+                                label: "Source",
+                                type: "select",
+                                options: [
+                                    { label: "Direct", value: "Direct" },
+                                    { label: "Facebook", value: "Facebook" },
+                                    { label: "Instagram", value: "Instagram" },
+                                    { label: "Google", value: "Google" },
+                                    { label: "Referral", value: "Referral" },
+                                    { label: "Walk-in", value: "Walk-in" },
+                                    { label: "Other", value: "Other" }
+                                ]
+                            },
+                            {
+                                key: "interestedCountry",
+                                label: "Country",
+                                type: "select",
+                                options: countries?.countries?.map((c: any) => ({ label: c.name, value: c.name })) || []
+                            },
+                            {
+                                key: "intake",
+                                label: "Intake",
+                                type: "select",
+                                options: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map(m => ({ label: `${m} 2024/25`, value: m }))
+                            },
+                            {
+                                key: "applyLevel",
+                                label: "Apply Level",
+                                type: "select",
+                                options: [
+                                    { label: "UG", value: "UG" },
+                                    { label: "PG", value: "PG" },
+                                    { label: "Diploma", value: "Diploma" },
+                                    { label: "PhD", value: "PhD" }
+                                ]
+                            },
+                            {
+                                key: "temperature",
+                                label: "Temperature",
+                                type: "select",
+                                options: Object.values(LeadTemperature).map(t => ({ label: t, value: t }))
+                            },
+                            {
+                                key: "onboardedBy",
+                                label: "Assigned To",
+                                type: "select",
+                                options: counselors?.map((c: any) => ({ label: c.name, value: c.id })) || []
+                            }
+                        ]}
+                        values={{
+                            source,
+                            interestedCountry,
+                            intake,
+                            applyLevel,
+                            temperature,
+                            onboardedBy
+                        }}
+                        onFilterChange={(key, value) => {
+                            if (key === "source") setSource(value);
+                            if (key === "interestedCountry") setInterestedCountry(value);
+                            if (key === "intake") setIntake(value);
+                            if (key === "applyLevel") setApplyLevel(value);
+                            if (key === "temperature") setTemperature(value);
+                            if (key === "onboardedBy") setOnboardedBy(value);
+                        }}
+                    />
+
+                    <div className="flex items-center justify-between gap-4 mb-4">
+                        <div className="flex items-center gap-3">
+                            <StatusTabs 
+                                tabs={leadStatusTabs} 
+                                activeTab={status} 
+                                onTabChange={setStatus} 
                             />
                         </div>
 
                         <div className="flex items-center gap-3">
-                        {["ADMIN", "SUPER_ADMIN", "AGENT", "COUNSELOR"].includes(role) && <BulkUploadLeadsButton onSuccess={refetch} />}
+                            {["ADMIN", "SUPER_ADMIN", "AGENT", "COUNSELOR"].includes(role) && <BulkUploadLeadsButton onSuccess={refetch} />}
                              <Link href={prefixPath("/leads/new")}>
                                 <Button className="h-9 px-4 gap-2 font-bold text-[12px] rounded-xl shadow-md">
                                     <Plus className="h-4 w-4" /> Add Lead
@@ -328,95 +306,6 @@ export default function LeadsPage() {
                         </div>
                     </div>
 
-                    {/* Advanced Filters Toggle */}
-                    <div className="mb-4">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShowFilters(!showFilters)}
-                            className="h-8 text-[11px] font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground p-0 gap-2"
-                        >
-                            <ChevronDown className={cn("h-4 w-4 transition-transform", showFilters && "rotate-180")} />
-                            {showFilters ? "Hide Advanced Filters" : "Show Advanced Filters"}
-                        </Button>
-                    </div>
-
-                    <StatusTabs 
-                        tabs={leadStatusTabs} 
-                        activeTab={status} 
-                        onTabChange={setStatus} 
-                    />
-
-                    {/* Advanced Filters Panel */}
-                    <div className={cn(
-                        "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-6 transition-all duration-300",
-                        showFilters ? "opacity-100 max-h-[500px]" : "opacity-0 max-h-0 overflow-hidden mb-0"
-                    )}>
-                        {/* Status label removed since we have tabs now, but if there are other status options it could stay as a label/spacer */}
-                        
-                        <div className="space-y-1.5">
-                             <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 ml-1">Assigned To</label>
-                            <Select value={onboardedBy} onValueChange={setOnboardedBy}>
-                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 dark:bg-transparent border-0 dark:border dark:border-white/10 shadow-sm focus:ring-0">
-                                    <SelectValue placeholder="Onboarded By" />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl border-border dark:bg-slate-900">
-                                    <SelectItem value="ALL">All Staff</SelectItem>
-                                    {counselors?.map((c: any) => (
-                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="space-y-1.5">
-                             <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 ml-1">Destination</label>
-                            <Select value={interestedCountry} onValueChange={setInterestedCountry}>
-                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 dark:bg-transparent border-0 dark:border dark:border-white/10 shadow-sm focus:ring-0">
-                                    <SelectValue placeholder="Lead Country" />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl border-border dark:bg-slate-900">
-                                    <SelectItem value="ALL">All Countries</SelectItem>
-                                    {countries?.countries?.map((c: any) => (
-                                        <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        <div className="space-y-1.5">
-                             <label className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 ml-1">Target Intake</label>
-                            <Select value={intake} onValueChange={setIntake}>
-                                <SelectTrigger className="h-9 text-[12px] rounded-xl bg-muted/50 dark:bg-transparent border-0 dark:border dark:border-white/10 shadow-sm focus:ring-0">
-                                    <SelectValue placeholder="Intake" />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-xl border-border dark:bg-slate-900">
-                                    <SelectItem value="ALL">All Intakes</SelectItem>
-                                    {["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map(m => (
-                                        <SelectItem key={m} value={m}>{m} 2024/25</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-
-                        {(status !== "ALL" || onboardedBy !== "ALL" || interestedCountry !== "ALL" || intake !== "ALL") && (
-                            <div className="col-span-full pt-1">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => {
-                                        setStatus("ALL");
-                                        setOnboardedBy("ALL");
-                                        setInterestedCountry("ALL");
-                                        setIntake("ALL");
-                                    }}
-                                    className="h-8 text-[11px] text-muted-foreground hover:text-destructive gap-1 px-2"
-                                >
-                                    <FilterX className="h-3.5 w-3.5" /> Clear All Filters
-                                </Button>
-                            </div>
-                        )}
-                    </div>
 
                     {isLoading && page === 1 ? (
                         <div className="space-y-4 p-4">
@@ -457,24 +346,6 @@ export default function LeadsPage() {
                 apiEndpoint="/api/leads/bulk-assign"
                 title="Leads"
                 moduleName="leads"
-            />
-
-            <EmailComposeModal
-                isOpen={showEmailModal}
-                onClose={() => setShowEmailModal(false)}
-                selectedEmails={leads.filter((s: any) => selectedIds.includes(s.id)).map((s: any) => s.email).filter(Boolean)}
-                apiEndpoint="/api/applications/email" 
-            />
-
-            <WhatsappMessageModal
-                isOpen={showWhatsappModal}
-                onClose={() => setShowWhatsappModal(false)}
-                selectedLeads={leads.filter((s: any) => selectedIds.includes(s.id)).map((s: any) => ({
-                    id: s.id,
-                    name: s.name,
-                    phone: s.phone || ""
-                }))}
-                apiEndpoint="/api/applications/whatsapp"
             />
 
             <ConfirmDialog

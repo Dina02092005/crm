@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { withPermission } from '@/lib/permissions';
-import { ApplicationStatus } from '@prisma/client';
+import { ApplicationStatus } from '@/lib/enums';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,22 +56,20 @@ export const GET = withPermission('APPLICATIONS', 'VIEW', async (req, { permissi
             },
         });
 
+        const statusValues = Object.values(ApplicationStatus);
         const counts: Record<string, number> = {
             ALL: 0,
-            PENDING: 0,
-            FINALIZED: 0,
-            READY_FOR_VISA: 0,
-            DEFERRED: 0,
-            ENROLLED: 0,
-            REJECTED: 0,
         };
+
+        // Initialize all status counts to 0
+        statusValues.forEach(status => {
+            counts[status] = 0;
+        });
 
         let total = 0;
         stats.forEach((group) => {
             const count = group._count.status;
-            if (counts[group.status] !== undefined) {
-                counts[group.status] = count;
-            }
+            counts[group.status] = count;
             total += count;
         });
         counts.ALL = total;

@@ -37,6 +37,7 @@ import {
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
+    DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { AssignLeadSheet } from "./AssignLeadSheet";
@@ -50,7 +51,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { LeadForm } from "./LeadForm";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { useUpdateLead, useDeleteLead, useBulkDeleteLeads } from "@/hooks/use-leads";
-import type { Lead as PrismaLead } from '@/lib/prisma';
+import type { Lead as PrismaLead } from '@prisma/client';
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 

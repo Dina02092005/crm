@@ -17,7 +17,6 @@ import {
     Pencil, 
     Trash2, 
     Phone, 
-    Mail, 
     Calendar, 
     ChevronLeft, 
     ChevronRight, 
@@ -234,10 +233,6 @@ export function StudentsTable({
                                     <div className="flex items-center gap-2 text-[11px] font-bold text-foreground/70 dark:text-slate-300">
                                         <Phone className="h-3 w-3 text-slate-400" />
                                         {student.phone}
-                                    </div>
-                                    <div className="flex items-center gap-2 text-[11px] font-medium text-muted-foreground">
-                                        <Mail className="h-3 w-3 text-slate-400" />
-                                        {student.email || "No email"}
                                     </div>
                                 </div>
                             </TableCell>

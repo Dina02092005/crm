@@ -3,7 +3,7 @@
 import { useState, useEffect, use, Suspense } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { 
+import {
     Search, 
     Plane, 
     Filter, 
@@ -11,13 +11,14 @@ import {
     FileSpreadsheet, 
     Trash2, 
     UserPlus, 
-    Mail, 
-    MessageCircle,
-    Globe
+    Globe,
+    Plus
 } from "lucide-react";
 import { toast } from "sonner";
 import { VisaApplicationsTable } from "@/components/dashboard/VisaApplicationsTable";
 import { useVisaApplications, useVisaStats, useDeleteVisaApplication } from "@/hooks/useApi";
+import { useCountries, useCounselors } from "@/hooks/use-masters";
+import { DataTableFilters, FilterConfig } from "@/components/dashboard/DataTableFilters";
 import { useDebounce } from "@/hooks/use-debounce";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -29,14 +30,20 @@ import { StudentVisaView } from "@/components/visa/StudentVisaView";
 import { EditVisaCaseModal } from "@/components/visa/EditVisaCaseModal";
 import axios from "axios";
 import { AssignApplicationsModal } from "@/components/applications/AssignApplicationsModal";
-import { EmailComposeModal } from "@/components/applications/EmailComposeModal";
-import { WhatsappMessageModal } from "@/components/applications/WhatsappMessageModal";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { StatusTabs, StatusTab } from "@/components/dashboard/StatusTabs";
+import { STATUS_CONFIG } from "@/lib/status-config";
+import { VisaStatus } from "@/lib/enums";
+import { cn } from "@/lib/utils";
 
 function VisaApplicationsPageContent({ role }: { role: string }) {
     const [search, setSearch] = useState("");
     const [status, setStatus] = useState("ALL");
+    const [countryId, setCountryId] = useState("ALL");
+    const [visaType, setVisaType] = useState("ALL");
+    const [intake, setIntake] = useState("ALL");
+    const [agentId, setAgentId] = useState("ALL");
+    const [counselorId, setCounselorId] = useState("ALL");
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(10);
     const debouncedSearch = useDebounce(search, 500);
@@ -45,8 +52,6 @@ function VisaApplicationsPageContent({ role }: { role: string }) {
     
     // Bulk action states
     const [showAssignModal, setShowAssignModal] = useState(false);
-    const [showEmailModal, setShowEmailModal] = useState(false);
-    const [showWhatsappModal, setShowWhatsappModal] = useState(false);
     const [isExporting, setIsExporting] = useState(false);
     const [isBulkDeleting, setIsBulkDeleting] = useState(false);
     const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
@@ -58,7 +63,21 @@ function VisaApplicationsPageContent({ role }: { role: string }) {
     const [commentsApp, setCommentsApp] = useState<any>(null);
     const [editVisaApp, setEditVisaApp] = useState<any>(null);
 
-    const { data, isLoading, refetch } = useVisaApplications(role === "student" ? "STUDENT" : undefined, page, limit, debouncedSearch, status);
+    const { data: countries } = useCountries();
+    const { data: counselors } = useCounselors();
+
+    const { data, isLoading, refetch } = useVisaApplications(
+        role === "student" ? "STUDENT" : undefined,
+        page,
+        limit,
+        debouncedSearch,
+        status,
+        countryId === "ALL" ? "" : countryId,
+        visaType === "ALL" ? "" : visaType,
+        intake === "ALL" ? "" : intake,
+        agentId === "ALL" ? "" : agentId,
+        counselorId === "ALL" ? "" : counselorId
+    );
     const deleteMutation = useDeleteVisaApplication();
 
     const visaApplications = (data?.visaApplications || []) as any[];
@@ -68,129 +87,40 @@ function VisaApplicationsPageContent({ role }: { role: string }) {
     const counts = stats || { ALL: 0, PENDING: 0, VISA_APPLICATION_SUBMITTED: 0, VISA_APPLICATION_IN_PROGRESS: 0, VISA_APPROVED: 0, VISA_REJECTED: 0, VISA_REFUSED: 0, DEFERRED: 0, ENROLLED: 0 };
 
     const visaStatusTabs: StatusTab[] = [
-        { 
-            id: "ALL", 
+        "ALL",
+        ...Object.values(VisaStatus)
+    ].map((key) => {
+        const config = STATUS_CONFIG[key] || { 
+            label: key.replace(/_/g, ' '), 
+            color: "text-slate-600", 
+            bg: "bg-slate-600/10" 
+        };
+        return {
+            id: key,
             label: (
                 <div className="flex items-center gap-2">
-                    All
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-primary/10 text-primary border-none">
-                        {counts.ALL}
+                    {config.label}
+                    <Badge 
+                        variant="secondary" 
+                        className={cn(
+                            "h-4 px-1 text-[10px] font-bold border-none", 
+                            config.bg, 
+                            config.color
+                        )}
+                    >
+                        {counts[key] || 0}
                     </Badge>
                 </div>
-            ), 
-            color: "text-primary", 
-            bg: "bg-primary/10" 
-        },
-        { 
-            id: "PENDING", 
-            label: (
-                <div className="flex items-center gap-2">
-                    Pending
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-amber-100 text-amber-700 border-none">
-                        {counts.PENDING}
-                    </Badge>
-                </div>
-            ), 
-            color: "text-amber-600", 
-            bg: "bg-amber-600/10" 
-        },
-        { 
-            id: "VISA_APPLICATION_SUBMITTED", 
-            label: (
-                <div className="flex items-center gap-2">
-                    Submitted
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-blue-100 text-blue-700 border-none">
-                        {counts.VISA_APPLICATION_SUBMITTED}
-                    </Badge>
-                </div>
-            ), 
-            color: "text-blue-600", 
-            bg: "bg-blue-600/10" 
-        },
-        { 
-            id: "VISA_APPLICATION_IN_PROGRESS", 
-            label: (
-                <div className="flex items-center gap-2">
-                    In Process
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-indigo-100 text-indigo-700 border-none">
-                        {counts.VISA_APPLICATION_IN_PROGRESS}
-                    </Badge>
-                </div>
-            ), 
-            color: "text-indigo-600", 
-            bg: "bg-indigo-600/10" 
-        },
-        { 
-            id: "VISA_APPROVED", 
-            label: (
-                <div className="flex items-center gap-2">
-                    Approved
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-emerald-100 text-emerald-700 border-none">
-                        {counts.VISA_APPROVED}
-                    </Badge>
-                </div>
-            ), 
-            color: "text-emerald-600", 
-            bg: "bg-emerald-600/10" 
-        },
-        { 
-            id: "VISA_REJECTED", 
-            label: (
-                <div className="flex items-center gap-2">
-                    Rejected
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-rose-100 text-rose-700 border-none">
-                        {counts.VISA_REJECTED}
-                    </Badge>
-                </div>
-            ), 
-            color: "text-rose-600", 
-            bg: "bg-rose-600/10" 
-        },
-        { 
-            id: "VISA_REFUSED", 
-            label: (
-                <div className="flex items-center gap-2">
-                    Refused
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-red-100 text-red-700 border-none">
-                        {counts.VISA_REFUSED}
-                    </Badge>
-                </div>
-            ), 
-            color: "text-red-700", 
-            bg: "bg-red-700/10" 
-        },
-        { 
-            id: "DEFERRED", 
-            label: (
-                <div className="flex items-center gap-2">
-                    Deferred
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-pink-100 text-pink-700 border-none">
-                        {counts.DEFERRED}
-                    </Badge>
-                </div>
-            ), 
-            color: "text-pink-600", 
-            bg: "bg-pink-600/10" 
-        },
-        { 
-            id: "ENROLLED", 
-            label: (
-                <div className="flex items-center gap-2">
-                    Enrolled
-                    <Badge variant="secondary" className="h-4 px-1 text-[10px] font-bold bg-cyan-100 text-cyan-700 border-none">
-                        {counts.ENROLLED}
-                    </Badge>
-                </div>
-            ), 
-            color: "text-cyan-600", 
-            bg: "bg-cyan-600/10" 
-        },
-    ];
+            ),
+            color: config.color,
+            bg: config.bg
+        };
+    });
 
     // Reset page on search/filter changes
     useEffect(() => {
         setPage(1);
-    }, [debouncedSearch, status]);
+    }, [debouncedSearch, status, countryId, visaType, intake, agentId, counselorId]);
 
     const handleDelete = async (id: string) => {
         try {
@@ -292,28 +222,6 @@ function VisaApplicationsPageContent({ role }: { role: string }) {
                     <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => setShowEmailModal(true)}
-                        disabled={selectedIds.length === 0}
-                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold disabled:opacity-50"
-                    >
-                        <Mail className="h-4 w-4 text-amber-600" />
-                        Email
-                    </Button>
-
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowWhatsappModal(true)}
-                        disabled={selectedIds.length === 0}
-                        className="h-9 rounded-xl border-slate-200 hover:bg-slate-50 gap-2 text-[12px] font-bold disabled:opacity-50"
-                    >
-                        <MessageCircle className="h-4 w-4 text-green-600" />
-                        Whatsapp
-                    </Button>
-
-                    <Button
-                        variant="outline"
-                        size="sm"
                         onClick={() => setShowBulkDeleteConfirm(true)}
                         disabled={selectedIds.length === 0}
                         className="h-9 rounded-xl border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 gap-2 text-[12px] font-bold disabled:opacity-50"
@@ -326,15 +234,76 @@ function VisaApplicationsPageContent({ role }: { role: string }) {
 
             <Card className="border-0 dark:border dark:border-white/5 rounded-3xl overflow-hidden bg-white dark:bg-transparent shadow-sm dark:shadow-none">
                 <CardContent className="p-4">
-                    {/* Integrated Header Row */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-                        <div className="relative max-w-sm w-full">
-                            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground/40" />
-                            <Input
-                                placeholder="Search student or country..."
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                className="pl-9 bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 h-9 text-[13px] placeholder:text-muted-foreground/40 font-sans w-full"
+                    <DataTableFilters
+                        onSearch={setSearch}
+                        searchValue={search}
+                        onClear={() => {
+                            setSearch("");
+                            setStatus("ALL");
+                            setCountryId("ALL");
+                            setVisaType("ALL");
+                            setIntake("ALL");
+                            setAgentId("ALL");
+                            setCounselorId("ALL");
+                        }}
+                        filters={[
+                            {
+                                key: "countryId",
+                                label: "Country",
+                                type: "select",
+                                options: countries?.countries?.map((c: any) => ({ label: c.name, value: c.id })) || []
+                            },
+                            {
+                                key: "visaType",
+                                label: "Visa Type",
+                                type: "select",
+                                options: [
+                                    { label: "Student Visa", value: "Student" },
+                                    { label: "Visitor Visa", value: "Visitor" },
+                                    { label: "Work Visa", value: "Work" }
+                                ]
+                            },
+                            {
+                                key: "intake",
+                                label: "Intake",
+                                type: "select",
+                                options: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"].map(m => ({ label: `${m} 2024/25`, value: m }))
+                            },
+                            {
+                                key: "agentId",
+                                label: "Agent",
+                                type: "select",
+                                options: counselors?.filter((e: any) => e.role === "AGENT").map((c: any) => ({ label: c.name, value: c.id })) || []
+                            },
+                            {
+                                key: "counselorId",
+                                label: "Counselor",
+                                type: "select",
+                                options: counselors?.filter((e: any) => e.role === "COUNSELOR").map((c: any) => ({ label: c.name, value: c.id })) || []
+                            }
+                        ]}
+                        values={{
+                            countryId,
+                            visaType,
+                            intake,
+                            agentId,
+                            counselorId
+                        }}
+                        onFilterChange={(key, value) => {
+                            if (key === "countryId") setCountryId(value);
+                            if (key === "visaType") setVisaType(value);
+                            if (key === "intake") setIntake(value);
+                            if (key === "agentId") setAgentId(value);
+                            if (key === "counselorId") setCounselorId(value);
+                        }}
+                    />
+
+                    <div className="flex items-center justify-between gap-4 mb-4">
+                        <div className="flex items-center gap-3">
+                            <StatusTabs 
+                                tabs={visaStatusTabs} 
+                                activeTab={status} 
+                                onTabChange={setStatus} 
                             />
                         </div>
 
@@ -345,12 +314,6 @@ function VisaApplicationsPageContent({ role }: { role: string }) {
                             </Badge>
                         </div>
                     </div>
-
-                    <StatusTabs 
-                        tabs={visaStatusTabs} 
-                        activeTab={status} 
-                        onTabChange={setStatus} 
-                    />
 
                     <VisaApplicationsTable
                         data={visaApplications}
@@ -375,38 +338,6 @@ function VisaApplicationsPageContent({ role }: { role: string }) {
             </Card>
 
             {/* Modals */}
-            <AssignApplicationsModal
-                isOpen={showAssignModal}
-                onClose={() => setShowAssignModal(false)}
-                selectedIds={selectedIds}
-                selectedNames={visaApplications.filter(a => selectedIds.includes(a.id)).map(a => a.student?.name || "N/A")}
-                onSuccess={() => {
-                    setSelectedIds([]);
-                    refetch();
-                }}
-                apiEndpoint="/api/visa-applications/bulk-assign"
-                title="Visa Applications"
-                moduleName="visa"
-            />
-
-            <EmailComposeModal
-                isOpen={showEmailModal}
-                onClose={() => setShowEmailModal(false)}
-                selectedEmails={visaApplications.filter(a => selectedIds.includes(a.id)).map(a => a.student?.email).filter(Boolean)}
-                apiEndpoint="/api/applications/email"
-            />
-
-            <WhatsappMessageModal
-                isOpen={showWhatsappModal}
-                onClose={() => setShowWhatsappModal(false)}
-                selectedLeads={visaApplications.filter(a => selectedIds.includes(a.id)).map(a => ({
-                    id: a.id,
-                    name: a.student?.name || "N/A",
-                    phone: a.student?.phone || ""
-                }))}
-                apiEndpoint="/api/applications/whatsapp"
-            />
-
             <ConfirmDialog
                 isOpen={showBulkDeleteConfirm}
                 onClose={() => setShowBulkDeleteConfirm(false)}
